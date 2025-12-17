@@ -28,8 +28,8 @@ TLFCfgPage::TLFCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : Ba
 	QVBoxLayout* mainLayout = new QVBoxLayout(centerWidget);
 
 	// 换行模式
-	QStringList fixModes = { "优先标点", "保持位置", "固定字数", "平均" };
-	QStringList fixModesToShow = { tr("优先标点"), tr("保持位置"), tr("固定字数"), tr("平均") };
+	QStringList fixModes = { "优先标点", "保持位置", "固定字数", "平均", "不修改" };
+	QStringList fixModesToShow = { tr("优先标点"), tr("保持位置"), tr("固定字数"), tr("平均"), tr("不修改") };
 	QString fixMode = QString::fromStdString(toml::find_or(_projectConfig, "plugins", "TextLinebreakFix", "换行模式", ""));
 	ElaScrollPageArea* fixModeArea = new ElaScrollPageArea(centerWidget);
 	QHBoxLayout* fixModeLayout = new QHBoxLayout(fixModeArea);

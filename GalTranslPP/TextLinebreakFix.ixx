@@ -15,7 +15,7 @@ export {
 
 	enum class LinebreakFixMode
 	{
-		None, Average, FixCharCount, KeepPositions, PreferPunctuations
+		None, Average, FixCharCount, KeepPositions, PreferPunctuations, NOTFIX
 	};
 
 	class TextLinebreakFix {
@@ -25,7 +25,6 @@ export {
 		std::function<NLPResult(const std::string&)> m_tokenizeTargetLangFunc;
 		std::vector<std::string> splitIntoTokens(const std::string& text);
 
-		fs::path m_projectDir;
 		fs::path m_tokenizeCachePath;
 		std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
 		std::shared_mutex m_tokenizeCacheMapMutex;
@@ -60,9 +59,8 @@ export {
 module :private;
 
 TextLinebreakFix::TextLinebreakFix(const fs::path& projectDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
-	: m_projectDir(projectDir), m_logger(logger)
+	: m_tokenizeCachePath(projectDir / L"tokenizeCache_tlf.json"), m_logger(logger)
 {
-	m_tokenizeCachePath = m_projectDir / L"tokenizeCache_tlf.json";
 	try {
 		const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins/TextLinebreakFix.toml");
 
@@ -78,6 +76,9 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& projectDir, const toml::value
 		}
 		else if (linebreakMode == "优先标点") {
 			m_mode = LinebreakFixMode::PreferPunctuations;
+		}
+		else if (linebreakMode == "不修改") {
+			m_mode = LinebreakFixMode::NOTFIX;
 		}
 		else {
 			throw std::invalid_argument("TextLinebreakFix 无效的换行模式: " + linebreakMode);
@@ -176,7 +177,10 @@ void TextLinebreakFix::run(Sentence* se)
 			}
 		};
 
-	if (transLinebreakCount == origLinebreakCount && !m_forceFix) {
+	if (
+		(m_mode == LinebreakFixMode::NOTFIX) ||
+		(transLinebreakCount == origLinebreakCount && !m_forceFix)
+		) {
 		checkLineCharCountFunc(se->translated_preview);
 		return;
 	}

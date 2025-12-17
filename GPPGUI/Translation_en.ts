@@ -3058,6 +3058,11 @@
         <translation>Average</translation>
     </message>
     <message>
+        <location filename="TLFCfgPage.cpp" line="32"/>
+        <source>不修改</source>
+        <translation>Not Fix</translation>
+    </message>
+    <message>
         <location filename="TLFCfgPage.cpp" line="36"/>
         <source>换行模式</source>
         <translation>Fix Mode</translation>
