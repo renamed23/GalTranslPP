@@ -627,6 +627,38 @@ std::function<std::string(const std::string&)> getTraditionalChineseExtractor(st
     return result;
 }
 
+std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadTokenizeCache
+(const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger) {
+    std::unordered_map<std::string, std::vector<std::vector<std::string>>> result;
+    try {
+        if (fs::exists(cachePath)) {
+            std::ifstream ifs(cachePath);
+            result = json::parse(ifs).get<decltype(result)>();
+        }
+        else {
+            logger->info("未找到分词缓存 {}，将重头开始分词", wide2Ascii(cachePath));
+        }
+    }
+    catch (...) {
+        logger->error("读取分词缓存 {} 失败，将重头开始分词", wide2Ascii(cachePath));
+    }
+    return result;
+}
+void saveTokenizeCache
+(const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger) {
+    try {
+        json j = cache;
+        createParent(cachePath);
+        std::ofstream ofs(cachePath);
+        ofs << j.dump(2);
+        ofs.close();
+        logger->info("分词缓存已保存到 {}", wide2Ascii(cachePath));
+    }
+    catch (...) {
+        logger->error("分词缓存 {} 保存失败", wide2Ascii(cachePath));
+    }
+}
+
 void extractFileFromZip(const fs::path& zipPath, const fs::path& outputDir, const std::string& fileName) {
     bit7z::Bit7zLibrary library{ "7z.dll" };
     bit7z::BitFileExtractor extractor{ library, bit7z::BitFormat::Auto };

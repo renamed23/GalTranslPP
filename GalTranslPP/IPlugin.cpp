@@ -36,7 +36,7 @@ std::vector<pro::proxy<PPlugin>> registerPlugins(const std::vector<std::string>&
             plugins.push_back(pro::make_proxy_shared<PPlugin, TextPostFull2Half>(projectConfig, logger));
         }
         else if (pluginName == "TextLinebreakFix") {
-            plugins.push_back(pro::make_proxy_shared<PPlugin, TextLinebreakFix>(projectConfig, logger));
+            plugins.push_back(pro::make_proxy_shared<PPlugin, TextLinebreakFix>(projectDir, projectConfig, logger));
         }
         else if (pluginName == "SkipTrans") {
             plugins.push_back(pro::make_proxy_shared<PPlugin, SkipTrans>(projectDir, projectConfig, pythonManager, luaManager, logger));

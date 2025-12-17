@@ -25,7 +25,11 @@ export {
 		std::function<NLPResult(const std::string&)> m_tokenizeTargetLangFunc;
 		std::vector<std::string> splitIntoTokens(const std::string& text);
 
-		double m_priorityThreshold = 0.2;
+		fs::path m_projectDir;
+		fs::path m_tokenizeCachePath;
+		std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
+		std::shared_mutex m_tokenizeCacheMapMutex;
+		double m_priorityThreshold;
 		std::shared_ptr<spdlog::logger> m_logger;
 		LinebreakFixMode m_mode;
 		int m_segmentThreshold;
@@ -37,22 +41,28 @@ export {
 
 	public:
 
-		TextLinebreakFix(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger);
+		TextLinebreakFix(const fs::path& projectDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger);
 
 		bool needReboot() const { return m_needReboot; }
 
 		void run(Sentence* se);
 
-		~TextLinebreakFix() = default;
+		~TextLinebreakFix()
+		{
+			if (m_useTokenizer) {
+				saveTokenizeCache(m_tokenizeCacheMap, m_tokenizeCachePath, m_logger);
+			}
+		}
 	};
 }
 
 
 module :private;
 
-TextLinebreakFix::TextLinebreakFix(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
-	: m_logger(logger)
+TextLinebreakFix::TextLinebreakFix(const fs::path& projectDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
+	: m_projectDir(projectDir), m_logger(logger)
 {
+	m_tokenizeCachePath = m_projectDir / L"tokenizeCache_tlf.json";
 	try {
 		const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins/TextLinebreakFix.toml");
 
@@ -80,6 +90,7 @@ TextLinebreakFix::TextLinebreakFix(const toml::value& projectConfig, std::shared
 
 
 		if (m_useTokenizer) {
+			m_tokenizeCacheMap = loadTokenizeCache(m_tokenizeCachePath, m_logger);
 			const std::string& tokenizerBackend = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.tokenizerBackend");
 			if (tokenizerBackend == "MeCab") {
 				const std::string& mecabDictDir = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.mecabDictDir");
@@ -123,15 +134,27 @@ TextLinebreakFix::TextLinebreakFix(const toml::value& projectConfig, std::shared
 		}
 	}
 	catch (const toml::exception& e) {
-		m_logger->critical("换行修复配置文件解析错误");
+		m_logger->critical("TextLinebreakFix 插件配置文件解析错误");
 		throw std::runtime_error(e.what());
 	}
 }
 
 std::vector<std::string> TextLinebreakFix::splitIntoTokens(const std::string& text)
 {
+	{
+		m_tokenizeCacheMapMutex.lock_shared();
+		auto it = m_tokenizeCacheMap.find(text); bool found = it != m_tokenizeCacheMap.end();
+		m_tokenizeCacheMapMutex.unlock_shared();
+		if (found) {
+			return ::splitIntoTokens(it->second, text);
+		}
+	}
 	const NLPResult result = m_tokenizeTargetLangFunc(text);
 	const WordPosVec& wordPosVec = std::get<0>(result);
+	{
+		std::lock_guard<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
+		m_tokenizeCacheMap.insert({ text, wordPosVec });
+	}
 	return ::splitIntoTokens(wordPosVec, text);
 }
 

@@ -37,14 +37,15 @@ export {
         int m_totalSentences = 0;
 
         // 阶段一和二的结果
+        std::unordered_map<std::string, EntityVec> m_tokenizeCacheMap;
         std::vector<std::string> m_segments;
-        std::vector<std::set<std::string>> m_segmentWords;
-        std::map<std::string, int> m_wordCounter;
-        std::set<std::string> m_nameSet;
+        std::vector<std::unordered_set<std::string>> m_segmentWords;
+        std::unordered_map<std::string, int> m_wordCounter;
+        std::unordered_set<std::string> m_nameSet;
 
         // 阶段四的结果 (线程安全)
         std::vector<std::tuple<std::string, std::string, std::string>> m_finalDict;
-        std::map<std::string, int> m_finalCounter;
+        std::unordered_map<std::string, int> m_finalCounter;
         std::mutex m_resultMutex;
 
         void preprocessAndTokenize(const std::vector<fs::path>& jsonFiles);
@@ -55,7 +56,8 @@ export {
         DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, APIPool& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc,
             std::function<void(Sentence*)> preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
             int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota);
-        void generate(const std::vector<fs::path>& jsonFiles, const fs::path& outputFilePath);
+        void generate(const std::vector<fs::path>& jsonFiles, const fs::path& inputCachePath, const fs::path& outputFilePath);
+        void saveCache(const fs::path& savePath);
     };
 }
 
@@ -126,51 +128,64 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
         }
         currentText += se.pre_processed_text + "\n";
         currentSegment += currentText;
-        if (countGraphemes(currentSegment) > MAX_SEGMENT_LEN) {
-            m_segments.push_back(currentSegment);
+        if (currentSegment.length() > MAX_SEGMENT_LEN && countGraphemes(currentSegment) > MAX_SEGMENT_LEN) {
+            m_segments.push_back(std::move(currentSegment));
             currentSegment.clear();
         }
     }
     
     if (!currentSegment.empty()) {
-        m_segments.push_back(currentSegment);
+        m_segments.push_back(std::move(currentSegment));
     }
 
     m_logger->info("共分割成 {} 个文本块，开始进行分词(使用依赖 Python 且未进行 GPU加速 的分词器这步会非常慢)...", m_segments.size());
     m_controller->makeBar((int)m_segments.size(), 1);
     m_controller->addThreadNum();
     m_segmentWords.reserve(m_segments.size());
+    std::unordered_set<std::string> wordsInSegment;
+    auto procEntityVecFunc = [&](const EntityVec& entityVec, const std::string& segment)
+        {
+            for (const auto& entity : entityVec) {
+                wordsInSegment.insert(entity.front());
+                m_wordCounter[entity.front()]++;
+            }
+            if (m_logger->should_log(spdlog::level::trace)) {
+                std::string entityStr;
+                for (const auto& entity : entityVec) {
+                    entityStr += "[" + entity.front() + ", " + entity[1] + "] ";
+                }
+                m_logger->trace("原文: {}\n分词实体结果: {}", segment, entityStr);
+            }
+        };
     for (const auto& segment : m_segments) {
+        if (auto it = m_tokenizeCacheMap.find(segment); it != m_tokenizeCacheMap.end()) {
+            EntityVec& entityVec = it->second;
+            procEntityVecFunc(entityVec, segment);
+        }
+        else {
+            NLPResult result = m_tokenizeSourceLangFunc(segment);
+            EntityVec& entityVec = std::get<1>(result);
+            std::erase_if(entityVec, [](const std::vector<std::string>& entity)
+                {
+                    static const std::set<std::string> excludeEntities =
+                    {
+                        "TITLE_AFFIX", "QUANTITY", "ORDINAL", "DATE", "MONEY"
+                    };
+                    if (excludeEntities.contains(entity[1])) {
+                        return true;
+                    }
+                    return removePunctuation(entity.front()).empty();
+                });
+            procEntityVecFunc(entityVec, segment);
+            m_tokenizeCacheMap.insert({ segment, std::move(entityVec) });
+        }
+        m_segmentWords.push_back(std::move(wordsInSegment));
+        wordsInSegment.clear();
+
         m_controller->updateBar();
         if (m_controller->shouldStop()) {
             break;
         }
-        std::set<std::string> wordsInSegment;
-        NLPResult result = m_tokenizeSourceLangFunc(segment);
-        EntityVec& entityVec = std::get<1>(result);
-        std::erase_if(entityVec, [](const std::vector<std::string>& entity)
-            {
-                static const std::set<std::string> excludeEntities =
-                {
-                    "TITLE_AFFIX", "QUANTITY", "ORDINAL", "DATE", "MONEY"
-                };
-                if (excludeEntities.contains(entity[1])) {
-                    return true;
-                }
-                return removePunctuation(entity.front()).empty();
-            });
-        for (const auto& entity : entityVec) {
-            wordsInSegment.insert(entity.front());
-            m_wordCounter[entity.front()]++;
-        }
-        if (m_logger->should_log(spdlog::level::trace)) {
-            std::string entityStr;
-            for (const auto& entity : entityVec) {
-                entityStr += "[" + entity.front() + ", " + entity[1] + "] ";
-            }
-            m_logger->trace("原文: {}\n分词实体结果: {}", segment, entityStr);
-        }
-        m_segmentWords.push_back(wordsInSegment);
     }
     m_controller->reduceThreadNum();
 }
@@ -322,10 +337,11 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
     m_controller->updateBar();
 }
 
-void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const fs::path& outputFilePath) {
+void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const fs::path& inputCachePath, const fs::path& outputFilePath) {
     if (jsonFiles.empty()) {
         throw std::runtime_error("没有输入文件，无法生成字典。");
     }
+    m_tokenizeCacheMap = loadTokenizeCache(inputCachePath, m_logger);
     preprocessAndTokenize(jsonFiles);
     std::vector<int> selectedIndices = solveSentenceSelection();
     if (int maxSelectedIndicesCount = std::max(m_totalSentences / 250, 128); selectedIndices.size() > maxSelectedIndicesCount) {
@@ -397,4 +413,8 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
     ofs << toml::format(toml::ordered_value{ toml::ordered_table{{ "gptDict", arr }} });
     ofs.close();
     m_logger->info("字典生成完成，共 {} 个词语，已保存到 {}", finalList.size(), wide2Ascii(outputFilePath));
+}
+
+void DictionaryGenerator::saveCache(const fs::path& savePath) {
+    saveTokenizeCache(m_tokenizeCacheMap, savePath, m_logger);
 }

@@ -189,7 +189,7 @@ void NormalJsonTranslator::init()
                 m_logger->info("MeCab 环境检查完毕。");
             }
             else if (tokenizerBackend == "spaCy") {
-                const std::string& spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_sm");
+                const std::string& spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
                 m_logger->info("正在检查 spaCy 环境...");
                 m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
                 m_logger->info("spaCy 环境检查完毕。");
@@ -882,6 +882,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
         }
 
+        // 再尽量覆盖一些边缘情况
         json totalCacheJsonList = json::array();
         for (const auto& cp : cachePaths) {
             std::shared_lock<std::shared_mutex> lock(m_cacheMutex);
@@ -1209,12 +1210,14 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
         DictionaryGenerator generator(m_controller, m_logger, m_apiPool, m_tokenizeSourceLangFunc,
             preProcessFunc, m_onPerformApi, m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang,
             m_maxRetries, m_threadsNum, m_apiTimeOutMs, m_checkQuota);
-        fs::path outputFilePath = m_projectDir / L"项目GPT字典-生成.toml";
+        const fs::path tokenizeCachePath = m_projectDir / L"tokenizeCache_dictgen.json";
+        const fs::path outputFilePath = m_projectDir / L"项目GPT字典-生成.toml";
         std::vector<fs::path> inputPaths = std::move(relJsonPaths);
         for (auto& inputPath : inputPaths) {
             inputPath = m_inputDir / inputPath;
         }
-        generator.generate(inputPaths, outputFilePath);
+        generator.generate(inputPaths, tokenizeCachePath, outputFilePath);
+        generator.saveCache(tokenizeCachePath);
         return std::nullopt;
     }
     // 字典生成完毕

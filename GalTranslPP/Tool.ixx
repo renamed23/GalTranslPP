@@ -94,6 +94,11 @@ export {
 
     std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger> logger);
 
+    std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadTokenizeCache
+    (const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger);
+    void saveTokenizeCache
+    (const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger);
+
     void extractZip(const fs::path& zipPath, const fs::path& outputDir);
     void extractFileFromZip(const fs::path& zipPath, const fs::path& outputDir, const std::string& fileName);
     void extractZipExclude(const fs::path& zipPath, const fs::path& outputDir, const std::set<std::string>& excludePrefixes);

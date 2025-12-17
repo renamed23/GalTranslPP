@@ -63,7 +63,7 @@ void CommonSettingsPage::_setupUI()
 	maxThreadLayout->addWidget(maxThreadText);
 	maxThreadLayout->addStretch();
 	ElaSpinBox* maxThreadSpinBox = new ElaSpinBox(maxThreadArea);
-	maxThreadSpinBox->setRange(1, 100);
+	maxThreadSpinBox->setRange(1, 1000);
 	maxThreadSpinBox->setValue(maxThread);
 	maxThreadLayout->addWidget(maxThreadSpinBox);
 	mainLayout->addWidget(maxThreadArea);

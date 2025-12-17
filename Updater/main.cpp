@@ -107,6 +107,7 @@ int main(int argc, char* argv[]) {
                 "BaseConfig/python-3.12.10-embed-amd64", "BaseConfig/pyScripts", "BaseConfig/Prompt.toml", 
                 "BaseConfig/Dict", 
             };
+            // 向后兼容
             if (cmpVer("2.1.1", orgGppVersion, isCompatible)) {
                 excludePreFixes.insert("Qt6Core.dll");
                 excludePreFixes.insert("7z.dll");

@@ -151,16 +151,14 @@ std::string TextPostFull2Half::convertText(const std::string& text) {
     icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(text);
     
     for (int32_t i = 0; i < ustr.length();) {
-        if (i <= ustr.length() - 5) {
-            if (ustr.tempSubString(i, 5) == u"<tab>") {
+        {
+            icu::UnicodeString tempSubString = ustr.tempSubString(i);
+            if (tempSubString.startsWith(u"<tab>")) {
                 result.append("<tab>");
                 i += 5;
                 continue;
             }
-        }
-        // 检测是否匹配"<br>"（使用子字符串比较）
-        if (i <= ustr.length() - 4) {
-            if (ustr.tempSubString(i, 4) == u"<br>") {
+            else if (tempSubString.startsWith(u"<br>")) {
                 result.append("<br>");
                 i += 4;
                 continue;
