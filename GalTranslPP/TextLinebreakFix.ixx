@@ -59,10 +59,10 @@ export {
 module :private;
 
 TextLinebreakFix::TextLinebreakFix(const fs::path& projectDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
-	: m_tokenizeCachePath(projectDir / L"tokenizeCache_tlf.json"), m_logger(logger)
+	: m_tokenizeCachePath(projectDir / L"other_cache" / L"tokenizeCache_tlf.json"), m_logger(logger)
 {
 	try {
-		const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins/TextLinebreakFix.toml");
+		const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins" / L"TextLinebreakFix.toml");
 
 		std::string linebreakMode = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.换行模式");
 		if (linebreakMode == "平均") {
@@ -143,10 +143,8 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& projectDir, const toml::value
 std::vector<std::string> TextLinebreakFix::splitIntoTokens(const std::string& text)
 {
 	{
-		m_tokenizeCacheMapMutex.lock_shared();
-		auto it = m_tokenizeCacheMap.find(text); bool found = it != m_tokenizeCacheMap.end();
-		m_tokenizeCacheMapMutex.unlock_shared();
-		if (found) {
+		std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
+		if (auto it = m_tokenizeCacheMap.find(text); it != m_tokenizeCacheMap.end()) {
 			return ::splitIntoTokens(it->second, text);
 		}
 	}

@@ -34,9 +34,13 @@ export {
         fs::path m_inputCacheDir;
         fs::path m_outputDir;
         fs::path m_outputCacheDir;
-        fs::path m_cacheDir;
+        fs::path m_transCacheDir;
+        fs::path m_otherCacheDir;
         fs::path m_projectDir;
 
+        // relPathString, backgroundText
+        std::map<std::string, std::string> m_backgroundTextCacheMap;
+        std::mutex m_backgroundTextCacheMapMutex;
         std::string m_systemPrompt;
         std::string m_userPrompt;
         std::string m_targetLang;
@@ -79,11 +83,11 @@ export {
         // 原始json相对路径到多个输入分割文件相对路径及其有没有完成的映射
         std::map<fs::path, std::map<fs::path, bool>> m_jsonToSplitFileParts;
 
-        std::map<std::string, std::string> m_nameMap;
+        std::unordered_map<std::string, std::string> m_nameMap;
         toml::ordered_value m_problemOverview = toml::array{};
         std::function<void(fs::path)> m_onFileProcessed;
         std::function<std::string(std::string)> m_onPerformApi;
-        std::shared_mutex m_cacheMutex;
+        std::shared_mutex m_transCacheMutex;
         std::mutex m_outputMutex;
 
         ctpl::thread_pool m_threadPool{1};

@@ -111,11 +111,8 @@ export {
                     task->taskFunc();
                     task->promise.set_value();
                 }
-                catch (const std::exception&) {
-                    task->promise.set_exception(std::current_exception());
-                }
                 catch (...) {
-                    task->promise.set_exception(std::make_exception_ptr(std::runtime_error("PythonMainInterpreterManager::daemonThreadFunc 出现未知异常")));
+                    task->promise.set_exception(std::current_exception());
                 }
             }
         }

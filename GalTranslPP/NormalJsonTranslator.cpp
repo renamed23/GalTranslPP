@@ -38,7 +38,21 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, std::shar
     m_inputCacheDir = inputCacheDir.value_or(L"cache" / m_projectDir.filename() / L"gt_input_cache");
     m_outputDir = outputDir.value_or(m_projectDir / L"gt_output");
     m_outputCacheDir = outputCacheDir.value_or(L"cache" / m_projectDir.filename() / L"gt_output_cache");
-    m_cacheDir = m_projectDir / L"transl_cache";
+    m_transCacheDir = m_projectDir / L"transl_cache";
+    m_otherCacheDir = m_projectDir / L"other_cache";
+    const fs::path backgroundTextCachePath = m_otherCacheDir / L"backgroundTextCache.json";
+    try {
+        if (fs::exists(backgroundTextCachePath)) {
+            std::ifstream ifs(backgroundTextCachePath);
+            m_backgroundTextCacheMap = json::parse(ifs).get<decltype(m_backgroundTextCacheMap)>();
+        }
+        else {
+            m_logger->debug("未找到背景文本缓存 {}", wide2Ascii(backgroundTextCachePath));
+        }
+    }
+    catch (...) {
+        m_logger->error("读取背景文本缓存 {} 失败", wide2Ascii(backgroundTextCachePath));
+    }
 }
 
 void NormalJsonTranslator::init()
@@ -328,7 +342,7 @@ void NormalJsonTranslator::init()
         m_usePostDictInMsg = toml::find_or(configData, "dictionary", "usePostDictInMsg", true);
         m_useGptDictToReplaceName = toml::find_or(configData, "dictionary", "useGPTDictInName", false);
 
-        auto loadDictsFunc = [&]<typename DictType>(const std::string & dictType, DictType & dict)
+        auto loadDictsFunc = [&]<typename DictType>(const std::string & dictType, DictType& dict)
         {
             const auto& dictFileNames = toml::find<
                 std::optional<std::vector<std::string>>
@@ -646,7 +660,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
             logBlock += "\nProblems:\n" + inputProblems;
         }
         if (m_logger->should_log(spdlog::level::debug) && !backgroundText.empty()) {
-            logBlock += "\nBackground:\n" + backgroundText;
+            logBlock += "\nBackground:\n" + backgroundText + "\n";
         }
         if (!glossary.empty()) {
             logBlock += "\nDict:\n" + glossary;
@@ -733,11 +747,11 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
     std::ifstream ifs;
     fs::path inputPath = m_needsCombining ? (m_inputCacheDir / relInputPath) : (m_inputDir / relInputPath);
     fs::path outputPath = m_needsCombining ? (m_outputCacheDir / relInputPath) : (m_outputDir / relInputPath);
-    fs::path cachePath = m_cacheDir / relInputPath;
+    fs::path cachePath = m_transCacheDir / relInputPath;
     fs::path showNormalPath = m_projectDir / L"gt_show_normal" / relInputPath;
+
     createParent(outputPath);
     createParent(cachePath);
-
     std::vector<Sentence> sentences;
 
     // 解析输入文件
@@ -824,7 +838,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
         auto usePotentialPartFileCacheToInsertCacheMap = [&](const fs::path& potentialCachePath)
             {
-                std::shared_lock<std::shared_mutex> lock(m_cacheMutex);
+                std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
                 try {
                     ifs.open(potentialCachePath);
                     json jsonArr = json::parse(ifs);
@@ -832,7 +846,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     insertJsonArrToCacheMap(jsonArr);
                 }
                 catch (const json::exception& e) {
-                    throw std::runtime_error(std::format("[线程 {}] 缓存文件 {} 解析失败: {}", threadId, wide2Ascii(fs::relative(potentialCachePath, m_cacheDir)), e.what()));
+                    throw std::runtime_error(std::format("[线程 {}] 缓存文件 {} 解析失败: {}", threadId, wide2Ascii(fs::relative(potentialCachePath, m_transCacheDir)), e.what()));
                 }
             };
 
@@ -865,27 +879,27 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         if (m_transEngine != TransEngine::Rebuild) {
             if (m_needsCombining) {
                 std::optional<fs::path> additionalCachePath = std::nullopt;
-                if (auto it = m_splitFilePartsToJson.find(relInputPath); it != m_splitFilePartsToJson.end() && fs::exists(m_cacheDir / it->second)) {
-                    additionalCachePath = m_cacheDir / it->second;
+                if (auto it = m_splitFilePartsToJson.find(relInputPath); it != m_splitFilePartsToJson.end() && fs::exists(m_transCacheDir / it->second)) {
+                    additionalCachePath = m_transCacheDir / it->second;
                 }
                 // 这个逻辑还挺耗时的，我自己尝试优化结果大败而归
                 size_t pos = relInputPath.filename().wstring().rfind(L"_part_");
                 std::wstring orgStem = relInputPath.filename().wstring().substr(0, pos);
                 std::wstring cacheSpec = orgStem + L"_part_*.json";
                 // 分割优先读分割缓存
-                readAllPotentialPartFileCache(cacheSpec, m_cacheDir / relInputPath.parent_path(), additionalCachePath);
+                readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path(), additionalCachePath);
             }
             else {
                 std::wstring cacheSpec = relInputPath.stem().wstring() + L"_part_*.json";
                 // 非分割优先读整体缓存
-                readAllPotentialPartFileCache(cacheSpec, m_cacheDir / relInputPath.parent_path());
+                readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path());
             }
         }
 
         // 再尽量覆盖一些边缘情况
         json totalCacheJsonList = json::array();
         for (const auto& cp : cachePaths) {
-            std::shared_lock<std::shared_mutex> lock(m_cacheMutex);
+            std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
             try {
                 ifs.open(cp);
                 json cacheJsonList = json::parse(ifs);
@@ -931,7 +945,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
         }
 
-        m_logger->info("[线程 {}] [文件 {}] 共 {} 句，命中缓存 {} 句，需翻译 {} 句。", threadId, wide2Ascii(relInputPath),
+        m_logger->info("[线程 {}] [文件 {}] 共 {} 句，命中缓存/跳过 {} 句，需翻译 {} 句。", threadId, wide2Ascii(relInputPath),
             sentences.size(), sentences.size() - toTranslate.size(), toTranslate.size());
 
         if (m_transEngine == TransEngine::Rebuild && !toTranslate.empty()) {
@@ -940,7 +954,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 notFoundSentences += se->original_text + "\n";
             }
             m_logger->critical("[线程 {}] [文件 {}] 有 {} 句未命中缓存，这些句子是: {}", threadId, wide2Ascii(relInputPath), toTranslate.size(), notFoundSentences);
-            std::lock_guard<std::shared_mutex> lock(m_cacheMutex);
+            std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
             saveCache(sentences, cachePath);
             return;
         }
@@ -955,36 +969,58 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
         int batchCount = 0;
         std::string backgroundText;
+        size_t fileHash = 0;
+        {
+            ifs.open(inputPath, std::ios::binary);
+            std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            ifs.close();
+            fileHash = std::hash<std::string>{}(content);
+        }
+        std::string filePathWithHash = wide2Ascii(relInputPath) + std::to_string(fileHash);
+        {
+            std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
+            if (auto it = m_backgroundTextCacheMap.find(filePathWithHash); it != m_backgroundTextCacheMap.end()) {
+                backgroundText = it->second;
+            }
+        }
         Sentence* pLastSentence = nullptr;
         for (size_t i = 0; i < toTranslate.size(); i += m_batchSize) {
-            if (m_controller->shouldStop()) {
-                return;
-            }
             std::vector<Sentence*> batch(toTranslate.begin() + i, toTranslate.begin() + std::min(i + m_batchSize, toTranslate.size()));
             if (i != 0 && !backgroundText.empty() && pLastSentence) {
                 if (batch.front()->index - pLastSentence->index > m_batchSize) {
                     backgroundText.clear();
                 }
             }
+            if (m_controller->shouldStop()) {
+                if (!backgroundText.empty()) {
+                    std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
+                    m_backgroundTextCacheMap[filePathWithHash] = backgroundText;
+                }
+                m_logger->debug("[线程 {}] [文件 {}] 已停止翻译", threadId, wide2Ascii(relInputPath));
+                return;
+            }
             translateBatchWithRetry(relInputPath, batch, backgroundText, threadId);
             pLastSentence = batch.back();
             for (Sentence* se : batch) {
                 postProcess(se);
             }
-            batchCount++;
-            if (batchCount % m_saveCacheInterval == 0) {
-                m_logger->debug("[线程 {}] [文件 {}] 达到保存间隔，正在更新缓存文件...", threadId, wide2Ascii(inputPath));
-                std::lock_guard<std::shared_mutex> lock(m_cacheMutex);
+            if (++batchCount % m_saveCacheInterval == 0) {
+                m_logger->debug("[线程 {}] [文件 {}] 达到保存间隔，正在更新缓存文件...", threadId, wide2Ascii(relInputPath));
+                std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
                 saveCache(sentences, cachePath);
             }
+        }
+        {
+            std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
+            m_backgroundTextCacheMap.erase(filePathWithHash);
         }
     }
     // 翻译逻辑结束
 
     // 最终保存缓存逻辑
     {
-        std::lock_guard<std::shared_mutex> lock(m_cacheMutex);
-        m_logger->debug("[线程 {}] [文件 {}] 翻译完成，正在进行最终保存...", threadId, wide2Ascii(inputPath));
+        std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
+        m_logger->debug("[线程 {}] [文件 {}] 翻译完成，正在进行最终保存...", threadId, wide2Ascii(relInputPath));
         saveCache(sentences, cachePath);
 
         std::string relInputPathStr = wide2Ascii(relInputPath);
@@ -1078,11 +1114,16 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 // ================================================         run           ========================================
 std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
 
-    if (fs::exists(m_cacheDir)) {
-        std::error_code ec;
-        fs::copy(m_cacheDir, m_cacheDir.parent_path() / L"transl_cache_bak", fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+    if (fs::exists(m_transCacheDir)) {
+        try {
+            fs::copy(m_transCacheDir, m_transCacheDir.parent_path() / (m_transCacheDir.filename().wstring() + L"_bak"),
+                fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+        }
+        catch (const fs::filesystem_error& e) {
+            m_logger->error("复制缓存文件夹时出现异常: {}", e.what());
+        }
     }
-    for (const auto& dir : { m_inputDir, m_outputDir, m_cacheDir }) {
+    for (const auto& dir : { m_inputDir, m_outputDir, m_transCacheDir }) {
         if (!fs::exists(dir)) {
             fs::create_directories(dir);
             m_logger->debug("已创建目录: {}", wide2Ascii(dir));
@@ -1102,10 +1143,9 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
 
         auto insertNameTable = [&](const std::string& name)
             {
-                if (name.empty()) {
-                    return;
+                if (!name.empty()) {
+                    nameTableMap[name]++;
                 }
-                nameTableMap[name]++;
             };
 
         // 收集人名和json相对路径，检查msg字段是否存在
@@ -1113,7 +1153,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             if (!entry.is_regular_file() || !isSameExtension(entry.path(), L".json")) {
                 continue;
             }
-            fs::path relInputPath = fs::relative(entry.path(), m_inputDir);
+            const fs::path relInputPath = fs::relative(entry.path(), m_inputDir);
             relJsonPaths.push_back(relInputPath);
             try {
                 ifs.open(entry.path());
@@ -1210,7 +1250,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
         DictionaryGenerator generator(m_controller, m_logger, m_apiPool, m_tokenizeSourceLangFunc,
             preProcessFunc, m_onPerformApi, m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang,
             m_maxRetries, m_threadsNum, m_apiTimeOutMs, m_checkQuota);
-        const fs::path tokenizeCachePath = m_projectDir / L"tokenizeCache_dictgen.json";
+        const fs::path tokenizeCachePath = m_otherCacheDir / L"tokenizeCache_dictgen.json";
         const fs::path outputFilePath = m_projectDir / L"项目GPT字典-生成.toml";
         std::vector<fs::path> inputPaths = std::move(relJsonPaths);
         for (auto& inputPath : inputPaths) {
@@ -1234,7 +1274,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             const std::string& transName = toml::find_or(value, 0, "");
             if (!transName.empty()) {
                 m_logger->trace("发现原名 '{}' 的译名 '{}'", key, transName);
-                m_nameMap.insert(std::make_pair(key, transName));
+                m_nameMap.insert({ key, transName });
             }
         }
     }
@@ -1259,13 +1299,13 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                         ifs.open(m_inputDir / relJsonPath);
                         json data = json::parse(ifs);
                         ifs.close();
-                        const std::vector<json>& parts = splitImplFunc(data, m_splitFileNum);
+                        const std::vector<json> parts = splitImplFunc(data, m_splitFileNum);
                         std::wstring relStem = relJsonPath.parent_path() / relJsonPath.stem();
                         for (size_t i = 0; i < parts.size(); ++i) {
-                            fs::path relPartPath = relStem + L"_part_" + std::to_wstring(i) + relJsonPath.extension().wstring();
+                            const fs::path relPartPath = relStem + L"_part_" + std::to_wstring(i) + relJsonPath.extension().wstring();
                             m_splitFilePartsToJson[relPartPath] = relJsonPath;
-                            m_jsonToSplitFileParts[relJsonPath].insert(std::make_pair(relPartPath, false));
-                            fs::path partPath = m_inputCacheDir / relPartPath;
+                            m_jsonToSplitFileParts[relJsonPath].insert({ relPartPath, false });
+                            const fs::path partPath = m_inputCacheDir / relPartPath;
                             createParent(partPath);
                             ofs.open(partPath);
                             ofs << parts[i].dump(2);
@@ -1377,6 +1417,23 @@ void NormalJsonTranslator::afterRun() {
         m_logger->error("{}问题概览结束\n```\n", problemOverviewStr);
     }
     // 问题概览完毕
+
+    // 背景文本缓存
+    {
+        const fs::path backgroundTextCachePath = m_otherCacheDir / L"backgroundTextCache.json";
+        try {
+            json j = m_backgroundTextCacheMap;
+            createParent(backgroundTextCachePath);
+            std::ofstream ofs(backgroundTextCachePath);
+            ofs << j.dump(2);
+            ofs.close();
+            m_logger->debug("背景文本缓存已保存至 {}", wide2Ascii(backgroundTextCachePath));
+        }
+        catch (...) {
+            m_logger->error("背景文本缓存 {} 保存失败", wide2Ascii(backgroundTextCachePath));
+        }
+    }
+    // 背景文本缓存完毕
 
     if (m_needsCombining) {
         fs::remove_all(m_inputCacheDir);

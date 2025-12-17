@@ -636,23 +636,23 @@ std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadToken
             result = json::parse(ifs).get<decltype(result)>();
         }
         else {
-            logger->info("未找到分词缓存 {}，将重头开始分词", wide2Ascii(cachePath));
+            logger->debug("未找到分词缓存 {}", wide2Ascii(cachePath));
         }
     }
     catch (...) {
-        logger->error("读取分词缓存 {} 失败，将重头开始分词", wide2Ascii(cachePath));
+        logger->error("读取分词缓存 {} 失败", wide2Ascii(cachePath));
     }
     return result;
 }
 void saveTokenizeCache
 (const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger) {
     try {
-        json j = cache;
         createParent(cachePath);
+        json j = cache;
         std::ofstream ofs(cachePath);
         ofs << j.dump(2);
         ofs.close();
-        logger->info("分词缓存已保存到 {}", wide2Ascii(cachePath));
+        logger->debug("分词缓存已保存到 {}", wide2Ascii(cachePath));
     }
     catch (...) {
         logger->error("分词缓存 {} 保存失败", wide2Ascii(cachePath));

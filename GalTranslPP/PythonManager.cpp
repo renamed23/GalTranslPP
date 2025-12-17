@@ -131,7 +131,9 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
         .def_readwrite("m_inputCacheDir", &NormalJsonTranslator::m_inputCacheDir)
         .def_readwrite("m_outputDir", &NormalJsonTranslator::m_outputDir)
         .def_readwrite("m_outputCacheDir", &NormalJsonTranslator::m_outputCacheDir)
-        .def_readwrite("m_cacheDir", &NormalJsonTranslator::m_cacheDir)
+        .def_readwrite("m_transCacheDir", &NormalJsonTranslator::m_transCacheDir)
+        .def_readwrite("m_otherCacheDir", &NormalJsonTranslator::m_otherCacheDir)
+        .def_readwrite("m_backgroundTextCacheMap", &NormalJsonTranslator::m_backgroundTextCacheMap)
         .def_readwrite("m_systemPrompt", &NormalJsonTranslator::m_systemPrompt)
         .def_readwrite("m_userPrompt", &NormalJsonTranslator::m_userPrompt)
         .def_readwrite("m_targetLang", &NormalJsonTranslator::m_targetLang)
@@ -162,7 +164,7 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
         .def_readwrite("m_jsonToSplitFileParts", &NormalJsonTranslator::m_jsonToSplitFileParts)
         .def_readwrite("m_onFileProcessed", &NormalJsonTranslator::m_onFileProcessed)
         .def_readwrite("m_onPerformApi", &NormalJsonTranslator::m_onPerformApi)
-        .def_property("m_threadPool", [](NormalJsonTranslator& self) -> ctpl::thread_pool& {return self.m_threadPool; }, nullptr, py::return_value_policy::reference_internal)
+        .def_property("m_threadPool", [](NormalJsonTranslator& self) -> ctpl::thread_pool& { return self.m_threadPool; }, nullptr, py::return_value_policy::reference_internal)
         .def("preProcess", &NormalJsonTranslator::preProcess)
         .def("postProcess", &NormalJsonTranslator::postProcess)
         .def("processFile", &NormalJsonTranslator::processFile)
@@ -228,11 +230,8 @@ void PythonInterpreterInstance::daemonThreadFunc() {
             task->taskFunc();
             task->promise.set_value();
         }
-        catch (const std::exception&) {
-            task->promise.set_exception(std::current_exception());
-        }
         catch (...) {
-            task->promise.set_exception(std::make_exception_ptr(std::runtime_error("PythonInterpreterInstance::daemonThreadFunc 出现未知异常")));
+            task->promise.set_exception(std::current_exception());
         }
     }
 }

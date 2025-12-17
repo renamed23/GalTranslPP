@@ -37,7 +37,7 @@ TextPostFull2Half::TextPostFull2Half(const toml::value& projectConfig, std::shar
     : m_logger(logger)
 {
     try {
-        const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins/TextPostFull2Half.toml");
+        const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins" / L"TextPostFull2Half.toml");
 
         m_replacePunctuation = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextPostFull2Half.是否替换标点");
         m_reverseConversion = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextPostFull2Half.是否反向替换");
