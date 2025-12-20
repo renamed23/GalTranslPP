@@ -16,10 +16,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. GUI 最大线程数上限 100 -> 1000",
-        "2. 分词结果现在会缓存了，如果中途想换另一个分词器重新分的话需要手动删一下原缓存",
-        "3. 背景文本现在也会缓存了（前提是整个文件内容 && 分割不变）",
-        "4. TextLinebreak 新增模式『不修改』，用于仅检查每行字数溢出",
+        "1. 将字典生成的分词缓存命中改为基于文件而非全文了",
     };
 
     mainLayout->addWidget(updateTitle);

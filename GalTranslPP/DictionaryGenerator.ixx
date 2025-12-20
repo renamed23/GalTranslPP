@@ -80,55 +80,59 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
     constexpr size_t MAX_SEGMENT_LEN = 512;
 
     std::ifstream ifs;
-    for (const auto& item : jsonFiles
-        | std::views::transform([&](const fs::path& filePath)
-            {
-                ifs.open(filePath);
-                json data = json::parse(ifs);
-                ifs.close();
-                return data;
-            }) | std::views::join)
+    for (const auto& jsonFile : jsonFiles)
     {
-        m_totalSentences++;
-        Sentence se;
-        if (item.contains("name")) {
-            se.nameType = NameType::Single;
-            se.name = item.value("name", "");
-        }
-        else if (item.contains("names")) {
-            se.nameType = NameType::Multiple;
-            se.names = item["names"].get<std::vector<std::string>>();
-        }
-        else {
-            se.nameType = NameType::None;
-        }
-        se.original_text = item.value("message", "");
+        ifs.open(jsonFile);
+        json data = json::parse(ifs);
+        ifs.close();
 
-        m_preProcessFunc(&se);
-        if (se.complete) {
-            continue;
-        }
-        replaceStrInplace(se.pre_processed_text, "<br>", "");
-        replaceStrInplace(se.pre_processed_text, "<tab>", "");
+        for (const auto& item : data) {
+            m_totalSentences++;
+            Sentence se;
+            if (item.contains("name")) {
+                se.nameType = NameType::Single;
+                se.name = item.value("name", "");
+            }
+            else if (item.contains("names")) {
+                se.nameType = NameType::Multiple;
+                se.names = item["names"].get<std::vector<std::string>>();
+            }
+            else {
+                se.nameType = NameType::None;
+            }
+            se.original_text = item.value("message", "");
 
-        if (se.nameType == NameType::Single && !se.name.empty()) {
-            m_nameSet.insert(se.name);
-            m_wordCounter[se.name] += 2;
-        }
-        else if (se.nameType == NameType::Multiple) {
-            for (const auto& name : se.names | std::views::filter([](const std::string& name) { return !name.empty(); })) {
-                m_nameSet.insert(name);
-                m_wordCounter[name] += 2;
+            m_preProcessFunc(&se);
+            if (se.complete) {
+                continue;
+            }
+            replaceStrInplace(se.pre_processed_text, "<br>", "");
+            replaceStrInplace(se.pre_processed_text, "<tab>", "");
+
+            if (se.nameType == NameType::Single && !se.name.empty()) {
+                m_nameSet.insert(se.name);
+                m_wordCounter[se.name] += 2;
+            }
+            else if (se.nameType == NameType::Multiple) {
+                for (const auto& name : se.names | std::views::filter([](const std::string& name) { return !name.empty(); })) {
+                    m_nameSet.insert(name);
+                    m_wordCounter[name] += 2;
+                }
+            }
+
+            std::string currentText = getNameString(&se);
+            if (!currentText.empty()) {
+                currentText += ": ";
+            }
+            currentText += se.pre_processed_text + "\n";
+            currentSegment += currentText;
+            if (currentSegment.length() > MAX_SEGMENT_LEN && countGraphemes(currentSegment) > MAX_SEGMENT_LEN) {
+                m_segments.push_back(std::move(currentSegment));
+                currentSegment.clear();
             }
         }
 
-        std::string currentText = getNameString(&se);
-        if (!currentText.empty()) {
-            currentText += ": ";
-        }
-        currentText += se.pre_processed_text + "\n";
-        currentSegment += currentText;
-        if (currentSegment.length() > MAX_SEGMENT_LEN && countGraphemes(currentSegment) > MAX_SEGMENT_LEN) {
+        if (!currentSegment.empty()) {
             m_segments.push_back(std::move(currentSegment));
             currentSegment.clear();
         }
