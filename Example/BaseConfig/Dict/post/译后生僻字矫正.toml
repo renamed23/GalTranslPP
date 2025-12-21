@@ -166,3 +166,11 @@ conditionReg = ''
 isReg = false
 priority = 0
 
+[[normalDict]]
+org = '妳'
+rep = '你'
+conditionTarget = ''
+conditionReg = ''
+isReg = false
+priority = 0
+

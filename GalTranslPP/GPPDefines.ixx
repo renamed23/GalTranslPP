@@ -9,7 +9,7 @@ export {
     const std::string GPPVERSION = "2.1.6";
     const std::string PYTHONVERSION = "1.0.0";
     const std::string PROMPTVERSION = "1.0.2";
-    const std::string DICTVERSION = "1.0.1";
+    const std::string DICTVERSION = "1.0.2";
     const std::string QTVERSION = "6.9.2";
 
     const fs::path pluginConfigsPath = L"BaseConfig/pluginConfigs";
