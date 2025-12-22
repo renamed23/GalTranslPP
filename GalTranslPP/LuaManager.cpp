@@ -235,7 +235,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 			state = std::make_shared<LuaStateInstance>();
 			state->lua->open_libraries();
 			std::ifstream ifs(stdScriptPath);
-			std::string script = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+			std::string script((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 			state->lua->script(script);
 			registerCustomTypes(state, scriptPath, needReboot);
 			it = m_scriptStates.find(stdScriptPath);

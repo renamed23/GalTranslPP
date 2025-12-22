@@ -62,7 +62,7 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 	: m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_tlf.json"), m_logger(logger)
 {
 	try {
-		const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins" / L"TextLinebreakFix.toml");
+		const auto pluginConfig = toml::parse(postPluginConfigPath / L"TextLinebreakFix.toml");
 
 		std::string linebreakMode = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.换行模式");
 		if (linebreakMode == "平均") {

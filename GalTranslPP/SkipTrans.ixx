@@ -47,7 +47,7 @@ SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfi
     : m_logger(logger)
 {
     try {
-        const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPrePlugins" / L"SkipTrans.toml");
+        const auto pluginConfig = toml::parse(prePluginConfigPath / L"SkipTrans.toml");
 
         m_skipH = parseToml<bool>(projectConfig, pluginConfig, "plugins.SkipTrans.skipH");
         if (m_skipH) {

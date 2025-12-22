@@ -12,7 +12,9 @@ export {
     const std::string DICTVERSION = "1.0.2";
     const std::string QTVERSION = "6.9.2";
 
-    const fs::path pluginConfigsPath = L"BaseConfig/pluginConfigs";
+    const fs::path pluginConfigsPath = fs::current_path() / L"BaseConfig" / L"pluginConfigs";
+    const fs::path prePluginConfigPath = pluginConfigsPath / L"textPrePlugins";
+    const fs::path postPluginConfigPath = pluginConfigsPath / L"textPostPlugins";
 
     enum class NameType
     {

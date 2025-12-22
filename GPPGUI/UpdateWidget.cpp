@@ -16,7 +16,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 新增保留原 json 中的其它原数据",
+        "1. 新增保留原 json 中的其它元数据",
         "2. 字典未使用检查所使用的分词也会被缓存了",
     };
 
