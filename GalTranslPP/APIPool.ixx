@@ -33,7 +33,7 @@ export {
     };
 
     bool checkResponse(const ApiResponse& response, const TranslationApi& currentAPI, int& retryCount, const std::filesystem::path& relInputPath,
-        int threadId, bool m_checkQuota, const std::string& m_apiStrategy, APIPool& m_apiPool, std::shared_ptr<spdlog::logger> m_logger);
+        int threadId, bool m_checkQuota, const std::string& m_apiStrategy, std::unique_ptr<APIPool>& m_apiPool, std::shared_ptr<spdlog::logger> m_logger);
 }
 
 
@@ -111,7 +111,7 @@ bool APIPool::isEmpty() {
 }
 
 bool checkResponse(const ApiResponse& response, const TranslationApi& currentAPI, int& retryCount, const std::filesystem::path& relInputPath,
-    int threadId, bool m_checkQuota, const std::string& m_apiStrategy, APIPool& m_apiPool, std::shared_ptr<spdlog::logger> m_logger)
+    int threadId, bool m_checkQuota, const std::string& m_apiStrategy, std::unique_ptr<APIPool>& m_apiPool, std::shared_ptr<spdlog::logger> m_logger)
 {
     if (response.success) {
         return true;
@@ -128,14 +128,14 @@ bool checkResponse(const ApiResponse& response, const TranslationApi& currentAPI
         )
     {
         m_logger->error("[线程 {}] API Key [{}] 疑似额度用尽，短期内多次报告将从池中移除。", threadId, currentAPI.apikey);
-        m_apiPool.reportProblem(currentAPI);
+        m_apiPool->reportProblem(currentAPI);
         // 不需要增加 retryCount
         return false;
     }
     // key 没有这个模型
     else if (lowerErrorMsg.contains("no available")) {
         m_logger->error("[线程 {}] API Key [{}] 没有 [{}] 模型，短期内多次报告将从池中移除。", threadId, currentAPI.apikey, currentAPI.modelName);
-        m_apiPool.reportProblem(currentAPI);
+        m_apiPool->reportProblem(currentAPI);
         return false;
     }
 
@@ -160,7 +160,7 @@ bool checkResponse(const ApiResponse& response, const TranslationApi& currentAPI
     m_logger->warn("[线程 {}] [文件 {}] 遇到未知API错误，进行第 {} 次重试...", threadId, wide2Ascii(relInputPath), retryCount);
     if (m_apiStrategy == "fallback") {
         m_logger->warn("[线程 {}] 将切换到下一个 API Key(如果有多个API Key的话)", threadId);
-        m_apiPool.resortTokens();
+        m_apiPool->resortTokens();
     }
     std::this_thread::sleep_for(std::chrono::seconds(2)); // 简单等待
     return false;

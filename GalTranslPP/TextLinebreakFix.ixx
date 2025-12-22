@@ -40,7 +40,7 @@ export {
 
 	public:
 
-		TextLinebreakFix(const fs::path& projectDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger);
+		TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger);
 
 		bool needReboot() const { return m_needReboot; }
 
@@ -58,8 +58,8 @@ export {
 
 module :private;
 
-TextLinebreakFix::TextLinebreakFix(const fs::path& projectDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
-	: m_tokenizeCachePath(projectDir / L"other_cache" / L"tokenizeCache_tlf.json"), m_logger(logger)
+TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
+	: m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_tlf.json"), m_logger(logger)
 {
 	try {
 		const auto pluginConfig = toml::parse(pluginConfigsPath / L"textPostPlugins" / L"TextLinebreakFix.toml");

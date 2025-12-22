@@ -40,7 +40,7 @@ export {
 		::add_convention<pro::weak_dispatch<MemNeedReboot>, bool() const> // 弱 proxy 约束的实现不是必须的，如果没有实现则默认返回 false
 		::build { };
 
-	std::vector<pro::proxy<PPlugin>> registerPlugins(const std::vector<std::string>& pluginNames, const fs::path& projectDir,
+	std::vector<pro::proxy<PPlugin>> registerPlugins(const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,
 		PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger,
 		const toml::value& projectConfig);
 }

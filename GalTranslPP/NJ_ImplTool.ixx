@@ -526,7 +526,7 @@ void saveCache(const std::vector<Sentence>& allSentences, const fs::path& cacheP
         }
         cacheObj["translated_by"] = se.translated_by;
         cacheObj["translated_preview"] = se.translated_preview;
-        cacheJson.push_back(cacheObj);
+        cacheJson.push_back(std::move(cacheObj));
     }
     std::ofstream ofs(cachePath);
     ofs << cacheJson.dump(2);

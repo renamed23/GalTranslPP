@@ -48,10 +48,13 @@ export {
         std::string m_codePage;
 
 		Problems m_problems;
+        std::unique_ptr<GptDictionary>& m_gptDictionary;
+        std::string m_targetLang;
 
 	public:
 
-        ProblemAnalyzer(std::shared_ptr<spdlog::logger> logger) : m_logger(logger) {}
+        ProblemAnalyzer(std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, std::shared_ptr<spdlog::logger> logger)
+            : m_gptDictionary(gptDictionary), m_targetLang(targetLang), m_logger(logger) {}
 
         ~ProblemAnalyzer() {
             langIdentifier.reset();
@@ -62,14 +65,14 @@ export {
 
         void overwriteCompareObj(const std::string& problemKey, const std::string& base, const std::string& check);
 
-		void analyze(Sentence* sentence, GptDictionary& gptDict, const std::string& targetLang);
+		void analyze(Sentence* sentence);
 	};
 }
 
 
 module :private;
 
-void ProblemAnalyzer::analyze(Sentence* sentence, GptDictionary& gptDict, const std::string& targetLang) {
+void ProblemAnalyzer::analyze(Sentence* sentence) {
     if (sentence->translated_preview.empty()) {
         if (!sentence->pre_processed_text.empty() && !sentence->pre_translated_text.empty()) {
             sentence->problems.push_back("翻译为空");
@@ -188,16 +191,19 @@ void ProblemAnalyzer::analyze(Sentence* sentence, GptDictionary& gptDict, const 
 
     // 6. 字典未使用
     if (m_problems.dictUnused.use) {
-        gptDict.checkDicUse(sentence, m_problems.dictUnused.base, m_problems.dictUnused.check);
+        m_gptDictionary->checkDicUse(sentence, m_problems.dictUnused.base, m_problems.dictUnused.check);
     }
 
     // 7. 语言不通
     if (m_problems.notTargetLang.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.notTargetLang.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.notTargetLang.check);
-        std::string simplifiedTargetLang = targetLang;
-        if (size_t pos = targetLang.find('-'); pos != std::string::npos) {
-            simplifiedTargetLang = targetLang.substr(0, pos);
+        std::string_view simplifiedTargetLang;
+        if (size_t pos = m_targetLang.find('-'); pos != std::string::npos) {
+            simplifiedTargetLang = std::string_view(m_targetLang).substr(0, pos);
+        }
+        else {
+            simplifiedTargetLang = m_targetLang;
         }
         std::string origTextToCheck = removePunctuation(origText);
         std::string transTextToCheck = removePunctuation(transView);

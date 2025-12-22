@@ -2,6 +2,7 @@
 import gpp_plugin_api as gpp
 from pathlib import Path
 import tomllib
+import json
 import threading
 import queue
 import time
@@ -112,13 +113,12 @@ def unload():
         if runUnloadFunc and pythonTranslator.m_transEngine != gpp.ShowNormal:
             fontChangerPath = pythonTranslator.m_projectDir / "DynamicFontChanger.exe"
             orgFontPath = pythonTranslator.m_projectDir / "julixiansimhei-Regular.ttf"
-            fontName = "Farther"
-            gamePath = Path(r"D:\GALGAME\linshi\Chuablesoft\あの晴れわたる空より高く")
-            targetTransPath = gamePath / "sce_dump" / "trans"
-            newConfigTransPath = gamePath / "newconfig" / "trans"
+            fontName = "WitchParade"
+            gamePath = Path(r"D:\GALGAME\linshi\夏の魔女のパレード")
+            targetTransPath = gamePath / "scenario_proc" / "trans"
 
             result = subprocess.run(
-                [fontChangerPath, pythonTranslator.m_projectDir / "gt_output", "-s"],
+                [fontChangerPath, pythonTranslator.m_projectDir / "gt_output", "-i", orgFontPath, "--fontname", fontName, "-s"],
                 capture_output=True,  # 捕获输出
                 text=True,            # 以文本形式返回
                 encoding='utf-8'
@@ -131,9 +131,25 @@ def unload():
             shutil.copy(charMapPath, gamePath)
             shutil.copytree(pythonTranslator.m_projectDir / "gt_output_sjis_output", targetTransPath, dirs_exist_ok=True)
 
-            newConfigPath = targetTransPath / "newconfig.json.json"
-            if newConfigPath.exists():
-                shutil.move(newConfigPath, newConfigTransPath / "newconfig.json.json")
+            charMapData = {}
+            nameTableData = {}
+            newNameTable = {}
+            with open(charMapPath, 'r', encoding='utf-8') as f:
+                charMapData = json.load(f)
+            with open(pythonTranslator.m_projectDir / "人名替换表.toml", 'rb') as f:
+                nameTableData = tomllib.load(f)
+            for orgName, nameArr in nameTableData.items():
+                mappedNewName = ""
+                for ch in nameArr[0]:
+                    if ch in charMapData:
+                        mappedNewName += charMapData[ch]
+                    else:
+                        mappedNewName += ch
+                newNameTable[orgName] = mappedNewName
+            with open(pythonTranslator.m_projectDir / "人名替换表_cnjp.json", 'w', encoding='utf-8') as f:
+                json.dump(newNameTable, f, ensure_ascii=False, indent=2)
+            shutil.copy(pythonTranslator.m_projectDir / "人名替换表_cnjp.json", gamePath / "name_proc")
+
     except Exception as e:
         logger.error(f"Error during unload(): {e}")
 

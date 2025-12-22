@@ -108,49 +108,34 @@ def init():
     logger.info("Current inputDir: " + str(pythonTranslator.m_inputDir))
 
 def unload():
-    if runUnloadFunc and pythonTranslator.m_transEngine != gpp.ShowNormal:
-        gamePath = Path(r"D:\GALGAME\linshi\bakaple")
-        targetTransPath = gamePath / "json_cn"
+    try:
+        if runUnloadFunc and pythonTranslator.m_transEngine != gpp.ShowNormal:
+            fontChangerPath = pythonTranslator.m_projectDir / "DynamicFontChanger.exe"
+            orgFontPath = pythonTranslator.m_projectDir / "julixiansimhei-Regular.ttf"
+            fontName = "Farther"
+            gamePath = Path(r"D:\GALGAME\linshi\Chuablesoft\あの晴れわたる空より高く")
+            targetTransPath = gamePath / "sce_dump" / "trans"
+            newConfigTransPath = gamePath / "newconfig" / "trans"
 
-        shutil.copytree(pythonTranslator.m_outputDir, targetTransPath, dirs_exist_ok=True)
+            result = subprocess.run(
+                [fontChangerPath, pythonTranslator.m_projectDir / "gt_output", "-s"],
+                capture_output=True,  # 捕获输出
+                text=True,            # 以文本形式返回
+                encoding='utf-8'
+            )
+            logger.info(f"返回输出: {result.stdout}")
 
-        scriptToolPath = Path(r"C:\Users\julixian\Desktop\Works\VS\EntisGLSSrcxmlScriptTool\x64\Release\EntisGLSSrcxmlScriptTool.exe")
+            newFontPath = pythonTranslator.m_projectDir / (fontName + "_cnjp.ttf")
+            charMapPath = pythonTranslator.m_projectDir / "charMap.json"
+            shutil.copy(newFontPath, gamePath)
+            shutil.copy(charMapPath, gamePath)
+            shutil.copytree(pythonTranslator.m_projectDir / "gt_output_sjis_output", targetTransPath, dirs_exist_ok=True)
 
-        result = subprocess.run(
-            [scriptToolPath, "inject", gamePath / "script_bak", targetTransPath, gamePath / "script_cn"],
-            capture_output=True,  # 捕获输出
-            text=True,            # 以文本形式返回
-            encoding='utf-8',
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-        logger.info(f"返回输出: {result.stdout}")
-
-        shutil.copytree(gamePath / "script_cn", gamePath / "repack" / "script", dirs_exist_ok=True)
-
-        result = subprocess.run(
-            [gamePath / "repack" / "rosetta.exe", gamePath / "repack" / "pack_noa.rs", "/arg",
-             gamePath / "repack" / "script.noa", gamePath / "repack" / "script\\*.*"],
-            capture_output=True,  # 捕获输出
-            text=True,            # 以文本形式返回
-            encoding='932',
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-        logger.info(f"返回输出: {result.stdout}")
-
-        shutil.copy(gamePath / "repack" / "script.noa",
-         r"C:\Users\julixian\Desktop\Works\VS\JLXHP\Release\bakaple\bakaple_cn_base00")
-
-        result = subprocess.run(
-            [r"C:\Users\julixian\Desktop\Works\VS\JLXHP\MergeJsonTransMap.exe",
-             r"D:\GALGAME\linshi\bakaple\json_cn",
-             r"D:\GALGAME\linshi\bakaple\json_jp",
-             r"C:\Users\julixian\Desktop\Works\VS\JLXHP\Release\bakaple\bakaple_cn_base00\base\transMap.json"],
-            capture_output=True,  # 捕获输出
-            text=True,            # 以文本形式返回
-            encoding='utf-8',
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-        logger.info(f"返回输出: {result.stdout}")
+            newConfigPath = targetTransPath / "newconfig.json.json"
+            if newConfigPath.exists():
+                shutil.move(newConfigPath, newConfigTransPath / "newconfig.json.json")
+    except Exception as e:
+        logger.error(f"Error during unload(): {e}")
 
     pythonTranslator.normalJsonTranslator_afterRun()
     logger.info("MyFilePluginFromPython unloads")

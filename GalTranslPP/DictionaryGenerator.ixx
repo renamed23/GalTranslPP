@@ -19,7 +19,8 @@ export {
     class DictionaryGenerator {
 
     private:
-        APIPool& m_apiPool;
+        std::unique_ptr<APIPool>& m_apiPool;
+        fs::path m_tokenizeCachePath;
         std::shared_ptr<IController> m_controller;
         std::shared_ptr<spdlog::logger> m_logger;
         std::function<void(Sentence*)> m_preProcessFunc;
@@ -53,25 +54,28 @@ export {
         void callLLMToGenerate(int segmentIndex, int threadId);
 
     public:
-        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, APIPool& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc,
+        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc, const fs::path& otherCacheDir,
             std::function<void(Sentence*)> preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
             int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota);
-        void generate(const std::vector<fs::path>& jsonFiles, const fs::path& inputCachePath, const fs::path& outputFilePath);
-        void saveCache(const fs::path& savePath);
+        void generate(const std::vector<fs::path>& jsonFiles, const fs::path& outputFilePath);
+
+        ~DictionaryGenerator() {
+            saveTokenizeCache(m_tokenizeCacheMap, m_tokenizeCachePath, m_logger);
+        }
     };
 }
 
 
 module :private;
 
-DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, APIPool& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc,
+DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc, const fs::path& otherCacheDir,
     std::function<void(Sentence*)> preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
     int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota)
-    : m_controller(controller), m_logger(logger), m_apiPool(apiPool), m_tokenizeSourceLangFunc(tokenizeFunc),
+    : m_controller(controller), m_logger(logger), m_apiPool(apiPool), m_tokenizeSourceLangFunc(tokenizeFunc), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_dictgen.json"),
     m_preProcessFunc(preProcessFunc), m_onPerformApi(onPerformApi), m_systemPrompt(systemPrompt), m_userPrompt(userPrompt), m_apiStrategy(apiStrategy), m_targetLang(targetLang),
     m_maxRetries(maxRetries), m_threadsNum(threadsNum), m_apiTimeoutMs(apiTimeoutMs), m_checkQuota(checkQuota)
 {
-
+    m_tokenizeCacheMap = loadTokenizeCache(m_tokenizeCachePath, m_logger);
 }
 
 void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jsonFiles) {
@@ -299,7 +303,7 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
         if (m_controller->shouldStop()) {
             return;
         }
-        std::optional<TranslationApi> apiOpt = m_apiStrategy == "random" ? m_apiPool.getApi() : m_apiPool.getFirstApi();
+        std::optional<TranslationApi> apiOpt = m_apiStrategy == "random" ? m_apiPool->getApi() : m_apiPool->getFirstApi();
         if (!apiOpt) {
             throw std::runtime_error("没有可用的API Key了");
         }
@@ -341,11 +345,10 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
     m_controller->updateBar();
 }
 
-void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const fs::path& inputCachePath, const fs::path& outputFilePath) {
+void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const fs::path& outputFilePath) {
     if (jsonFiles.empty()) {
         throw std::runtime_error("没有输入文件，无法生成字典。");
     }
-    m_tokenizeCacheMap = loadTokenizeCache(inputCachePath, m_logger);
     preprocessAndTokenize(jsonFiles);
     std::vector<int> selectedIndices = solveSentenceSelection();
     if (int maxSelectedIndicesCount = std::max(m_totalSentences / 250, 128); selectedIndices.size() > maxSelectedIndicesCount) {
@@ -417,8 +420,4 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
     ofs << toml::format(toml::ordered_value{ toml::ordered_table{{ "gptDict", arr }} });
     ofs.close();
     m_logger->info("字典生成完成，共 {} 个词语，已保存到 {}", finalList.size(), wide2Ascii(outputFilePath));
-}
-
-void DictionaryGenerator::saveCache(const fs::path& savePath) {
-    saveTokenizeCache(m_tokenizeCacheMap, savePath, m_logger);
 }

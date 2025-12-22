@@ -1,3 +1,5 @@
+#define _RANGES_
+
 #ifdef PYBIND11_HEADERS 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 #include <pybind11/stl.h>

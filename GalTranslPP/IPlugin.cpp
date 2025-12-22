@@ -17,7 +17,7 @@ import PythonTextPlugin;
 
 namespace fs = std::filesystem;
 
-std::vector<pro::proxy<PPlugin>> registerPlugins(const std::vector<std::string>& pluginNames, const fs::path& projectDir,
+std::vector<pro::proxy<PPlugin>> registerPlugins(const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,
     PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger,
     const toml::value& projectConfig) {
     std::vector<pro::proxy<PPlugin>> plugins;
@@ -25,21 +25,21 @@ std::vector<pro::proxy<PPlugin>> registerPlugins(const std::vector<std::string>&
     for (const auto& pluginName : pluginNames) {
         std::string pluginNameLower = str2Lower(pluginName);
         if (pluginNameLower.ends_with(".lua")) {
-            plugins.push_back(pro::make_proxy_shared<PPlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
+            plugins.push_back(pro::make_proxy<PPlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 luaManager, logger));
         }
         else if (pluginNameLower.ends_with(".py")) {
-            plugins.push_back(pro::make_proxy_shared<PPlugin, PythonTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
+            plugins.push_back(pro::make_proxy<PPlugin, PythonTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 pythonManager, logger));
         }
         else if (pluginName == "TextPostFull2Half") {
-            plugins.push_back(pro::make_proxy_shared<PPlugin, TextPostFull2Half>(projectConfig, logger));
+            plugins.push_back(pro::make_proxy<PPlugin, TextPostFull2Half>(projectConfig, logger));
         }
         else if (pluginName == "TextLinebreakFix") {
-            plugins.push_back(pro::make_proxy_shared<PPlugin, TextLinebreakFix>(projectDir, projectConfig, logger));
+            plugins.push_back(pro::make_proxy<PPlugin, TextLinebreakFix>(otherCacheDir, projectConfig, logger));
         }
         else if (pluginName == "SkipTrans") {
-            plugins.push_back(pro::make_proxy_shared<PPlugin, SkipTrans>(projectDir, projectConfig, pythonManager, luaManager, logger));
+            plugins.push_back(pro::make_proxy<PPlugin, SkipTrans>(projectDir, projectConfig, pythonManager, luaManager, logger));
         }
     }
 

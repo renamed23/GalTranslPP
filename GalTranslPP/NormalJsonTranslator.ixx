@@ -36,6 +36,7 @@ export {
         fs::path m_outputCacheDir;
         fs::path m_transCacheDir;
         fs::path m_otherCacheDir;
+        fs::path m_backgroundTextCachePath;
         fs::path m_projectDir;
 
         // relPathString, backgroundText
@@ -91,11 +92,11 @@ export {
         std::mutex m_outputMutex;
 
         ctpl::thread_pool m_threadPool{1};
-        APIPool m_apiPool;
-        GptDictionary m_gptDictionary;
-        NormalDictionary m_preDictionary;
-        NormalDictionary m_postDictionary;
-        ProblemAnalyzer m_problemAnalyzer;
+        std::unique_ptr<APIPool> m_apiPool;
+        std::unique_ptr<GptDictionary> m_gptDictionary;
+        std::unique_ptr<NormalDictionary> m_preDictionary;
+        std::unique_ptr<NormalDictionary> m_postDictionary;
+        std::unique_ptr<ProblemAnalyzer> m_problemAnalyzer;
         std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
         std::vector<pro::proxy<PPlugin>> m_prePlugins;
         std::vector<pro::proxy<PPlugin>> m_postPlugins;

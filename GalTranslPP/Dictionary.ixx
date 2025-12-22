@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 
 export {
 
-    struct GptTabEntry {
+    struct GptDictEntry {
         int priority;
         std::string searchStr;
         std::string replaceStr;
@@ -28,23 +28,27 @@ export {
 
     class GptDictionary {
     private:
-        std::vector<GptTabEntry> m_entries;
-
+        fs::path m_projectDir;
+        fs::path m_tokenizeCachePath;
+        std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
+        std::vector<GptDictEntry> m_entries;
+        LuaManager& m_luaManager;
+        PythonManager& m_pythonManager;
         std::shared_ptr<spdlog::logger> m_logger;
         std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
 
     public:
 
-        GptDictionary(std::shared_ptr<spdlog::logger> logger) : m_logger(logger) {}
+        GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, std::function<NLPResult(const std::string&)> tokenizeSourceLangFunc,
+            LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger);
+
+        ~GptDictionary() {
+            saveTokenizeCache(m_tokenizeCacheMap, m_tokenizeCachePath, m_logger);
+        }
 
         void sort();
 
-        void setTokenizeSourceLangFunc(std::function<NLPResult(const std::string&)> tokenizeFunc) {
-            m_tokenizeSourceLangFunc = tokenizeFunc;
-        }
-
-        void loadFromFile(const fs::path& filePath, const fs::path& projectDir,
-            PythonManager& pythonManager, LuaManager& luaManager, bool& needReboot);
+        void loadFromFile(const fs::path& filePath, bool& needReboot);
 
         std::string generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine);
 
@@ -54,7 +58,7 @@ export {
     };
 
 
-    struct DictEntry {
+    struct NormalDictEntry {
         int priority;
 
         std::string searchStr;
@@ -68,15 +72,19 @@ export {
 
     class NormalDictionary {
     private:
-        std::vector<DictEntry> m_entries;
+        fs::path m_projectDir;
+        LuaManager& m_luaManager;
+        PythonManager& m_pythonManager;
+        std::vector<NormalDictEntry> m_entries;
         std::shared_ptr<spdlog::logger> m_logger;
 
     public:
 
-        NormalDictionary(std::shared_ptr<spdlog::logger> logger) : m_logger(logger) {}
+        NormalDictionary(const fs::path& projectDir,
+            LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger) 
+            : m_projectDir(projectDir), m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger) {}
 
-        void loadFromFile(const fs::path& filePath, const fs::path& projectDir,
-            PythonManager& pythonManager, LuaManager& luaManager, bool& needReboot);
+        void loadFromFile(const fs::path& filePath, bool& needReboot);
 
         void sort();
 
@@ -87,8 +95,17 @@ export {
 
 module :private;
 
+GptDictionary::GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, std::function<NLPResult(const std::string&)> tokenizeSourceLangFunc,
+    LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger)
+    : m_projectDir(projectDir), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_gptdict.json"),
+    m_tokenizeSourceLangFunc(tokenizeSourceLangFunc),
+    m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger)
+{
+    m_tokenizeCacheMap = loadTokenizeCache(m_tokenizeCachePath, m_logger);
+}
+
 void GptDictionary::sort() {
-    std::ranges::sort(m_entries, [](const GptTabEntry& a, const GptTabEntry& b)
+    std::ranges::sort(m_entries, [](const GptDictEntry& a, const GptDictEntry& b)
         {
             if (a.priority != b.priority) {
                 return a.priority > b.priority;
@@ -164,8 +181,7 @@ std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, T
     return {};
 }
 
-void GptDictionary::loadFromFile(const fs::path& filePath, const fs::path& projectDir,
-    PythonManager&, LuaManager&, bool& needReboot) {
+void GptDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
     if (!fs::exists(filePath)) {
         m_logger->error("GPT 字典文件不存在: {}", wide2Ascii(filePath));
         return;
@@ -180,7 +196,7 @@ void GptDictionary::loadFromFile(const fs::path& filePath, const fs::path& proje
         }
         const auto& dictTbls = dictData.at("gptDict").as_array();
         for (const auto& el : dictTbls) {
-            GptTabEntry entry;
+            GptDictEntry entry;
             if (!el.contains("org") && !el.contains("searchStr")) {
                 continue;
             }
@@ -221,7 +237,7 @@ void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart ch
     const std::string& transView = chooseStringRef(sentence, check);
     for (const auto& entry : m_entries) {
         // 如果原文中不包含这个词，就跳过检查
-        if (origText.find(entry.searchStr) == std::string::npos) {
+        if (!origText.contains(entry.searchStr)) {
             continue;
         }
         // 检查译文中是否使用了对应的词
@@ -244,8 +260,8 @@ void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart ch
         }
         // 未出现则分词检查原文中是否有完整的 searchStr 词组
         NLPResult tokens = m_tokenizeSourceLangFunc(origText);
-        const std::vector<std::vector<std::string>>& wordPosList = std::get<0>(tokens);
-        for (const auto& wordPos : wordPosList) {
+        const WordPosVec& wordPosVec = std::get<0>(tokens);
+        for (const auto& wordPos : wordPosVec) {
             if (wordPos[0] == entry.searchStr) {
                 found = true;
                 break;
@@ -263,8 +279,7 @@ void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart ch
 
 
 
-void NormalDictionary::loadFromFile(const fs::path& filePath, const fs::path& projectDir,
-    PythonManager& pythonManager, LuaManager& luaManager, bool& needReboot) {
+void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
     if (!fs::exists(filePath)) {
         m_logger->warn("字典文件不存在: {}", wide2Ascii(filePath));
         return;
@@ -278,7 +293,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, const fs::path& pr
         }
         const auto dicts = dictData.at("normalDict").as_array();
         for (const auto& el : dicts) {
-            DictEntry entry;
+            NormalDictEntry entry;
             if (!el.contains("org") && !el.contains("searchStr")) {
                 continue;
             }
@@ -308,7 +323,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, const fs::path& pr
             entry.priority = toml::find_or(el, "priority", 0);
 
             if (getConditionType(el) != ConditionType::None) {
-                entry.dictCondition = getCheckSeCondFunc(el, projectDir, pythonManager, luaManager, m_logger, needReboot);
+                entry.dictCondition = getCheckSeCondFunc(el, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot);
             }
             m_entries.push_back(entry);
             count++;
@@ -324,7 +339,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, const fs::path& pr
 }
 
 void NormalDictionary::sort() {
-    std::ranges::sort(m_entries, [](const DictEntry& a, const DictEntry& b) 
+    std::ranges::sort(m_entries, [](const NormalDictEntry& a, const NormalDictEntry& b) 
         {
             if (a.priority != b.priority) {
                 return a.priority > b.priority;
@@ -341,10 +356,6 @@ void NormalDictionary::sort() {
 
 std::string NormalDictionary::doReplace(const Sentence* sentence, CachePart targetToModify) {
     std::string textToModify = chooseString(sentence, targetToModify);
-
-    if (textToModify.empty()) {
-        return textToModify;
-    }
 
     for (const auto& entry : m_entries
         | std::views::filter([&](const auto& entry)

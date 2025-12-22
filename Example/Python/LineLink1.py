@@ -150,6 +150,17 @@ def linkLine(se: gpp.Sentence):
     # 4. 用 <br> 将新分好的段落连接起来返回
     se.translated_preview = "<br>".join(new_lines)
 
+def procCPKey1(se: gpp.Sentence):
+    for problem in se.problems:
+        if not problem.startswith("Current problem:"):
+            continue
+        if problem[16:] == "问题键1":
+            se.name_preview = "ユリス"
+            return True
+        break
+    return False
+
+
 qStr1 = "「那当然！这点程度就死心可不是尤加蒙学姐的作风哦！<br>值得纪念的第１００次我会准备得更豪华、<br>更轰动地来告白，做好觉悟吧！」"
 def run(se: gpp.Sentence):
     """
@@ -161,7 +172,8 @@ def run(se: gpp.Sentence):
         linkLine(se)
         if se.translated_preview == qStr1:
             se.translated_preview = qStr1 + "<br>（尤加蒙(YuGaMoNn)：汤鸭(YuGaMo)加上ん音的梗读法）"
-
+        if se.name == "ユリス" and not se.original_text:
+            se.problems += [ "问题键1" ]
     except Exception as e:
         logger.error(f"Error during LineLink run(): {e}")
 
