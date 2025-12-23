@@ -60,7 +60,7 @@ void DictSettingsPage::_setupUI()
 			QList<EntryType>& withdrawList, const std::string& configKey, const QString& tabName) 
 		-> std::pair<std::function<void()>, std::function<void(bool)>>
 	{
-		using ModelType = typename std::conditional<std::is_same_v<EntryType, GptDictEntry>, GptDictModel, NormalDictModel>::type;
+		using ModelType = typename std::conditional_t<std::is_same_v<EntryType, GptDictEntry>, GptDictModel, NormalDictModel>;
 		QWidget* dictWidget = new QWidget(mainWidget);
 		QVBoxLayout* dictLayout = new QVBoxLayout(dictWidget);
 		QWidget* buttonWidget = new QWidget(mainWidget);

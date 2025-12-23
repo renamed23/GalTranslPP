@@ -25,9 +25,9 @@ DefaultPromptPage::DefaultPromptPage(QWidget* parent)
     setWindowTitle(tr("默认提示词管理"));
     setTitleVisible(false);
 
-	if (fs::exists(L"BaseConfig/Prompt.toml")) {
+	if (fs::exists(defaultPromptPath)) {
 		try {
-			_promptConfig = toml::parse<toml::ordered_type_config>(fs::path(L"BaseConfig/Prompt.toml"));
+			_promptConfig = toml::parse<toml::ordered_type_config>(defaultPromptPath);
 		}
 		catch (...) {
 			ElaMessageBar::error(ElaMessageBarType::TopRight, tr("解析失败"), tr("默认提示词配置文件不符合 toml 规范"), 3000);
@@ -126,7 +126,7 @@ void DefaultPromptPage::_setupUI()
 			connect(promptSaveButton, &ElaPushButton::clicked, this, [=]()
 				{
 					result();
-					std::ofstream ofs(L"BaseConfig/Prompt.toml");
+					std::ofstream ofs(defaultPromptPath);
 					ofs << toml::format(_promptConfig);
 					ofs.close();
 					ElaMessageBar::success(ElaMessageBarType::TopRight, tr("保存成功"), tr("默认 ") + promptName + tr(" 提示词配置已保存。"), 3000);
@@ -141,7 +141,8 @@ void DefaultPromptPage::_setupUI()
 	auto forgalTsvApplyFunc = createPromptWidgetFunc("ForGalTsv", "FORGALTSV_TRANS_PROMPT_EN", "FORGALTSV_SYSTEM");
 	auto forNovelTsvApplyFunc = createPromptWidgetFunc("ForNovelTsv", "FORNOVELTSV_TRANS_PROMPT_EN", "FORNOVELTSV_SYSTEM");
 	auto sakuraApplyFunc = createPromptWidgetFunc("Sakura", "SAKURA_TRANS_PROMPT", "SAKURA_SYSTEM_PROMPT");
-	auto gendicApplyFunc = createPromptWidgetFunc("GenDict", "GENDIC_PROMPT", "GENDIC_SYSTEM");
+	auto gendictApplyFunc = createPromptWidgetFunc("GenDict", "GENDIC_PROMPT", "GENDIC_SYSTEM");
+	auto nametransApplyFunc = createPromptWidgetFunc("NameTrans", "NAMETRANS_PROMPT", "NAMETRANS_SYSTEM");
 
 
 	_applyFunc = [=]()
@@ -150,8 +151,9 @@ void DefaultPromptPage::_setupUI()
 			forgalTsvApplyFunc();
 			forNovelTsvApplyFunc();
 			sakuraApplyFunc();
-			gendicApplyFunc();
-			std::ofstream ofs(L"BaseConfig/Prompt.toml");
+			gendictApplyFunc();
+			nametransApplyFunc();
+			std::ofstream ofs(defaultPromptPath);
 			ofs << _promptConfig;
 			ofs.close();
 		};

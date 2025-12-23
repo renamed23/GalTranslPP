@@ -279,11 +279,11 @@
         <location filename="CommonGptDictPage.cpp" line="268"/>
         <location filename="CommonGptDictPage.cpp" line="326"/>
         <location filename="CommonGptDictPage.cpp" line="358"/>
-        <location filename="CommonGptDictPage.cpp" line="387"/>
-        <location filename="CommonGptDictPage.cpp" line="391"/>
-        <location filename="CommonGptDictPage.cpp" line="450"/>
-        <location filename="CommonGptDictPage.cpp" line="518"/>
-        <location filename="CommonGptDictPage.cpp" line="549"/>
+        <location filename="CommonGptDictPage.cpp" line="389"/>
+        <location filename="CommonGptDictPage.cpp" line="393"/>
+        <location filename="CommonGptDictPage.cpp" line="454"/>
+        <location filename="CommonGptDictPage.cpp" line="522"/>
+        <location filename="CommonGptDictPage.cpp" line="553"/>
         <source>字典 </source>
         <translation>Dict </translation>
     </message>
@@ -314,22 +314,22 @@
     </message>
     <message>
         <location filename="CommonGptDictPage.cpp" line="349"/>
-        <location filename="CommonGptDictPage.cpp" line="391"/>
+        <location filename="CommonGptDictPage.cpp" line="393"/>
         <source>重命名失败</source>
         <translation>Fail to rename</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="387"/>
+        <location filename="CommonGptDictPage.cpp" line="389"/>
         <source>重命名成功</source>
         <translation>Renamed successfully</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="388"/>
+        <location filename="CommonGptDictPage.cpp" line="390"/>
         <source> 已重命名为 </source>
         <translation> has been renamed to </translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="392"/>
+        <location filename="CommonGptDictPage.cpp" line="394"/>
         <source> 重命名失败</source>
         <translation> fails to be renamed</translation>
     </message>
@@ -342,77 +342,81 @@
         <translation type="vanished"> is nonconforming</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="496"/>
+        <location filename="CommonGptDictPage.cpp" line="500"/>
         <source>选择字典文件</source>
         <translation>Choose dict file</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="509"/>
-        <location filename="CommonGptDictPage.cpp" line="518"/>
+        <location filename="CommonGptDictPage.cpp" line="513"/>
+        <location filename="CommonGptDictPage.cpp" line="522"/>
         <source>导入失败</source>
         <translation>Fail to import</translation>
     </message>
     <message>
         <location filename="CommonGptDictPage.cpp" line="359"/>
-        <location filename="CommonGptDictPage.cpp" line="519"/>
-        <location filename="CommonGptDictPage.cpp" line="550"/>
+        <location filename="CommonGptDictPage.cpp" line="523"/>
+        <location filename="CommonGptDictPage.cpp" line="554"/>
         <source> 已存在</source>
         <translation> has already existed</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="509"/>
         <source>文件删除失败</source>
-        <translation>Fail to delete file</translation>
+        <translation type="vanished">Fail to delete file</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="525"/>
-        <location filename="CommonGptDictPage.cpp" line="566"/>
+        <location filename="CommonGptDictPage.cpp" line="529"/>
+        <location filename="CommonGptDictPage.cpp" line="570"/>
         <source>创建成功</source>
         <translation>Created successfully</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="525"/>
-        <location filename="CommonGptDictPage.cpp" line="566"/>
+        <location filename="CommonGptDictPage.cpp" line="529"/>
+        <location filename="CommonGptDictPage.cpp" line="570"/>
         <source>字典页 </source>
         <translation>Dict page </translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="525"/>
-        <location filename="CommonGptDictPage.cpp" line="566"/>
+        <location filename="CommonGptDictPage.cpp" line="529"/>
+        <location filename="CommonGptDictPage.cpp" line="570"/>
         <source> 已创建</source>
         <translation> is created successfully</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="532"/>
+        <location filename="CommonGptDictPage.cpp" line="536"/>
         <source>请输入字典表名称</source>
         <translation>Please type in dict name</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="532"/>
+        <location filename="CommonGptDictPage.cpp" line="536"/>
         <source>新建字典</source>
         <translation>Create a new dict</translation>
     </message>
     <message>
         <location filename="CommonGptDictPage.cpp" line="358"/>
-        <location filename="CommonGptDictPage.cpp" line="540"/>
-        <location filename="CommonGptDictPage.cpp" line="549"/>
-        <location filename="CommonGptDictPage.cpp" line="557"/>
+        <location filename="CommonGptDictPage.cpp" line="544"/>
+        <location filename="CommonGptDictPage.cpp" line="553"/>
+        <location filename="CommonGptDictPage.cpp" line="561"/>
         <source>新建失败</source>
         <translation>Fail to create</translation>
     </message>
     <message>
         <location filename="CommonGptDictPage.cpp" line="349"/>
-        <location filename="CommonGptDictPage.cpp" line="540"/>
+        <location filename="CommonGptDictPage.cpp" line="544"/>
         <source>字典名称不能为空，且不能包含点号、斜杠或反斜杠！</source>
         <translation>Dict name can not be empty or contain point symbol, slash, backslash!</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="557"/>
+        <location filename="CommonGptDictPage.cpp" line="513"/>
+        <source>原文件删除失败</source>
+        <translation>Fail to remove original file</translation>
+    </message>
+    <message>
+        <location filename="CommonGptDictPage.cpp" line="561"/>
         <source>无法创建 </source>
         <translation>Fail to create </translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="558"/>
+        <location filename="CommonGptDictPage.cpp" line="562"/>
         <source> 文件</source>
         <translation></translation>
     </message>
@@ -421,42 +425,42 @@
         <translation type="vanished">Choose a dict page first!</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="411"/>
+        <location filename="CommonGptDictPage.cpp" line="413"/>
         <source>是</source>
         <translation>Yes</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="412"/>
+        <location filename="CommonGptDictPage.cpp" line="414"/>
         <source>思考人生</source>
         <translation>Thinking of life</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="413"/>
+        <location filename="CommonGptDictPage.cpp" line="415"/>
         <source>否</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="418"/>
+        <location filename="CommonGptDictPage.cpp" line="420"/>
         <source>你确定要删除 </source>
         <translation>Are you sure to delete </translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="418"/>
+        <location filename="CommonGptDictPage.cpp" line="420"/>
         <source> 吗？</source>
         <translation> ?</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="423"/>
+        <location filename="CommonGptDictPage.cpp" line="425"/>
         <source>将永久删除该字典文件，如有需要请先备份！</source>
         <translation>The dict file will be deleted forever, make a backup if you need!</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="450"/>
+        <location filename="CommonGptDictPage.cpp" line="454"/>
         <source>删除成功</source>
         <translation>Deleted successfully</translation>
     </message>
     <message>
-        <location filename="CommonGptDictPage.cpp" line="451"/>
+        <location filename="CommonGptDictPage.cpp" line="455"/>
         <source> 已从字典管理和磁盘中移除！</source>
         <translation> has been removed from dict management and disk!</translation>
     </message>
@@ -591,11 +595,11 @@
         <location filename="CommonNormalDictPage.cpp" line="298"/>
         <location filename="CommonNormalDictPage.cpp" line="354"/>
         <location filename="CommonNormalDictPage.cpp" line="386"/>
-        <location filename="CommonNormalDictPage.cpp" line="415"/>
-        <location filename="CommonNormalDictPage.cpp" line="419"/>
-        <location filename="CommonNormalDictPage.cpp" line="478"/>
-        <location filename="CommonNormalDictPage.cpp" line="546"/>
-        <location filename="CommonNormalDictPage.cpp" line="578"/>
+        <location filename="CommonNormalDictPage.cpp" line="417"/>
+        <location filename="CommonNormalDictPage.cpp" line="421"/>
+        <location filename="CommonNormalDictPage.cpp" line="482"/>
+        <location filename="CommonNormalDictPage.cpp" line="550"/>
+        <location filename="CommonNormalDictPage.cpp" line="582"/>
         <source>字典 </source>
         <translation>Dict </translation>
     </message>
@@ -626,27 +630,27 @@
     </message>
     <message>
         <location filename="CommonNormalDictPage.cpp" line="377"/>
-        <location filename="CommonNormalDictPage.cpp" line="419"/>
+        <location filename="CommonNormalDictPage.cpp" line="421"/>
         <source>重命名失败</source>
         <translation>Fail to rename</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="415"/>
+        <location filename="CommonNormalDictPage.cpp" line="417"/>
         <source>重命名成功</source>
         <translation>Renamed successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="416"/>
+        <location filename="CommonNormalDictPage.cpp" line="418"/>
         <source> 已重命名为 </source>
         <translation> has been renamed to </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="420"/>
+        <location filename="CommonNormalDictPage.cpp" line="422"/>
         <source> 重命名失败</source>
         <translation> fails to be renamed</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="446"/>
+        <location filename="CommonNormalDictPage.cpp" line="448"/>
         <source> 吗？</source>
         <translation> ?</translation>
     </message>
@@ -660,81 +664,85 @@
         <translation type="vanished"> is nonconforming</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="524"/>
+        <location filename="CommonNormalDictPage.cpp" line="528"/>
         <source>选择字典文件</source>
         <translation>Choose dict file</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="537"/>
-        <location filename="CommonNormalDictPage.cpp" line="546"/>
+        <location filename="CommonNormalDictPage.cpp" line="541"/>
+        <location filename="CommonNormalDictPage.cpp" line="550"/>
         <source>导入失败</source>
         <translation>Fail to import</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="537"/>
         <source>文件删除失败</source>
-        <translation>Fail to delete file</translation>
+        <translation type="vanished">Fail to delete file</translation>
     </message>
     <message>
         <location filename="CommonNormalDictPage.cpp" line="387"/>
-        <location filename="CommonNormalDictPage.cpp" line="547"/>
-        <location filename="CommonNormalDictPage.cpp" line="579"/>
+        <location filename="CommonNormalDictPage.cpp" line="551"/>
+        <location filename="CommonNormalDictPage.cpp" line="583"/>
         <source> 已存在</source>
         <translation> has already existed</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="553"/>
+        <location filename="CommonNormalDictPage.cpp" line="541"/>
+        <source>原文件删除失败</source>
+        <translation>Fail to remove original file</translation>
+    </message>
+    <message>
+        <location filename="CommonNormalDictPage.cpp" line="557"/>
         <source>创建成功</source>
         <translation>Created successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="553"/>
-        <location filename="CommonNormalDictPage.cpp" line="594"/>
+        <location filename="CommonNormalDictPage.cpp" line="557"/>
+        <location filename="CommonNormalDictPage.cpp" line="598"/>
         <source>字典页 </source>
         <translation>Dict page </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="553"/>
-        <location filename="CommonNormalDictPage.cpp" line="595"/>
+        <location filename="CommonNormalDictPage.cpp" line="557"/>
+        <location filename="CommonNormalDictPage.cpp" line="599"/>
         <source> 已创建</source>
         <translation> is created successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="560"/>
+        <location filename="CommonNormalDictPage.cpp" line="564"/>
         <source>请输入字典表名称</source>
         <translation>Please type in dict name</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="560"/>
+        <location filename="CommonNormalDictPage.cpp" line="564"/>
         <source>新建字典</source>
         <translation>Create a new dict page</translation>
     </message>
     <message>
         <location filename="CommonNormalDictPage.cpp" line="386"/>
-        <location filename="CommonNormalDictPage.cpp" line="568"/>
-        <location filename="CommonNormalDictPage.cpp" line="578"/>
-        <location filename="CommonNormalDictPage.cpp" line="585"/>
+        <location filename="CommonNormalDictPage.cpp" line="572"/>
+        <location filename="CommonNormalDictPage.cpp" line="582"/>
+        <location filename="CommonNormalDictPage.cpp" line="589"/>
         <source>新建失败</source>
         <translation>Fail to create</translation>
     </message>
     <message>
         <location filename="CommonNormalDictPage.cpp" line="377"/>
-        <location filename="CommonNormalDictPage.cpp" line="568"/>
+        <location filename="CommonNormalDictPage.cpp" line="572"/>
         <source>字典名称不能为空，且不能包含点号、斜杠或反斜杠！</source>
         <translation>Dict name can not be empty or contain point symbol, slash, backslash!</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="585"/>
+        <location filename="CommonNormalDictPage.cpp" line="589"/>
         <source>无法创建 </source>
         <translation>Fail to create </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="586"/>
+        <location filename="CommonNormalDictPage.cpp" line="590"/>
         <source> 文件</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="594"/>
+        <location filename="CommonNormalDictPage.cpp" line="598"/>
         <source>新建成功</source>
         <translation>Created successfully</translation>
     </message>
@@ -743,37 +751,37 @@
         <translation type="obsolete">Choose a dict page first!</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="439"/>
+        <location filename="CommonNormalDictPage.cpp" line="441"/>
         <source>是</source>
         <translation>Yes</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="440"/>
+        <location filename="CommonNormalDictPage.cpp" line="442"/>
         <source>思考人生</source>
         <translation>Thinking of life</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="441"/>
+        <location filename="CommonNormalDictPage.cpp" line="443"/>
         <source>否</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="446"/>
+        <location filename="CommonNormalDictPage.cpp" line="448"/>
         <source>你确定要删除 </source>
         <translation>Are you sure to delete </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="451"/>
+        <location filename="CommonNormalDictPage.cpp" line="453"/>
         <source>将永久删除该字典文件，如有需要请先备份！</source>
         <translation>The dict file will be deleted forever, make a backup if you need!</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="478"/>
+        <location filename="CommonNormalDictPage.cpp" line="482"/>
         <source>删除成功</source>
         <translation>Deleted successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="479"/>
+        <location filename="CommonNormalDictPage.cpp" line="483"/>
         <source> 已从字典管理和磁盘中移除！</source>
         <translation> has been removed from dict management and disk!</translation>
     </message>
@@ -1961,142 +1969,147 @@
 <context>
     <name>OtherSettingsPage</name>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="24"/>
+        <location filename="OtherSettingsPage.cpp" line="27"/>
         <source>其它设置</source>
         <translation>Other settings</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="47"/>
+        <location filename="OtherSettingsPage.cpp" line="50"/>
         <source>项目路径</source>
         <translation>Project path</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="57"/>
+        <location filename="OtherSettingsPage.cpp" line="60"/>
         <source>打开文件夹</source>
         <translation>Open project dir</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="65"/>
+        <location filename="OtherSettingsPage.cpp" line="68"/>
         <source>移动项目</source>
         <translation>Move project</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="69"/>
-        <location filename="OtherSettingsPage.cpp" line="80"/>
-        <location filename="OtherSettingsPage.cpp" line="88"/>
+        <location filename="OtherSettingsPage.cpp" line="72"/>
+        <location filename="OtherSettingsPage.cpp" line="83"/>
+        <location filename="OtherSettingsPage.cpp" line="91"/>
         <source>移动失败</source>
         <translation>Fail to move</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="69"/>
+        <location filename="OtherSettingsPage.cpp" line="72"/>
         <source>项目仍在运行中，无法移动</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="73"/>
+        <location filename="OtherSettingsPage.cpp" line="76"/>
         <source>请选择要移动到的文件夹</source>
         <translation>Please choose the dir you want to move to</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="80"/>
+        <location filename="OtherSettingsPage.cpp" line="83"/>
         <source>目录下已有同名文件夹</source>
         <translation>Dir with the same name has already existed</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="93"/>
+        <location filename="OtherSettingsPage.cpp" line="96"/>
         <source>移动成功</source>
         <translation>Moved successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="93"/>
+        <location filename="OtherSettingsPage.cpp" line="96"/>
         <source> 项目已移动到新文件夹</source>
         <translation> has been moved to new dir</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="104"/>
+        <location filename="OtherSettingsPage.cpp" line="107"/>
         <source>项目更名</source>
         <translation>Rename project name</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="109"/>
+        <location filename="OtherSettingsPage.cpp" line="112"/>
         <source>更名</source>
         <translation>Rename</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="113"/>
-        <location filename="OtherSettingsPage.cpp" line="125"/>
-        <location filename="OtherSettingsPage.cpp" line="131"/>
-        <location filename="OtherSettingsPage.cpp" line="139"/>
+        <location filename="OtherSettingsPage.cpp" line="116"/>
+        <location filename="OtherSettingsPage.cpp" line="128"/>
+        <location filename="OtherSettingsPage.cpp" line="134"/>
+        <location filename="OtherSettingsPage.cpp" line="142"/>
         <source>更名失败</source>
         <translation>Fail to rename</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="113"/>
+        <location filename="OtherSettingsPage.cpp" line="116"/>
         <source>项目仍在运行中，无法更名</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="119"/>
+        <location filename="OtherSettingsPage.cpp" line="122"/>
         <source>请输入新的项目名称</source>
         <translation>Please type in new project name</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="119"/>
+        <location filename="OtherSettingsPage.cpp" line="122"/>
         <source>新的项目名</source>
         <translation>New name</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="125"/>
+        <location filename="OtherSettingsPage.cpp" line="128"/>
         <source>项目名不能为空且不能包含斜杠</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="131"/>
+        <location filename="OtherSettingsPage.cpp" line="134"/>
         <source>目录下已有同名文件或文件夹</source>
         <translation>File/dir with the same name has already existed</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="145"/>
+        <location filename="OtherSettingsPage.cpp" line="148"/>
         <source>更名成功</source>
         <translation>Renamed successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="145"/>
+        <location filename="OtherSettingsPage.cpp" line="148"/>
         <source>项目已更名为 </source>
         <translation>Project has been renamed to </translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="169"/>
+        <source>选择翻译问题概览文件</source>
+        <translation>Choose translation problems overview file</translation>
     </message>
     <message>
         <source>开始翻译或关闭程序时会自动保存所有项目的配置，一般无需手动保存。</source>
         <translation type="vanished">The app also automatically saves all project configs when beginning translating or exiting.</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="155"/>
+        <location filename="OtherSettingsPage.cpp" line="282"/>
         <source>保存项目配置</source>
         <translation>Save project settings</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="159"/>
+        <location filename="OtherSettingsPage.cpp" line="286"/>
         <source>保存</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="163"/>
+        <location filename="OtherSettingsPage.cpp" line="290"/>
         <source>保存成功</source>
         <translation>Saved successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="163"/>
-        <location filename="OtherSettingsPage.cpp" line="259"/>
+        <location filename="OtherSettingsPage.cpp" line="290"/>
+        <location filename="OtherSettingsPage.cpp" line="386"/>
         <source>项目 </source>
         <translation>Project </translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="163"/>
+        <location filename="OtherSettingsPage.cpp" line="290"/>
         <source> 的配置信息已保存</source>
         <translation> &apos;s config info has been saved</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="173"/>
+        <location filename="OtherSettingsPage.cpp" line="300"/>
         <source>刷新项目配置</source>
         <translation>Refresh project configs</translation>
     </message>
@@ -2105,101 +2118,148 @@
         <translation type="vanished">Take care because all configs and dicts of this project will be refreshed.</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="177"/>
+        <location filename="OtherSettingsPage.cpp" line="304"/>
         <source>刷新</source>
         <translation>Refresh</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="193"/>
+        <location filename="OtherSettingsPage.cpp" line="320"/>
         <source>你确定要刷新项目配置吗？</source>
         <translation>Are you sure to refresh project config?</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="198"/>
+        <location filename="OtherSettingsPage.cpp" line="325"/>
         <source>GUI中未保存的数据将会被覆盖！</source>
         <translation>Data in GUI that not saved will be covered!</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="218"/>
+        <location filename="OtherSettingsPage.cpp" line="345"/>
         <source>删除翻译缓存</source>
         <translation>Delete translation cache</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="222"/>
+        <location filename="OtherSettingsPage.cpp" line="349"/>
         <source>删除</source>
         <translation>Delete</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="226"/>
-        <location filename="OtherSettingsPage.cpp" line="256"/>
+        <location filename="OtherSettingsPage.cpp" line="353"/>
+        <location filename="OtherSettingsPage.cpp" line="383"/>
         <source>删除失败</source>
         <translation>Fail to delete</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="226"/>
+        <location filename="OtherSettingsPage.cpp" line="353"/>
         <source>项目仍在运行中，无法删除缓存</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="186"/>
-        <location filename="OtherSettingsPage.cpp" line="232"/>
+        <location filename="OtherSettingsPage.cpp" line="313"/>
+        <location filename="OtherSettingsPage.cpp" line="359"/>
         <source>否</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="155"/>
+        <location filename="OtherSettingsPage.cpp" line="158"/>
+        <source>导入翻译问题概览至翻译缓存</source>
+        <translation>Import translation problems overview to trans_cache</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="158"/>
+        <source>使用 翻译问题概览.json/.toml 中的 Sentence 替换 trans_cache 中的 Sentence</source>
+        <translation>Use sentences in TranslationProblemsOverview.json/.toml to replace those in trans_cache</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="162"/>
+        <source>导入</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="166"/>
+        <location filename="OtherSettingsPage.cpp" line="270"/>
+        <source>导入失败</source>
+        <translation>Fail to import</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="166"/>
+        <source>项目仍在运行中，无法导入</source>
+        <translation>Project is still running</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="254"/>
+        <source>成功导入 </source>
+        <translation>Successfully import </translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="254"/>
+        <source> 个句子至 trans_cache</source>
+        <translation> sentences to trans_cache</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="263"/>
+        <location filename="OtherSettingsPage.cpp" line="266"/>
+        <source>导入完毕</source>
+        <translation>Importing completes</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="263"/>
+        <source>导入中出现的问题记录在 import_problems.log 中</source>
+        <translation>Problems during importing saved to import_problems.log</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="282"/>
         <source>开始翻译或关闭程序时会自动保存所有项目的配置，一般无需手动保存</source>
         <translation>The app also automatically saves all project configs when beginning translating or exiting</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="173"/>
+        <location filename="OtherSettingsPage.cpp" line="300"/>
         <source>刷新现有配置和字典，谨慎使用</source>
         <translation>Take care because all configs and dicts of this project will be refreshed</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="181"/>
+        <location filename="OtherSettingsPage.cpp" line="308"/>
         <source>刷新失败</source>
         <translation>Fail to refresh</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="181"/>
+        <location filename="OtherSettingsPage.cpp" line="308"/>
         <source>项目仍在运行中，无法刷新</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="187"/>
-        <location filename="OtherSettingsPage.cpp" line="233"/>
+        <location filename="OtherSettingsPage.cpp" line="314"/>
+        <location filename="OtherSettingsPage.cpp" line="360"/>
         <source>思考人生</source>
         <translation>Thinking of life</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="188"/>
-        <location filename="OtherSettingsPage.cpp" line="234"/>
+        <location filename="OtherSettingsPage.cpp" line="315"/>
+        <location filename="OtherSettingsPage.cpp" line="361"/>
         <source>是</source>
         <translation>Yes</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="218"/>
+        <location filename="OtherSettingsPage.cpp" line="345"/>
         <source>删除项目的翻译缓存，下次翻译将会重新从头开始</source>
         <translation>Translation all over again</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="239"/>
+        <location filename="OtherSettingsPage.cpp" line="366"/>
         <source>你确定要删除项目翻译缓存吗？</source>
         <translation>Are you sure to delete translation cache of this project?</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="244"/>
+        <location filename="OtherSettingsPage.cpp" line="371"/>
         <source>再次翻译将会重新从头开始！</source>
         <translation>You have to start all over again on next translation!</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="259"/>
+        <location filename="OtherSettingsPage.cpp" line="386"/>
         <source>删除成功</source>
         <translation>Deleted successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="259"/>
+        <location filename="OtherSettingsPage.cpp" line="386"/>
         <source> 的翻译缓存已删除</source>
         <translation> &apos;s transl_cache has been deleted</translation>
     </message>
@@ -2632,31 +2692,6 @@
         <source>系统提示词</source>
         <translation>System prompt</translation>
     </message>
-    <message>
-        <location filename="PromptSettingsPage.cpp" line="131"/>
-        <source>ForGalJson</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="PromptSettingsPage.cpp" line="132"/>
-        <source>ForGalTsv</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="PromptSettingsPage.cpp" line="133"/>
-        <source>ForNovelTsv</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="PromptSettingsPage.cpp" line="134"/>
-        <source>Sakura</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="PromptSettingsPage.cpp" line="135"/>
-        <source>GenDict</source>
-        <translation></translation>
-    </message>
 </context>
 <context>
     <name>ReadDicts</name>
@@ -2736,8 +2771,9 @@
     </message>
     <message>
         <location filename="SettingPage.cpp" line="172"/>
-        <source>DumpName/GenDict任务成功后自动刷新人名表/项目GPT字典</source>
-        <translation>Automatically refresh nametable/project gpt dict after DumpName/GenDict</translation>
+        <source>(DumpName/NameTrans)/GenDict任务成功后自动刷新人名表/项目GPT字典</source>
+        <oldsource>DumpName/GenDict任务成功后自动刷新人名表/项目GPT字典</oldsource>
+        <translation>Automatically refresh nametable/project gpt dict after （DumpName/NameTrans)/GenDict</translation>
     </message>
     <message>
         <location filename="SettingPage.cpp" line="188"/>
@@ -2907,124 +2943,124 @@
         <translation>Translation mode:</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="181"/>
+        <location filename="StartSettingsPage.cpp" line="182"/>
         <source>开始翻译</source>
         <translation>Start translating</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="198"/>
+        <location filename="StartSettingsPage.cpp" line="199"/>
         <source>停止翻译</source>
         <translation>Stop translation</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="371"/>
+        <location filename="StartSettingsPage.cpp" line="410"/>
         <source>文件格式错误</source>
         <translation>File format error</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="371"/>
+        <location filename="StartSettingsPage.cpp" line="410"/>
         <source>自定义文件插件的格式必须是 .lua 或 .py 格式。</source>
         <translation>Custom plugin must be *.lua or *.py format.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="427"/>
+        <location filename="StartSettingsPage.cpp" line="466"/>
         <source>停止中</source>
         <translation>Stopping</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="427"/>
+        <location filename="StartSettingsPage.cpp" line="466"/>
         <source>正在等待最后一批翻译完成，请稍候...</source>
         <translation>Waiting for the last batch of translations...</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="439"/>
-        <location filename="StartSettingsPage.cpp" line="443"/>
-        <location filename="StartSettingsPage.cpp" line="450"/>
+        <location filename="StartSettingsPage.cpp" line="478"/>
+        <location filename="StartSettingsPage.cpp" line="482"/>
+        <location filename="StartSettingsPage.cpp" line="489"/>
         <source>翻译失败</source>
         <translation>Fail to translate</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="439"/>
-        <location filename="StartSettingsPage.cpp" line="444"/>
-        <location filename="StartSettingsPage.cpp" line="450"/>
-        <location filename="StartSettingsPage.cpp" line="454"/>
-        <location filename="StartSettingsPage.cpp" line="457"/>
-        <location filename="StartSettingsPage.cpp" line="484"/>
-        <location filename="StartSettingsPage.cpp" line="488"/>
+        <location filename="StartSettingsPage.cpp" line="478"/>
+        <location filename="StartSettingsPage.cpp" line="483"/>
+        <location filename="StartSettingsPage.cpp" line="489"/>
+        <location filename="StartSettingsPage.cpp" line="493"/>
+        <location filename="StartSettingsPage.cpp" line="496"/>
+        <location filename="StartSettingsPage.cpp" line="523"/>
+        <location filename="StartSettingsPage.cpp" line="527"/>
         <source>项目 </source>
         <translation>Project </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="439"/>
-        <location filename="StartSettingsPage.cpp" line="444"/>
+        <location filename="StartSettingsPage.cpp" line="478"/>
+        <location filename="StartSettingsPage.cpp" line="483"/>
         <source> 的翻译任务失败，请检查日志输出。</source>
         <translation> &apos;s task failed, please check logs.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="450"/>
+        <location filename="StartSettingsPage.cpp" line="489"/>
         <source> 连工厂函数都失败了，玩毛啊</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="454"/>
-        <location filename="StartSettingsPage.cpp" line="456"/>
-        <location filename="StartSettingsPage.cpp" line="463"/>
-        <location filename="StartSettingsPage.cpp" line="465"/>
+        <location filename="StartSettingsPage.cpp" line="493"/>
+        <location filename="StartSettingsPage.cpp" line="495"/>
+        <location filename="StartSettingsPage.cpp" line="502"/>
+        <location filename="StartSettingsPage.cpp" line="504"/>
         <source>生成完成</source>
         <translation>Generation completed</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="454"/>
-        <location filename="StartSettingsPage.cpp" line="457"/>
+        <location filename="StartSettingsPage.cpp" line="493"/>
+        <location filename="StartSettingsPage.cpp" line="496"/>
         <source> 的生成任务已完成。</source>
         <translation> &apos;s gerneration task has completed.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="463"/>
-        <location filename="StartSettingsPage.cpp" line="466"/>
+        <location filename="StartSettingsPage.cpp" line="502"/>
+        <location filename="StartSettingsPage.cpp" line="505"/>
         <source>请在 show_normal 文件夹中查收项目 </source>
         <translation>Please go to show_normal dir to check out </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="463"/>
-        <location filename="StartSettingsPage.cpp" line="466"/>
+        <location filename="StartSettingsPage.cpp" line="502"/>
+        <location filename="StartSettingsPage.cpp" line="505"/>
         <source> 的预处理结果。</source>
         <translation> &apos;s preproc result.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="472"/>
-        <location filename="StartSettingsPage.cpp" line="474"/>
+        <location filename="StartSettingsPage.cpp" line="511"/>
+        <location filename="StartSettingsPage.cpp" line="513"/>
         <source>翻译完成</source>
         <translation>Translation completed</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="472"/>
-        <location filename="StartSettingsPage.cpp" line="475"/>
+        <location filename="StartSettingsPage.cpp" line="511"/>
+        <location filename="StartSettingsPage.cpp" line="514"/>
         <source>请在 gt_output 文件夹中查收项目 </source>
         <translation>Please go to gt_output dir to check out </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="475"/>
+        <location filename="StartSettingsPage.cpp" line="514"/>
         <source> 的翻译结果。</source>
         <translation> &apos;s translation result.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="483"/>
+        <location filename="StartSettingsPage.cpp" line="522"/>
         <source>翻译停止</source>
         <translation>Translation stopped</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="484"/>
+        <location filename="StartSettingsPage.cpp" line="523"/>
         <source> 的翻译任务停止成功。</source>
         <translation> &apos;s task stopped successfully.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="488"/>
+        <location filename="StartSettingsPage.cpp" line="527"/>
         <source>停止成功</source>
         <translation>Stopped succeesfully</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="488"/>
+        <location filename="StartSettingsPage.cpp" line="527"/>
         <source> 的翻译任务已终止</source>
         <translation> &apos;s task has been stoped</translation>
     </message>

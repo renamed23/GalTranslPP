@@ -5,7 +5,6 @@ module;
 #ifdef _WIN32
 #include <Windows.h>
 #include <Shlwapi.h>
-#pragma comment(lib, "Shlwapi.lib")
 #endif
 #include <spdlog/spdlog.h>
 #include <unicode/regex.h>
@@ -18,6 +17,7 @@ module NormalJsonTranslator;
 
 import ConditionTool;
 import DictionaryGenerator;
+import NameTranslator;
 import NJ_ImplTool;
 import NLPTool;
 
@@ -56,9 +56,6 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, std::shar
 void NormalJsonTranslator::init()
 {
     const fs::path configPath = m_projectDir / L"config.toml";
-    if (!fs::exists(configPath)) {
-        throw std::runtime_error("找不到 config.toml 文件");
-    }
     try {
         bool needReboot = false;
         const auto configData = toml::parse(configPath);
@@ -82,6 +79,9 @@ void NormalJsonTranslator::init()
         else if (transEngineStr == "DumpName") {
             m_transEngine = TransEngine::DumpName;
         }
+        else if (transEngineStr == "NameTrans") {
+            m_transEngine = TransEngine::NameTrans;
+        }
         else if (transEngineStr == "GenDict") {
             m_transEngine = TransEngine::GenDict;
         }
@@ -92,10 +92,10 @@ void NormalJsonTranslator::init()
             m_transEngine = TransEngine::ShowNormal;
         }
         else {
-            throw std::runtime_error("Invalid trans engine");
+            throw std::runtime_error("Invalid trans engine: " + transEngineStr);
         }
 
-        const auto pluginConfigData = toml::parse(pluginConfigsPath / L"filePlugins" / L"NormalJson.toml");
+        const auto pluginConfigData = toml::parse(filePluginConfigPath / L"NormalJson.toml");
         m_outputWithSrc = parseToml<bool>(configData, pluginConfigData, "plugins.NormalJson.output_with_src");
 
         m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 8);
@@ -145,38 +145,6 @@ void NormalJsonTranslator::init()
         loadDictsFunc("pre", m_preDictionary);
 
         if (m_transEngine != TransEngine::DumpName) {
-            // 需要翻译预处理
-            const std::string& tokenizerBackend = toml::find_or(configData, "common", "tokenizerBackend", "MeCab");
-            if (tokenizerBackend == "MeCab") {
-                const std::string& mecabDictDir = toml::find_or(configData, "common", "mecabDictDir", "BaseConfig/mecabDict/mecab-ipadic-utf8");
-                m_logger->info("正在检查 MeCab 环境...");
-                m_tokenizeSourceLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-                m_logger->info("MeCab 环境检查完毕。");
-            }
-            else if (tokenizerBackend == "spaCy") {
-                const std::string& spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
-                m_logger->info("正在检查 spaCy 环境...");
-                m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
-                m_logger->info("spaCy 环境检查完毕。");
-            }
-            else if (tokenizerBackend == "Stanza") {
-                const std::string& stanzaLang = toml::find_or(configData, "common", "stanzaLang", "zh");
-                m_logger->info("正在检查 Stanza 环境...");
-                m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
-                m_logger->info("Stanza 环境检查完毕。");
-            }
-            else {
-                throw std::invalid_argument("无效的 tokenizerBackend: " + tokenizerBackend);
-            }
-
-            const auto& textPrePlugins = toml::find<
-                std::optional<std::vector<std::string>>
-            >(configData, "plugins", "textPrePlugins");
-            if (textPrePlugins) {
-                m_prePlugins = registerPlugins(*textPrePlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
-            }
-
-
             // 需要 API 和提示词
             if (m_transEngine != TransEngine::Rebuild && m_transEngine != TransEngine::ShowNormal) {
 
@@ -293,6 +261,10 @@ void NormalJsonTranslator::init()
                     systemKey = "GENDIC_SYSTEM";
                     userKey = "GENDIC_PROMPT";
                     break;
+                case TransEngine::NameTrans:
+                    systemKey = "NAMETRANS_SYSTEM";
+                    userKey = "NAMETRANS_PROMPT";
+                    break;
                 default:
                     throw std::invalid_argument("未知的 TransEngine");
                 }
@@ -312,8 +284,47 @@ void NormalJsonTranslator::init()
             }
 
 
+            if (m_transEngine != TransEngine::NameTrans) {
+                // 需要翻译预处理
+                const std::string& tokenizerBackend = toml::find_or(configData, "common", "tokenizerBackend", "MeCab");
+                if (tokenizerBackend == "MeCab") {
+                    const std::string& mecabDictDir = toml::find_or(configData, "common", "mecabDictDir", "BaseConfig/mecabDict/mecab-ipadic-utf8");
+                    m_logger->info("正在检查 MeCab 环境...");
+                    m_tokenizeSourceLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
+                    m_logger->info("MeCab 环境检查完毕。");
+                }
+                else if (tokenizerBackend == "spaCy") {
+                    const std::string& spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
+                    m_logger->info("正在检查 spaCy 环境...");
+                    m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
+                    m_logger->info("spaCy 环境检查完毕。");
+                }
+                else if (tokenizerBackend == "Stanza") {
+                    const std::string& stanzaLang = toml::find_or(configData, "common", "stanzaLang", "zh");
+                    m_logger->info("正在检查 Stanza 环境...");
+                    m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
+                    m_logger->info("Stanza 环境检查完毕。");
+                }
+                else {
+                    throw std::invalid_argument("无效的 tokenizerBackend: " + tokenizerBackend);
+                }
+
+                const auto& textPrePlugins = toml::find<
+                    std::optional<std::vector<std::string>>
+                >(configData, "plugins", "textPrePlugins");
+                if (textPrePlugins) {
+                    m_prePlugins = registerPlugins(*textPrePlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
+                }
+            }
+            else {
+                m_gptDictionary = std::make_unique<GptDictionary>(m_projectDir, m_otherCacheDir, m_tokenizeSourceLangFunc,
+                    m_luaManager, m_pythonManager, m_logger);
+                loadDictsFunc("gpt", m_gptDictionary);
+            }
+
+
             // 需要翻译中/后处理
-            if (m_transEngine != TransEngine::ShowNormal && m_transEngine != TransEngine::GenDict) {
+            if (m_transEngine != TransEngine::ShowNormal && m_transEngine != TransEngine::GenDict && m_transEngine != TransEngine::NameTrans) {
 
                 m_gptDictionary = std::make_unique<GptDictionary>(m_projectDir, m_otherCacheDir, m_tokenizeSourceLangFunc,
                     m_luaManager, m_pythonManager, m_logger);
@@ -664,11 +675,11 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         logBlock += "\ninputBlock:\n" + inputBlock;
         m_logger->info("[线程 {}] [文件 {}] 开始翻译:\n{}", threadId, wide2Ascii(relInputPath), logBlock);
         std::string promptReq = m_userPrompt;
-        replaceStrInplace(promptReq, "[Problem Description]", inputProblems);
-        replaceStrInplace(promptReq, "[Background Description]", backgroundText);
+        replaceStrInplace(promptReq, "[Problem Description]", inputProblems.empty() ? "None" : inputBlock);
+        replaceStrInplace(promptReq, "[Background Description]", backgroundText.empty() ? "None" : backgroundText);
         replaceStrInplace(promptReq, "[Input]", inputBlock);
         replaceStrInplace(promptReq, "[TargetLang]", m_targetLang);
-        replaceStrInplace(promptReq, "[Glossary]", glossary);
+        replaceStrInplace(promptReq, "[Glossary]", glossary.empty() ? "None" : glossary);
 
         json messages = json::array({ {{"role", "system"}, {"content", m_systemPrompt}} });
         if (!contextHistory.empty()) {
@@ -1133,6 +1144,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
     std::ifstream ifs;
     std::ofstream ofs;
 
+    const fs::path nameTablePath = m_projectDir / L"人名替换表.toml";
     // 人名表处理
     {
         std::map<std::string, int> nameTableMap;
@@ -1193,8 +1205,6 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
         }
         m_controller->makeBar(m_totalSentences, m_threadsNum);
 
-
-        const fs::path nameTablePath = m_projectDir / L"人名替换表.toml";
         toml::value orgNameTable = toml::table{};
         try {
             if (fs::exists(nameTablePath)) {
@@ -1238,6 +1248,16 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
         }
     }
     // 人名表处理完毕
+
+
+    // 人名表翻译
+    if (m_transEngine == TransEngine::NameTrans) {
+        NameTranslator nameTranslator(m_controller, m_logger, m_apiPool, m_gptDictionary, m_onPerformApi,
+            m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang, m_maxRetries, m_apiTimeOutMs, m_checkQuota);
+        nameTranslator.run(nameTablePath);
+        return std::nullopt;
+    }
+    // 人名表翻译完毕
 
 
     // 字典生成

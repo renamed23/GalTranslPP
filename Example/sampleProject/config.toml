@@ -22,7 +22,8 @@ baseClassName = "NormalJson" # 参数同上，用于在使用自定义 filePlugi
 # ForGalTsv: 向AI输入TSV格式的对话并要求AI以TSV格式回复，使用 FORGALTSV_SYSTEM 和 FORGALTSV_TRANS_PROMPT_EN 作为提示词
 # ForNovelTsv: 和 ForGalTsv 的区别是输入不带name，使用 FORNOVELTSV_SYSTEM 和 FORNOVELTSV_TRANS_PROMPT_EN 作为提示词
 # Sakura: 使用 SAKURA_SYSTEM_PROMPT 和 SAKURA_TRANS_PROMPT 作为提示词
-# DumpName: 生成 人名替换表.toml 以供替换人名
+# DumpName: 更新 人名替换表.toml 以供替换人名
+# NameTrans: 翻译人名表(如果没有则先Dump)，使用 NAMETRANS_SYSTEM 和 NAMETRANS_PROMPT 作为提示词
 # GenDict: 借助AI自动生成术语表，使用 GENDIC_SYSTEM 和 GENDIC_PROMPT 作为提示词
 # Rebuild: 即使problem或orig_text中包含retranslKey也不会重翻，只根据缓存翻译重建结果
 # ShowNormal: 展示预处理后的内容及句子，如Epub格式下可生成预处理后的html/xhtml文件以及生成的json，可用于检查和排错

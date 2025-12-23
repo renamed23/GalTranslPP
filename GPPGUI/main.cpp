@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         QTranslator translator;
         QTranslator qtBaseTranslator; // 用于翻译 Qt 内置对话框，如 QMessageBox 的按钮
         try {
-            toml::value globalConfig = toml::parse(fs::path(L"BaseConfig/globalConfig.toml"));
+            toml::value globalConfig = toml::parse(globalConfigPath);
             checkUpdate = toml::find_or(globalConfig, "autoCheckUpdate", true);
             allowMultiInstance = toml::find_or(globalConfig, "allowMultiInstance", false);
             std::string language = toml::find_or(globalConfig, "language", "zh_CN");
@@ -82,8 +82,6 @@ int main(int argc, char* argv[])
                 if (!envZipPath.empty()) {
                     PyConfig config;
                     PyConfig_InitPythonConfig(&config);
-                    config.parse_argv = 0;
-                    config.install_signal_handlers = 1;
                     PyConfig_SetString(&config, &config.home, fs::canonical(pyEnvPath).c_str());
                     PyConfig_SetString(&config, &config.executable, fs::canonical(pyEnvPath / L"python.exe").c_str());
                     PyConfig_SetString(&config, &config.pythonpath_env, envZipPath.c_str());
@@ -116,7 +114,6 @@ int main(int argc, char* argv[])
             waitForProcessToExit(pid);
         }
 
-        // 向后兼容，在下个大版本中删除
         if (fs::exists(L"Updater_new.exe")) {
             try {
                 fs::rename(L"Updater_new.exe", L"Updater.exe");
@@ -124,7 +121,7 @@ int main(int argc, char* argv[])
             }
             catch (const fs::filesystem_error& e) {
 #ifdef Q_OS_WIN
-                MessageBoxW(nullptr, QString(e.what()).toStdWString().c_str(), L"Updater 更新错误", MB_ICONERROR);
+                MessageBoxW(nullptr, ascii2Wide(e.what()).c_str(), L"Updater 更新错误", MB_ICONERROR);
 #endif
             }
         }
@@ -227,20 +224,20 @@ int main(int argc, char* argv[])
         }
         catch (const fs::filesystem_error& e) {
 #ifdef Q_OS_WIN
-            MessageBoxW(nullptr, QString(e.what()).toStdWString().c_str(), L"缓存删除错误", MB_ICONERROR);
+            MessageBoxW(nullptr, ascii2Wide(e.what()).c_str(), L"缓存删除错误", MB_ICONERROR);
 #endif
         }
         return result;
     }
     catch (const toml::exception& e) {
 #ifdef Q_OS_WIN
-        MessageBoxW(nullptr, QString::fromStdString(e.what()).toStdWString().c_str(), L"TOML 错误", MB_ICONERROR);
+        MessageBoxW(nullptr, ascii2Wide(e.what()).c_str(), L"TOML 错误", MB_ICONERROR);
 #endif
         return 1;
     }
     catch (const std::exception& e) {
 #ifdef Q_OS_WIN
-        MessageBoxW(nullptr, QString::fromStdString(e.what()).toStdWString().c_str(), L"标准错误", MB_ICONERROR);
+        MessageBoxW(nullptr, ascii2Wide(e.what()).c_str(), L"标准错误", MB_ICONERROR);
 #endif
         return 1;
     }

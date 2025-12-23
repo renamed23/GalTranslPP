@@ -1,8 +1,13 @@
 module;
 
-#define _RANGES_
+#include "GPPMacros.hpp"
 #ifdef _WIN32
 #include <Windows.h>
+#pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "Iphlpapi.lib")
+#pragma comment(lib, "Secur32.lib")
 #endif
 
 #define BIT7Z_AUTO_FORMAT
@@ -21,11 +26,6 @@ module;
 #include <opencc/opencc.h>
 #pragma comment(lib, "../lib/marisa.lib")
 #pragma comment(lib, "../lib/opencc.lib")
-
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "crypt32.lib")
-#pragma comment(lib, "Iphlpapi.lib")
-#pragma comment(lib, "Secur32.lib")
 
 
 module Tool;
@@ -58,51 +58,56 @@ std::string ascii2Ascii(const std::string& ascii, UINT src, UINT dst, LPBOOL use
     return wide2Ascii(ascii2Wide(ascii, src), dst, usedDefaultChar);
 }
 
-bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow) {
+bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow, int timeDelayAfterCommand) {
 
-    // 1. 构造完整的命令行字符串。
-    //    CreateProcess 的 lpCommandLine 参数要求，如果程序路径包含空格，
-    //    它应该被双引号包围。
-    std::wstring commandLineStr = L"\"" + program + L"\" " + args;
+    std::wstring commandLineStr;
+
+    if (showWindow) {
+        // 如果需要显示窗口并延迟关闭：
+        // 使用 cmd.exe /C 来执行命令。
+        // 格式为: cmd.exe /C " "程序路径" 参数 & timeout /t 3 "
+        // & 符号表示：无论前一个程序成功与否，都执行后面的 timeout
+        // timeout /t 3 表示等待 3 秒
+        // 注意：cmd /C 对引号的处理比较特殊，通常建议在最外层再包一对引号以防路径含空格出错
+        commandLineStr = L"cmd.exe /C \"\"" + program + L"\" " + args + L" & timeout /t " + std::to_wstring(timeDelayAfterCommand) + L"\"";
+    }
+    else {
+        // 如果隐藏窗口，保持原样直接运行，不需要 cmd 包装
+        commandLineStr = L"\"" + program + L"\" " + args;
+    }
 
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
 
     ZeroMemory(&si, sizeof(si));
-    si.dwFlags |= STARTF_USESHOWWINDOW; // 指定 wShowWindow 成员有效
-    si.wShowWindow = showWindow ? SW_SHOW : SW_HIDE;          // 将窗口设置为隐藏
+    si.dwFlags |= STARTF_USESHOWWINDOW;
+    si.wShowWindow = showWindow ? SW_SHOW : SW_HIDE;
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    // CreateProcessW 需要一个可写的字符缓冲区
     std::vector<wchar_t> commandLineVec(commandLineStr.begin(), commandLineStr.end());
     commandLineVec.push_back(L'\0');
 
-    //    设置 dwCreationFlags
-    //    CREATE_NEW_CONSOLE 会为新进程创建一个新的控制台窗口。
-    //    这个新窗口会显示 python.exe 的所有标准输出和标准错误。
     DWORD creationFlags = 0;
     if (showWindow) {
         creationFlags |= CREATE_NEW_CONSOLE;
     }
 
-    if (!CreateProcessW(NULL,           // lpApplicationName
-        &commandLineVec[0], // lpCommandLine (must be writable)
-        NULL,           // lpProcessAttributes
-        NULL,           // lpThreadAttributes
-        FALSE,          // bInheritHandles
-        creationFlags,  // dwCreationFlags
-        NULL,           // lpEnvironment
-        NULL,           // lpCurrentDirectory
-        &si,            // lpStartupInfo
-        &pi)) {         // lpProcessInformation
+    if (!CreateProcessW(NULL,
+        &commandLineVec[0],
+        NULL,
+        NULL,
+        FALSE,
+        creationFlags,
+        NULL,
+        NULL,
+        &si,
+        &pi)) {
         return false;
     }
 
-    // 等待子进程结束
     WaitForSingleObject(pi.hProcess, INFINITE);
 
-    // 清理句柄
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
@@ -349,8 +354,8 @@ std::pair<std::string, int> getMostCommonChar(const std::string& s) {
         return { {}, 0 };
     }
 
-    auto maxIterator = std::max_element(counts.begin(), counts.end(),
-        [](const auto& a, const auto& b) {
+    auto maxIterator = std::ranges::max_element(counts, [](const auto& a, const auto& b) 
+        {
             return a.second < b.second;
         });
 
@@ -726,8 +731,8 @@ bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& i
     for (size_t i = 0; i < len; i++) {
         int latestVerPart = i < latestVerParts.size() ? std::stoi(latestVerParts[i]) : 0;
         int currentVerPart = i < currentVerParts.size() ? std::stoi(currentVerParts[i]) : 0;
-        if (i == 0 && latestVerPart > currentVerPart) {
-            isCompatible = false;
+        if (i == 0) {
+            isCompatible = latestVerPart <= currentVerPart;
         }
 
         if (latestVerPart > currentVerPart) {

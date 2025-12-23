@@ -64,7 +64,7 @@ void CommonGptDictPage::_setupUI()
 
 	auto createGptTab = [=](const fs::path& orgDictPath) -> QWidget*
 		{
-			fs::path dictPath = L"BaseConfig/Dict/gpt" / fs::path(orgDictPath.filename()).replace_extension(".toml");
+			fs::path dictPath = defaultGptDictPath / fs::path(orgDictPath.filename()).replace_extension(".toml");
 			std::string dictName = wide2Ascii(orgDictPath.stem().wstring());
 			GptTabEntry gptTabEntry;
 
@@ -362,11 +362,13 @@ void CommonGptDictPage::_setupUI()
 
 					fs::path oldDictPath = it->dictPath;
 					std::string oldDictName = wide2Ascii(oldDictPath.stem().wstring());
-					fs::path newDictPath = L"BaseConfig/Dict/gpt/" + newDictName.toStdWString() + L".toml";
+					fs::path newDictPath = defaultGptDictPath / (newDictName.toStdWString() + L".toml");
 					try {
 						if (fs::exists(oldDictPath)) {
-							std::error_code ec;
-							fs::rename(oldDictPath, newDictPath, ec);
+							try {
+								fs::rename(oldDictPath, newDictPath);
+							}
+							catch (...) { }
 						}
 						it->dictPath = newDictPath;
 						auto& dictNames = _globalConfig["commonGptDicts"]["dictNames"];
@@ -430,8 +432,10 @@ void CommonGptDictPage::_setupUI()
 						{
 							pageMainWidget->deleteLater();
 							tabWidget->removeTab(tabWidget->indexOf(pageMainWidget));
-							std::error_code ec;
-							fs::remove(it->dictPath, ec);
+							try {
+								fs::remove(it->dictPath);
+							}
+							catch(...) { }
 							_gptTabEntries.erase(it);
 							auto& dictNames = _globalConfig["commonGptDicts"]["dictNames"];
 							if (dictNames.is_array()) {
@@ -475,7 +479,7 @@ void CommonGptDictPage::_setupUI()
 				it = commonGptDicts.as_array().erase(it);
 				continue;
 			}
-			fs::path dictPath = L"BaseConfig/Dict/gpt/" + ascii2Wide(it->as_string()) + L".toml";
+			fs::path dictPath = defaultGptDictPath / (ascii2Wide(it->as_string()) + L".toml");
 			if (!fs::exists(dictPath)) {
 				it = commonGptDicts.as_array().erase(it);
 				continue;
@@ -500,13 +504,13 @@ void CommonGptDictPage::_setupUI()
 			}
 			insertToml(_globalConfig, "lastCommonGptDictPath", importDictPathStr.toStdString());
 			fs::path importDictPath = importDictPathStr.toStdWString();
-			fs::path newDictPath = L"BaseConfig/Dict/gpt" / fs::path(importDictPath.filename()).replace_extension(".toml");
+			fs::path newDictPath = defaultGptDictPath / importDictPath.filename().replace_extension(".toml");
 			if (fs::exists(newDictPath) && !fs::equivalent(importDictPath, newDictPath)) {
 				try {
 					fs::remove(newDictPath);
 				}
 				catch (...) {
-					ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("导入失败"), tr("文件删除失败"), 3000);
+					ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("导入失败"), tr("原文件删除失败"), 3000);
 					return;
 				}
 			}
@@ -551,7 +555,7 @@ void CommonGptDictPage::_setupUI()
 				return;
 			}
 
-			fs::path newDictPath = L"BaseConfig/Dict/gpt/" + dictName.toStdWString() + L".toml";
+			fs::path newDictPath = defaultGptDictPath / (dictName.toStdWString() + L".toml");
 			std::ofstream ofs(newDictPath);
 			if (!ofs.is_open()) {
 				ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("新建失败"), tr("无法创建 ") +

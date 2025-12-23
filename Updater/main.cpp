@@ -4,7 +4,6 @@
 #include <QApplication>
 #include <QProcess>
 #include <QDir>
-#include <QDebug>
 #pragma comment(lib, "../lib/GalTranslPP.lib")
 
 
@@ -32,19 +31,6 @@ void waitForProcessToExit(qint64 pid) {
 
 #endif
 }
-
-void killProcess(qint64 pid) {
-#ifdef Q_OS_WIN
-    HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-    if (hProcess != NULL) {
-        TerminateProcess(hProcess, 0);
-        CloseHandle(hProcess);
-    }
-#else
-
-#endif
-}
-
 
 int main(int argc, char* argv[]) {
 
@@ -94,36 +80,42 @@ int main(int argc, char* argv[]) {
         std::string orgPromptVersion = parser.isSet("promptVersion") ? parser.value("promptVersion").toStdString() : "1.0.0";
         std::string orgDictVersion = parser.isSet("dictVersion") ? parser.value("dictVersion").toStdString() : "1.0.0";
         std::string orgQtVersion = parser.isSet("qtVersion") ? parser.value("qtVersion").toStdString() : "6.9.2";
-        // 向后兼容，在下个大版本中删除
+
         if (cmpVer("2.1.1", orgGppVersion, isCompatible)) {
-            killProcess(pid);
+#ifdef Q_OS_WIN
+            MessageBoxW(NULL, L"版本过旧，无法自动更新至最新版本，请前往 github 手动下载新版。", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
+#endif
+            return -1;
         }
-        else {
-            waitForProcessToExit(pid);
-        }
+
+        waitForProcessToExit(pid);
+
         try {
             std::set<std::string> excludePreFixes =
             {
-                "BaseConfig/python-3.12.10-embed-amd64", "BaseConfig/pyScripts", "BaseConfig/Prompt.toml", 
+                "BaseConfig/pyScripts", "BaseConfig/Prompt.toml", 
                 "BaseConfig/Dict", 
             };
-            // 向后兼容
-            if (cmpVer("2.1.1", orgGppVersion, isCompatible)) {
-                excludePreFixes.insert("Qt6Core.dll");
-                excludePreFixes.insert("7z.dll");
-                excludePreFixes.insert("Updater_new.exe");
-            }
+            
             if (cmpVer(PYTHONVERSION, orgPythonVersion, isCompatible)) {
-                excludePreFixes.erase("BaseConfig/python-3.12.10-embed-amd64");
                 excludePreFixes.erase("BaseConfig/pyScripts");
             }
             if (cmpVer(PROMPTVERSION, orgPromptVersion, isCompatible)) {
+                if (!isCompatible) {
 #ifdef Q_OS_WIN
-                int ret = MessageBoxW(NULL, L"检测到新版本的 Prompt，是否更新 Prompt (会覆盖当前的默认提示词)？", L"GalTransl++ Updater", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
-                if (ret == IDYES) {
+                    MessageBoxW(NULL, L"由于提示词解析方式发生不兼容变更，本次更新将强制覆盖原默认提示词。\n"
+                        L"你可以先行备份，然后点击确定以继续更新。", L"GalTransl++ Updater", MB_OK | MB_TOPMOST);
+#endif
                     excludePreFixes.erase("BaseConfig/Prompt.toml");
                 }
+                else {
+#ifdef Q_OS_WIN
+                    int ret = MessageBoxW(NULL, L"检测到新版本的 Prompt，是否更新 Prompt (会覆盖当前的默认提示词)？", L"GalTransl++ Updater", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
+                    if (ret == IDYES) {
+                        excludePreFixes.erase("BaseConfig/Prompt.toml");
+                    }
 #endif
+                }
             }
             if (cmpVer(DICTVERSION, orgDictVersion, isCompatible)) {
 #ifdef Q_OS_WIN
@@ -163,21 +155,19 @@ int main(int argc, char* argv[]) {
         extractFileFromZip(sourceZip.toStdWString(), targetDir.toStdWString() + L"/new", "Updater_new.exe");
         extractFileFromZip(sourceZip.toStdWString(), targetDir.toStdWString() + L"/new", "Qt6Core.dll");
         extractFileFromZip(sourceZip.toStdWString(), targetDir.toStdWString() + L"/new", "7z.dll");
-        if (fs::exists(L"new/Updater_new.exe")) {
-            QStringList arguments;
-            arguments << "--newActionFlag" << QString::number(QApplication::applicationPid());
-            arguments << "--pid" << QString::number(QApplication::applicationPid());
-            arguments << "--source" << sourceZip << "--target" << targetDir;
-            arguments << "--gppVersion" << QString::fromStdString(GPPVERSION);
-            arguments << "--pythonVersion" << QString::fromStdString(PYTHONVERSION);
-            arguments << "--promptVersion" << QString::fromStdString(PROMPTVERSION);
-            arguments << "--dictVersion" << QString::fromStdString(DICTVERSION);
-            arguments << "--qtVersion" << QString::fromStdString(QTVERSION);
-            if (parser.isSet("restart")) {
-                arguments << "--restart" << parser.value("restart");
-            }
-            QProcess::startDetached("new/Updater_new.exe", arguments, QString(targetDir.toStdWString() + L"/new"));
+        QStringList arguments;
+        arguments << "--newActionFlag" << QString::number(QApplication::applicationPid());
+        arguments << "--pid" << QString::number(QApplication::applicationPid());
+        arguments << "--source" << sourceZip << "--target" << targetDir;
+        arguments << "--gppVersion" << QString::fromStdString(GPPVERSION);
+        arguments << "--pythonVersion" << QString::fromStdString(PYTHONVERSION);
+        arguments << "--promptVersion" << QString::fromStdString(PROMPTVERSION);
+        arguments << "--dictVersion" << QString::fromStdString(DICTVERSION);
+        arguments << "--qtVersion" << QString::fromStdString(QTVERSION);
+        if (parser.isSet("restart")) {
+            arguments << "--restart" << parser.value("restart");
         }
+        QProcess::startDetached("new/Updater_new.exe", arguments, QString(targetDir.toStdWString() + L"/new"));
     }
     catch (const std::exception&) {
 #ifdef Q_OS_WIN

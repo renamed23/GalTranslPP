@@ -295,7 +295,7 @@ void ProjectSettingsPage::_onFinishTranslating(const QString& transEngine, int e
         exitCode == 0 &&
         toml::find_or(_globalConfig, "autoRefreshAfterTranslate", true)
         ) {
-        if (transEngine == "DumpName") {
+        if (transEngine == "DumpName" || transEngine == "NameTrans") {
             _nameTableSettingsPage->refreshTable();
         }
         else if (transEngine == "GenDict") {

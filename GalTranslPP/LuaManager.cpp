@@ -581,9 +581,9 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 			std::string resultStr = ascii2Ascii(ascii, (UINT)src.value_or(65001), (UINT)dst.value_or(0), &usedDefaultChar);
 			return std::make_tuple(resultStr, (bool)usedDefaultChar);
 		};
-	utilsTable["executeCommand"] = [](const std::string& program, const std::string& args, std::optional<bool> showWindow) -> bool
+	utilsTable["executeCommand"] = [](const std::string& program, const std::string& args, std::optional<bool> showWindow, std::optional<int> timeDelayAfterCommand) -> bool
 		{
-			return executeCommand(ascii2Wide(program), ascii2Wide(args), showWindow.value_or(false));
+			return executeCommand(ascii2Wide(program), ascii2Wide(args), showWindow.value_or(true), timeDelayAfterCommand.value_or(5));
 		};
 	utilsTable["getConsoleWidth"] = &getConsoleWidth;
 	utilsTable["createParent"] = [](const std::string& path) -> bool

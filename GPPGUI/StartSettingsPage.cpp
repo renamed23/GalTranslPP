@@ -165,6 +165,7 @@ void StartSettingsPage::_setupUI()
 	translateMode->addItem("ForNovelTsv");
 	translateMode->addItem("Sakura");
 	translateMode->addItem("DumpName");
+	translateMode->addItem("NameTrans");
 	translateMode->addItem("GenDict");
 	translateMode->addItem("Rebuild");
 	translateMode->addItem("ShowNormal");
@@ -234,7 +235,7 @@ void StartSettingsPage::_setupUI()
 		});
 	connect(_worker, &TranslatorWorker::writeLogSignal, this, [=](QString log)
 		{
-			const int MAX_LOG_LINE_COUNT = 10000;
+			constexpr int MAX_LOG_LINE_COUNT = 10000;
 
 			// 禁用更新可以防止在进行大量操作时出现闪烁，并提高性能
 			logOutput->setUpdatesEnabled(false);
@@ -253,9 +254,50 @@ void StartSettingsPage::_setupUI()
 
 			// 2. 追加日志 (使用一个临时的“影子”光标在后台进行操作)
 			QTextCursor tempCursor(logOutput->document());
-			tempCursor.movePosition(QTextCursor::End); // 移动到文档末尾
+			tempCursor.movePosition(QTextCursor::End);
+
 
 			// --- 高亮代码逻辑开始 ---
+			auto processLogFunc = [&](const QString& l)
+				{
+					QStringList lines = l.split('\n');
+					for (int i = 0; i < lines.size(); ++i) {
+						QString line = lines[i];
+						line = line.trimmed();
+						// 如果是最后一行且为空（通常是因为 log 以 \n 结尾），则跳过，避免多余空行
+						if (i == lines.size() - 1 && line.isEmpty()) break;
+						QTextCharFormat fmt;
+						// 根据 spdlog 的格式 [timestamp level] 进行判断
+						// 使用 " level]" 包含右中括号和前置空格，防止匹配到日志内容中的单词
+						if (line.contains(" error]")) {
+							fmt.setForeground(Qt::red); // 错误：红色
+						}
+						else if (line.contains(" critical]")) {
+							fmt.setForeground(Qt::darkRed); // 严重：深红
+							fmt.setFontWeight(QFont::Bold); // 加粗
+						}
+						else if (line.contains(" warning]")) {
+							// 警告：深橙色
+							fmt.setForeground(QColor(255, 140, 0));
+						}
+						else if (line.contains(" info]")) {
+							fmt.setForeground(QColor(Qt::black)); // 显式设为黑色或保持默认
+						}
+						else if (line.contains(" debug]", Qt::CaseInsensitive)) {
+							fmt.setForeground(QColor(Qt::darkBlue));
+						}
+
+						// 应用格式并插入文本
+						tempCursor.setCharFormat(fmt);
+						tempCursor.insertText(line);
+
+						// 补回换行符 (因为 split 去掉了换行符)
+						// 如果不是最后一行，则插入换行
+						if (i < lines.size() - 1) {
+							tempCursor.insertText("\n");
+						}
+					}
+				};
 			if (log.contains("```\n问题概览:")) {
 				QString pre, overview, post;
 				int index = log.indexOf("```\n问题概览:");
@@ -265,18 +307,15 @@ void StartSettingsPage::_setupUI()
 				overview = log.left(index + 10);
 				log = log.mid(index + 10);
 				post = log;
-				tempCursor.insertText(pre);
-				tempCursor.movePosition(QTextCursor::End);
+				processLogFunc(pre);
 				QTextCharFormat format;
 				format.setForeground(QColor(255, 0, 0));
 				tempCursor.setCharFormat(format);
 				tempCursor.insertText(overview);
-				tempCursor.movePosition(QTextCursor::End);
-				tempCursor.setCharFormat(QTextCharFormat());
-				tempCursor.insertText(post);
+				processLogFunc(post);
 			}
 			else {
-				tempCursor.insertText(log); // 在末尾插入文本
+				processLogFunc(log);
 			}
 			// --- 高亮代码逻辑结束 ---
 

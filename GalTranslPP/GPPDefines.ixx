@@ -6,13 +6,21 @@ namespace fs = std::filesystem;
 
 export {
 
-    const std::string GPPVERSION = "2.1.7";
+    const std::string GPPVERSION = "2.2.0";
     const std::string PYTHONVERSION = "1.0.0";
-    const std::string PROMPTVERSION = "1.0.2";
+    const std::string PROMPTVERSION = "2.0.0";
     const std::string DICTVERSION = "1.0.2";
     const std::string QTVERSION = "6.9.2";
 
-    const fs::path pluginConfigsPath = fs::current_path() / L"BaseConfig" / L"pluginConfigs";
+    const fs::path baseConfigPath = fs::current_path() / L"BaseConfig";
+    const fs::path globalConfigPath = baseConfigPath / L"globalConfig.toml";
+    const fs::path defaultPromptPath = baseConfigPath / L"Prompt.toml";
+    const fs::path defaultDictPath = baseConfigPath / L"Dict";
+    const fs::path defaultGptDictPath = defaultDictPath / L"gpt";
+    const fs::path defaultPreDictPath = defaultDictPath / L"pre";
+    const fs::path defaultPostDictPath = defaultDictPath / L"post";
+    const fs::path pluginConfigsPath = baseConfigPath / L"pluginConfigs";
+    const fs::path filePluginConfigPath = pluginConfigsPath / L"filePlugins";
     const fs::path prePluginConfigPath = pluginConfigsPath / L"textPrePlugins";
     const fs::path postPluginConfigPath = pluginConfigsPath / L"textPostPlugins";
 
@@ -60,7 +68,7 @@ export {
 
     enum class TransEngine
     {
-        None, ForGalJson, ForGalTsv, ForNovelTsv, DeepseekJson, Sakura, DumpName, GenDict, Rebuild, ShowNormal
+        None, ForGalJson, ForGalTsv, ForNovelTsv, DeepseekJson, Sakura, DumpName, NameTrans, GenDict, Rebuild, ShowNormal
     };
 
     enum class CachePart 

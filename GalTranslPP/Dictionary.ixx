@@ -31,6 +31,7 @@ export {
         fs::path m_projectDir;
         fs::path m_tokenizeCachePath;
         std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
+        std::shared_mutex m_tokenizeCacheMapMutex;
         std::vector<GptDictEntry> m_entries;
         LuaManager& m_luaManager;
         PythonManager& m_pythonManager;
@@ -136,6 +137,7 @@ std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, T
 
             case TransEngine::ForGalTsv:
             case TransEngine::ForNovelTsv:
+            case TransEngine::NameTrans:
                 promptContent += entry.searchStr + "\t" + entry.replaceStr;
                 if (!entry.note.empty()) {
                     promptContent += "\t" + entry.note;
@@ -169,6 +171,7 @@ std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, T
 
     case TransEngine::ForGalTsv:
     case TransEngine::ForNovelTsv:
+    case TransEngine::NameTrans:
         return "SRC\tDST\tNOTE\n" + promptContent;
 
     case TransEngine::Sakura:
@@ -211,7 +214,8 @@ void GptDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
             entry.replaceStr = el.contains("rep") ? el.at("rep").as_string() : el.at("replaceStr").as_string();
             entry.note = toml::find_or(el, "note", "");
             entry.priority = toml::find_or(el, "priority", 0);
-            m_entries.push_back(entry);
+            m_entries.push_back(std::move(entry));
+            ++count;
         }
     }
     catch (const toml::exception& e) {
@@ -258,14 +262,34 @@ void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart ch
             sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用");
             continue;
         }
+
         // 未出现则分词检查原文中是否有完整的 searchStr 词组
-        NLPResult tokens = m_tokenizeSourceLangFunc(origText);
-        const WordPosVec& wordPosVec = std::get<0>(tokens);
-        for (const auto& wordPos : wordPosVec) {
-            if (wordPos[0] == entry.searchStr) {
-                found = true;
-                break;
+        auto checkTokenFunc = [&](const WordPosVec& wordPosVec)
+            {
+                for (const auto& wordPos : wordPosVec) {
+                    if (wordPos[0] == entry.searchStr) {
+                        found = true;
+                        break;
+                    }
+                }
+            };
+
+        std::optional<std::reference_wrapper<WordPosVec>> wordPosVecRef;
+        {
+            std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
+            if (auto it = m_tokenizeCacheMap.find(origText); it != m_tokenizeCacheMap.end()) {
+                wordPosVecRef = it->second;
             }
+        }
+        if (wordPosVecRef.has_value()) {
+            checkTokenFunc(wordPosVecRef.value().get());
+        }
+        else {
+            NLPResult tokens = m_tokenizeSourceLangFunc(origText);
+            WordPosVec& wordPosVec = std::get<0>(tokens);
+            checkTokenFunc(wordPosVec);
+            std::lock_guard<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
+            m_tokenizeCacheMap.insert({ entry.searchStr, std::move(wordPosVec) });
         }
 
         if (found) {
@@ -325,9 +349,8 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
             if (getConditionType(el) != ConditionType::None) {
                 entry.dictCondition = getCheckSeCondFunc(el, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot);
             }
-            m_entries.push_back(entry);
-            count++;
-            
+            m_entries.push_back(std::move(entry));
+            ++count;
         }
     }
     catch (const toml::exception& e) {

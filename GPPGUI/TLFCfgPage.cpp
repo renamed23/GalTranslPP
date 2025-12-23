@@ -49,7 +49,7 @@ TLFCfgPage::TLFCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : Ba
 	mainLayout->addWidget(fixModeArea);
 
 	// 优先阈值
-	double priorityThreshold = toml::find_or(_projectConfig, "plugins", "TextLinebreakFix", "优先阈值", 0.24);
+	double priorityThreshold = toml::find_or(_projectConfig, "plugins", "TextLinebreakFix", "优先阈值", 0.245);
 	ElaScrollPageArea* priorityThresholdArea = new ElaScrollPageArea(centerWidget);
 	QHBoxLayout* priorityThresholdLayout = new QHBoxLayout(priorityThresholdArea);
 	ElaDoubleText* priorityThresholdText = new ElaDoubleText(priorityThresholdArea,

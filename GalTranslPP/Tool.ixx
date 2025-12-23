@@ -23,7 +23,7 @@ export {
     std::wstring ascii2Wide(const std::string& ascii, UINT CodePage = 65001);
     std::string ascii2Ascii(const std::string& ascii, UINT src = 65001, UINT dst = 0, LPBOOL usedDefaultChar = nullptr);
 
-    bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow = false);
+    bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow = true, int timeDelayAfterCommand = 5);
 
     int getConsoleWidth();
 

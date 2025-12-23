@@ -302,7 +302,7 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, std::
                     logger->info("将在 3s 后开始安装依赖，请勿关闭接下来出现的窗口！");
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     logger->info("正在执行安装命令: {}", installCommand);
-                    if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand), true)) {
+                    if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand))) {
                         throw std::runtime_error("安装依赖 " + dependency + " 的命令失败");
                     }
                     try {
@@ -346,14 +346,15 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
                     logger->info("将在 3s 后开始安装模型，请勿关闭接下来出现的窗口！");
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     logger->info("正在执行安装命令: {}", installCommand);
-                    if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand), true)) {
+                    if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand))) {
                         throw std::runtime_error("安装模型 " + modelName + " 的命令失败");
                     }
                     modelInstalled = nlpModule.attr("check_model")(modelName).cast<bool>();
                     if (modelInstalled) {
                         logger->info("模块 {} 的模型 {} 安装成功", moduleName, modelName);
                         m_nlpModuleFunctions[moduleName].insert_or_assign(modelName, std::weak_ptr<py::object>{});
-                        // 不重启会找不到新下载的模型...因为已导入的 nlp 库模块不会 reload
+                        // 不重启会找不到新下载的模型，因为已导入的 nlp 库模块不会 reload
+                        // 理论上强制 reload 一遍 nlp 库也可以不用重启，不过保险起见
                         needReboot = true;
                         return;
                     }

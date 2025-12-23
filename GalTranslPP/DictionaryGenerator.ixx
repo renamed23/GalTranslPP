@@ -2,7 +2,6 @@
 
 #include <spdlog/spdlog.h>
 #include <boost/regex.hpp>
-#include <cpr/cpr.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 
@@ -10,7 +9,6 @@ export module DictionaryGenerator;
 
 import APIPool;
 import Dictionary;
-import PythonManager;
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -277,21 +275,20 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
         return;
     }
     std::string text = m_segments[segmentIndex];
-    std::string hint = "无";
-    std::string nameHit;
+    std::string hint;
     for (const auto& name : m_nameSet) {
         if (text.contains(name)) {
-            nameHit += name + "\n";
+            hint += name + "\n";
         }
     }
-    if (!nameHit.empty()) {
-        hint = "输入文本中的这些词语是一定要加入术语表的: \n" + nameHit;
+    if (!hint.empty()) {
+        hint = "输入文本中的这些词语是一定要加入术语表的: \n" + hint;
     }
 
     std::string prompt = m_userPrompt;
     replaceStrInplace(prompt, "[TargetLang]", m_targetLang);
-    replaceStrInplace(prompt, "{input}", text);
-    replaceStrInplace(prompt, "{hint}", hint);
+    replaceStrInplace(prompt, "[Input]", text);
+    replaceStrInplace(prompt, "[Hint]", hint.empty() ? "None" : hint);
 
     json messages = json::array({
         {{"role", "system"}, {"content", m_systemPrompt}},

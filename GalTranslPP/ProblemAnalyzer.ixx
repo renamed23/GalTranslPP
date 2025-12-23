@@ -222,7 +222,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
                     if (result.language == chrome_lang_id::NNetLanguageIdentifier::kUnknown) {
                         break;
                     }
-                    m_logger->trace("CLD3: {} -> {} ({}, {}, {})", origText, result.language, result.is_reliable, result.probability, result.proportion);
+                    //m_logger->trace("CLD3: {} -> {} ({}, {}, {})", origText, result.language, result.is_reliable, result.probability, result.proportion);
                     if (result.probability < m_probabilityThreshold) {
                         continue;
                     }
@@ -238,7 +238,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
                     if (result.language == chrome_lang_id::NNetLanguageIdentifier::kUnknown) {
                         break;
                     }
-                    m_logger->trace("CLD3: {} -> {} ({}, {}, {})", transView, result.language, result.is_reliable, result.probability, result.proportion);
+                    //m_logger->trace("CLD3: {} -> {} ({}, {}, {})", transView, result.language, result.is_reliable, result.probability, result.proportion);
                     if (result.probability < m_probabilityThreshold) {
                         continue;
                     }

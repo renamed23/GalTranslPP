@@ -83,7 +83,7 @@ void CommonNormalDictPage::_setupUI()
 
 	auto createNormalTab = [=](const fs::path& orgDictPath) -> QWidget*
 		{
-			fs::path dictPath = L"BaseConfig/Dict/" + ascii2Wide(_modePath) + L"/" + fs::path(orgDictPath.filename()).replace_extension(L".toml").wstring();
+			fs::path dictPath = defaultDictPath / ascii2Wide(_modePath) / orgDictPath.filename().replace_extension(L".toml");
 			std::string dictName = wide2Ascii(orgDictPath.stem().wstring());
 			NormalTabEntry normalTabEntry;
 
@@ -390,11 +390,13 @@ void CommonNormalDictPage::_setupUI()
 
 					fs::path oldDictPath = it->dictPath;
 					std::string oldDictName = wide2Ascii(oldDictPath.stem().wstring());
-					fs::path newDictPath = L"BaseConfig/Dict/" + ascii2Wide(_modePath) + L"/" + newDictName.toStdWString() + L".toml";
+					fs::path newDictPath = defaultDictPath / ascii2Wide(_modePath) / (newDictName.toStdWString() + L".toml");
 					try {
 						if (fs::exists(oldDictPath)) {
-							std::error_code ec;
-							fs::rename(oldDictPath, newDictPath, ec);
+							try {
+								fs::rename(oldDictPath, newDictPath);
+							}
+							catch(...) { }
 						}
 						it->dictPath = newDictPath;
 						auto& dictNames = _globalConfig[_modeConfig]["dictNames"];
@@ -458,8 +460,10 @@ void CommonNormalDictPage::_setupUI()
 						{
 							pageMainWidget->deleteLater();
 							tabWidget->removeTab(tabWidget->indexOf(pageMainWidget));
-							std::error_code ec;
-							fs::remove(it->dictPath, ec);
+							try {
+								fs::remove(it->dictPath);
+							}
+							catch(...) { }
 							_normalTabEntries.erase(it);
 							auto& dictNames = _globalConfig[_modeConfig]["dictNames"];
 							if (dictNames.is_array()) {
@@ -503,7 +507,7 @@ void CommonNormalDictPage::_setupUI()
 				it = commonNormalDicts.as_array().erase(it);
 				continue;
 			}
-			fs::path dictPath = L"BaseConfig/Dict/" + ascii2Wide(_modePath) + L"/" + ascii2Wide(it->as_string()) + L".toml";
+			fs::path dictPath = defaultDictPath / ascii2Wide(_modePath) / (ascii2Wide(it->as_string()) + L".toml");
 			if (!fs::exists(dictPath)) {
 				it = commonNormalDicts.as_array().erase(it);
 				continue;
@@ -528,13 +532,13 @@ void CommonNormalDictPage::_setupUI()
 			}
 			insertToml(_globalConfig, "lastCommonNormalDictPath", importDictPathStr.toStdString());
 			fs::path importDictPath = importDictPathStr.toStdWString();
-			fs::path newDictPath = L"BaseConfig/Dict/" + ascii2Wide(_modePath) + L"/" + importDictPath.stem().wstring() + L".toml";
+			fs::path newDictPath = defaultDictPath / ascii2Wide(_modePath) / (importDictPath.stem().wstring() + L".toml");
 			if (fs::exists(newDictPath) && !fs::equivalent(importDictPath, newDictPath)) {
 				try {
 					fs::remove(newDictPath);
 				}
 				catch (...) {
-					ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("导入失败"), tr("文件删除失败"), 3000);
+					ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("导入失败"), tr("原文件删除失败"), 3000);
 					return;
 				}
 			}
@@ -569,7 +573,7 @@ void CommonNormalDictPage::_setupUI()
 				return;
 			}
 
-			fs::path newDictPath = L"BaseConfig/Dict/" + ascii2Wide(_modePath) + L"/" + dictName.toStdWString() + L".toml";
+			fs::path newDictPath = defaultDictPath / ascii2Wide(_modePath) / (dictName.toStdWString() + L".toml");
 			bool hasSameNameTab = std::ranges::any_of(_normalTabEntries, [=](const NormalTabEntry& entry)
 				{
 					return entry.dictPath.stem().wstring() == dictName.toStdWString();

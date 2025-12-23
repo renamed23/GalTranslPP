@@ -17,6 +17,9 @@
 #include "ElaDoubleText.h"
 
 import Tool;
+import NJ_ImplTool;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
 OtherSettingsPage::OtherSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) :
 	BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)
@@ -146,6 +149,130 @@ void OtherSettingsPage::_setupUI()
 		});
 	renameLayout->addWidget(renameButton);
 	mainLayout->addWidget(renameArea);
+
+
+	// 导入翻译问题概览至翻译缓存
+	ElaScrollPageArea* importArea = new ElaScrollPageArea(mainWidget);
+	QHBoxLayout* importLayout = new QHBoxLayout(importArea);
+	ElaDoubleText* importLabel = new ElaDoubleText(importArea,
+		tr("导入翻译问题概览至翻译缓存"), 16, tr("使用 翻译问题概览.json/.toml 中的 Sentence 替换 trans_cache 中的 Sentence"), 10, "");
+	importLayout->addWidget(importLabel);
+	importLayout->addStretch();
+	ElaPushButton* importButton = new ElaPushButton(importArea);
+	importButton->setText(tr("导入"));
+	connect(importButton, &ElaPushButton::clicked, this, [=]()
+		{
+			if (toml::find_or(_projectConfig, "GUIConfig", "isRunning", true)) {
+				ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("导入失败"), tr("项目仍在运行中，无法导入"), 3000);
+				return;
+			}
+			QString importOverviewPathStr = QFileDialog::getOpenFileName(this, tr("选择翻译问题概览文件"), QString(_projectDir.wstring()),
+				"JSON files (*.json);;TOML files (*.toml)");
+			if (importOverviewPathStr.isEmpty()) {
+				return;
+			}
+			try {
+				std::unordered_map<std::string, std::vector<json>> overviewFileMap;
+				std::vector<std::string> problems;
+				std::ifstream ifs;
+				std::ofstream ofs;
+				size_t importCount = 0;
+
+				{
+					json overviewData;
+					if (importOverviewPathStr.endsWith(".json", Qt::CaseInsensitive)) {
+						ifs.open(importOverviewPathStr.toStdWString());
+						overviewData = json::parse(ifs);
+						ifs.close();
+					}
+					else if (importOverviewPathStr.endsWith(".toml", Qt::CaseInsensitive)) {
+						const auto tomlData = toml::parse(fs::path(importOverviewPathStr.toStdWString()));
+						overviewData = toml2Json(tomlData.at("problemOverview"));
+					}
+					else {
+						throw std::runtime_error("未知的文件类型");
+					}
+					for (const auto& overviewItem : overviewData) {
+						overviewFileMap[overviewItem["filename"].get<std::string>()].push_back(overviewItem);
+					}
+				}
+
+				for (const auto& [cacheFileName, overviewItems] : overviewFileMap) {
+					const fs::path cachePath = _projectDir / L"transl_cache" / ascii2Wide(cacheFileName);
+					if (!fs::exists(cachePath)) {
+						problems.push_back(std::format("[文件 {}] 未在 cache 中找到，跳过导入", cacheFileName));
+						continue;
+					}
+
+					json cacheData;
+					std::unordered_map<int, std::reference_wrapper<json>> cacheIndexMap;
+
+					try {
+						ifs.open(cachePath);
+						cacheData = json::parse(ifs);
+						for (auto& cacheItem : cacheData) {
+							cacheIndexMap.insert({ cacheItem["index"].get<int>(), cacheItem });
+						}
+					}
+					catch (...) {
+						ifs.close();
+						problems.push_back(std::format("[文件 {}] 无法解析，跳过导入", cacheFileName));
+						continue;
+					}
+					ifs.close();
+					size_t fileImportCount = 0;
+					for (const auto& overviewItem : overviewItems) {
+						int overviewItemIndex = overviewItem["index"].get<int>();
+						auto it = cacheIndexMap.find(overviewItemIndex);
+						if (it == cacheIndexMap.end()) {
+							problems.push_back(std::format("[文件 {}] 句子(index {}) 未在 cache 中找到，跳过导入", cacheFileName, overviewItemIndex));
+							continue;
+						}
+						auto& cacheItem = it->second.get();
+						std::string overviewItemOrigText = overviewItem["original_text"].get<std::string>();
+						std::string cacheItemOrigText = cacheItem["original_text"].get<std::string>();
+						if (overviewItemOrigText != cacheItemOrigText) {
+							problems.push_back(std::format("[文件 {}] 句子(index {}) 与 cache 中原文不匹配，可能产生意外结果，\n概览原文: {}\n缓存原文: {}",
+								cacheFileName, overviewItemIndex, overviewItemOrigText, cacheItemOrigText));
+						}
+						cacheItem = overviewItem;
+						cacheItem.erase("filename");
+						++fileImportCount;
+					}
+					if (fileImportCount != 0) {
+						ofs.open(cachePath);
+						if (!ofs.is_open()) {
+							problems.push_back(std::format("[文件 {}] 无法写入，跳过导入", cacheFileName));
+							continue;
+						}
+						ofs << cacheData.dump(2);
+						ofs.close();
+						importCount += fileImportCount;
+					}
+				}
+
+				QString completeStr = tr("成功导入 ") + QString::number(importCount) + tr(" 个句子至 trans_cache");
+				if (!problems.empty()) {
+					const fs::path problemPath = _projectDir / L"import_problems.log";
+					std::ofstream ofs(problemPath);
+					for (const auto& problem : problems) {
+						ofs << problem << "\n";
+					}
+					ofs << completeStr.toStdString() << "\n";
+					ofs.close();
+					ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("导入完毕"), tr("导入中出现的问题记录在 import_problems.log 中"), 3000);
+				}
+				else {
+					ElaMessageBar::success(ElaMessageBarType::TopRight, tr("导入完毕"), completeStr, 3000);
+				}
+			}
+			catch (const std::exception& e) {
+				ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("导入失败"), QString(e.what()), 3000);
+				return;
+			}
+		});
+	importLayout->addWidget(importButton);
+	mainLayout->addWidget(importArea);
 
 
 	// 保存配置

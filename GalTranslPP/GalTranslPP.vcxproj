@@ -181,6 +181,7 @@
     <ClCompile Include="LuaManager.ixx" />
     <ClCompile Include="LuaTextPlugin.ixx" />
     <ClCompile Include="LuaTranslator.ixx" />
+    <ClCompile Include="NameTranslator.ixx" />
     <ClCompile Include="NJ_ImplTool.ixx" />
     <ClCompile Include="NLPTool.ixx" />
     <ClCompile Include="NormalJsonTranslator.cpp" />

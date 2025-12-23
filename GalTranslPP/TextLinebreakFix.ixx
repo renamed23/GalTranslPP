@@ -15,7 +15,7 @@ export {
 
 	enum class LinebreakFixMode
 	{
-		None, Average, FixCharCount, KeepPositions, PreferPunctuations, NOTFIX
+		None, Average, FixCharCount, KeepPositions, PreferPunctuations, NotFix
 	};
 
 	class TextLinebreakFix {
@@ -78,7 +78,7 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 			m_mode = LinebreakFixMode::PreferPunctuations;
 		}
 		else if (linebreakMode == "不修改") {
-			m_mode = LinebreakFixMode::NOTFIX;
+			m_mode = LinebreakFixMode::NotFix;
 		}
 		else {
 			throw std::invalid_argument("TextLinebreakFix 无效的换行模式: " + linebreakMode);
@@ -176,7 +176,7 @@ void TextLinebreakFix::run(Sentence* se)
 		};
 
 	if (
-		(m_mode == LinebreakFixMode::NOTFIX) ||
+		(m_mode == LinebreakFixMode::NotFix) ||
 		(transLinebreakCount == origLinebreakCount && !m_forceFix)
 		) {
 		checkLineCharCountFunc(se->translated_preview);

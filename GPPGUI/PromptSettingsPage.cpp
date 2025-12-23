@@ -33,7 +33,7 @@ PromptSettingsPage::PromptSettingsPage(fs::path& projectDir, toml::ordered_value
 				QString(_projectDir.filename().wstring()) + tr(" 的提示词配置文件不符合标准。"), 3000);
 		}
 	}
-	else if (fs::exists(L"BaseConfig/Prompt.toml")) {
+	else if (fs::exists(defaultPromptPath)) {
 		try {
 			_promptConfig = toml::parse<toml::ordered_type_config>(_projectDir / L"Prompt.toml");
 		}
@@ -128,11 +128,12 @@ void PromptSettingsPage::_setupUI()
 			return result;
 		};
 
-	auto forgalJsonApplyFunc = createPromptWidgetFunc(tr("ForGalJson"), "FORGALJSON_TRANS_PROMPT_EN", "FORGALJSON_SYSTEM");
-	auto forgalTsvApplyFunc = createPromptWidgetFunc(tr("ForGalTsv"), "FORGALTSV_TRANS_PROMPT_EN", "FORGALTSV_SYSTEM");
-	auto forNovelTsvApplyFunc = createPromptWidgetFunc(tr("ForNovelTsv"), "FORNOVELTSV_TRANS_PROMPT_EN", "FORNOVELTSV_SYSTEM");
-	auto sakuraApplyFunc = createPromptWidgetFunc(tr("Sakura"), "SAKURA_TRANS_PROMPT", "SAKURA_SYSTEM_PROMPT");
-	auto gendicApplyFunc = createPromptWidgetFunc(tr("GenDict"), "GENDIC_PROMPT", "GENDIC_SYSTEM");
+	auto forgalJsonApplyFunc = createPromptWidgetFunc("ForGalJson", "FORGALJSON_TRANS_PROMPT_EN", "FORGALJSON_SYSTEM");
+	auto forgalTsvApplyFunc = createPromptWidgetFunc("ForGalTsv", "FORGALTSV_TRANS_PROMPT_EN", "FORGALTSV_SYSTEM");
+	auto forNovelTsvApplyFunc = createPromptWidgetFunc("ForNovelTsv", "FORNOVELTSV_TRANS_PROMPT_EN", "FORNOVELTSV_SYSTEM");
+	auto sakuraApplyFunc = createPromptWidgetFunc("Sakura", "SAKURA_TRANS_PROMPT", "SAKURA_SYSTEM_PROMPT");
+	auto gendictApplyFunc = createPromptWidgetFunc("GenDict", "GENDIC_PROMPT", "GENDIC_SYSTEM");
+	auto nametransApplyFunc = createPromptWidgetFunc("NameTrans", "NAMETRANS_PROMPT", "NAMETRANS_SYSTEM");
 
 	_applyFunc = [=]()
 		{
@@ -140,7 +141,8 @@ void PromptSettingsPage::_setupUI()
 			forgalTsvApplyFunc();
 			forNovelTsvApplyFunc();
 			sakuraApplyFunc();
-			gendicApplyFunc();
+			gendictApplyFunc();
+			nametransApplyFunc();
 			std::ofstream ofs(_projectDir / L"Prompt.toml");
 			ofs << toml::format(_promptConfig);
 			ofs.close();

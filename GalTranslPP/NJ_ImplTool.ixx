@@ -4,6 +4,7 @@
 #include <toml.hpp>
 #include <unicode/regex.h>
 #include <unicode/unistr.h>
+#include <unicode/brkiter.h>
 #include <boost/regex.hpp>
 
 export module NJ_ImplTool;
@@ -36,6 +37,7 @@ export {
 
     std::vector<json> splitJsonArrayEqual(const json& originalData, int numParts);
 
+    json toml2Json(const toml::value& value);
     ordered_json toml2Json(const toml::ordered_value& tomlData);
 }
 
@@ -244,6 +246,20 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             std::string background = match[1].str();
             replaceStrInplace(background, "<ORIGINAL>", backgroudText);
             backgroudText = std::move(background);
+            UErrorCode errorCode = U_ZERO_ERROR;
+            icu::UnicodeString uString = icu::UnicodeString::fromUTF8(backgroudText);
+            std::unique_ptr<icu::BreakIterator> breakIterator(
+                icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
+            );
+            if (U_FAILURE(errorCode)) {
+                throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
+            }
+            breakIterator->setText(uString);
+            int32_t pos = breakIterator->next(256);
+            if (pos != icu::BreakIterator::DONE) {
+                backgroudText.clear();
+                uString.tempSubString(0, pos).toUTF8String(backgroudText);
+            }
         }
         if (!showBackgroundText) {
             content = boost::regex_replace(content, backgroundRegex, "");
@@ -577,6 +593,36 @@ std::vector<json> splitJsonArrayEqual(const json& originalData, int numParts) {
         currentIndex += currentPartSize;
     }
     return parts;
+}
+
+json toml2Json(const toml::value& value) {
+    if (value.is_table()) {
+        json resultMap = json::object();
+        for (const auto& [key, val] : value.as_table()) {
+            resultMap[key] = toml2Json(val);
+        }
+        return resultMap;
+    }
+    else if (value.is_array()) {
+        json resultVec = json::array();
+        for (const auto& elem : value.as_array()) {
+            resultVec.push_back(toml2Json(elem));
+        }
+        return resultVec;
+    }
+    else if (value.is_string()) {
+        return value.as_string();
+    }
+    else if (value.is_integer()) {
+        return value.as_integer();
+    }
+    else if (value.is_floating()) {
+        return value.as_floating();
+    }
+    else if (value.is_boolean()) {
+        return value.as_boolean();
+    }
+    throw std::runtime_error("不支持的 TOML 数据类型");
 }
 
 ordered_json toml2Json(const toml::ordered_value& value) {
