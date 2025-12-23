@@ -1,9 +1,10 @@
-﻿#ifdef _WIN32
+﻿#define PYBIND11_HEADERS
+#include "../GalTranslPP/GPPMacros.hpp"
+
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 
-#define PYBIND11_HEADERS
-#include "../GalTranslPP/GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 
@@ -26,7 +27,7 @@ int main(int argc, char* argv[])
     std::unique_ptr<py::gil_scoped_release> release;
 
     try {
-        const auto globalConfig = toml::parse(fs::path(L"BaseConfig/globalConfig.toml"));
+        const auto globalConfig = toml::parse(globalConfigPath);
         const std::string& pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
 
         const fs::path pyEnvPath = ascii2Wide(pyEnvPathStr);
@@ -41,8 +42,6 @@ int main(int argc, char* argv[])
             if (!envZipPath.empty()) {
                 PyConfig config;
                 PyConfig_InitPythonConfig(&config);
-                config.parse_argv = 0;
-                config.install_signal_handlers = 1;
                 PyConfig_SetString(&config, &config.home, fs::canonical(pyEnvPath).c_str());
                 PyConfig_SetString(&config, &config.executable, fs::canonical(pyEnvPath / L"python.exe").c_str());
                 PyConfig_SetString(&config, &config.pythonpath_env, envZipPath.c_str());
