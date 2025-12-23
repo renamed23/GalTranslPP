@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({ QStringList{"promptVersion"}, "Version of Prompt.", "promptVersion" });
     parser.addOption({ QStringList{"dictVersion"}, "Version of dictionary.", "dictVersion" });
     parser.addOption({ QStringList{"qtVersion"}, "Version of QT.", "qtVersion" });
+    parser.addOption({ QStringList{"icuVersion"}, "Version of ICU.", "icuVersion" });
     parser.process(a);
 
     qint64 pid = parser.value("pid").toLongLong();
@@ -80,6 +81,7 @@ int main(int argc, char* argv[]) {
         std::string orgPromptVersion = parser.isSet("promptVersion") ? parser.value("promptVersion").toStdString() : "1.0.0";
         std::string orgDictVersion = parser.isSet("dictVersion") ? parser.value("dictVersion").toStdString() : "1.0.0";
         std::string orgQtVersion = parser.isSet("qtVersion") ? parser.value("qtVersion").toStdString() : "6.9.2";
+        std::string orgIcuVersion = parser.isSet("icuVersion") ? parser.value("icuVersion").toStdString() : "7.4.0";
 
         if (cmpVer("2.1.1", orgGppVersion, isCompatible)) {
 #ifdef Q_OS_WIN
@@ -125,6 +127,22 @@ int main(int argc, char* argv[]) {
                 }
 #endif
             }
+            if (cmpVer(ICUVERSION, orgIcuVersion, isCompatible)) {
+                try {
+                    const std::vector<std::string> orgVerStrVec = splitString(orgIcuVersion, '.');
+                    const std::wstring orgVerStr = ascii2Wide(orgVerStrVec.at(0) + orgVerStrVec.at(1));
+                    const std::vector<std::wstring> icuDlls = { L"icudt", L"icuin", L"icuuc" };
+                    for (const auto& icuDll : icuDlls) {
+#ifdef Q_OS_WIN
+                        const fs::path dllPath = L"../" + icuDll + orgVerStr + L".dll";
+#endif
+                        if (fs::exists(dllPath)) {
+                            fs::remove(dllPath);
+                        }
+                    }
+                }
+                catch(...) { }
+            }
             extractZipExclude(sourceZip.toStdWString(), targetDir.toStdWString(), excludePreFixes);
 
 #ifdef Q_OS_WIN
@@ -164,6 +182,7 @@ int main(int argc, char* argv[]) {
         arguments << "--promptVersion" << QString::fromStdString(PROMPTVERSION);
         arguments << "--dictVersion" << QString::fromStdString(DICTVERSION);
         arguments << "--qtVersion" << QString::fromStdString(QTVERSION);
+        arguments << "--icuVersion" << QString::fromStdString(ICUVERSION);
         if (parser.isSet("restart")) {
             arguments << "--restart" << parser.value("restart");
         }

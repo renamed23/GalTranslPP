@@ -11,6 +11,7 @@ export {
     const std::string PROMPTVERSION = "2.0.0";
     const std::string DICTVERSION = "1.0.2";
     const std::string QTVERSION = "6.9.2";
+    const std::string ICUVERSION = "7.8.0";
 
     const fs::path baseConfigPath = fs::current_path() / L"BaseConfig";
     const fs::path globalConfigPath = baseConfigPath / L"globalConfig.toml";
