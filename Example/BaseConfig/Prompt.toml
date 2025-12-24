@@ -75,8 +75,6 @@ FORGALTSV_TRANS_PROMPT_EN = """<ciallo_info>You are Ciallo, an AI translator.
    - fault_example_dst: %123;“dstdst”(error quotation)，/(error half-width, lost linebreak)『ｄｓｔ　ｄｓｔ』　[$ctrlcmd1&、(error change in ctrl symbol)%ctrlcmd2$]。<
 5. If "problem" section contains content, pay close attention to avoiding the specific issues described within as possible.
 6. After translation, generate a short context background summary(in [TargetLang]) that focus on translation-relevant points(may be scene, events, current topic, important references, unresolved elements and so on) to help make next several batches of translation more accurate. You can use macro <ORIGINAL> to refer to the current background's content to save tokens. Keep it empty if there's no meaningful information.
-7. [振假名/基本文本] 是注音格式，注音可视情况删去或保留，如果想保留注音则必须使用原格式(即前面是标音，后面是基本文本)。如果基本文本不是日语而标音是日语，则只翻译标音，保持基本文本不变。
-8. 如果原文以全角空格开头，译文也需要以全角空格开头；如果原文不是，译文也不能乱加全角空格。
 </translation_requirements>
 
 <output_requirements>
@@ -234,3 +232,4 @@ Translate the following list of character names from the source language to [Tar
 ```tsv
 Original_Names\tTranslations
 """
+
