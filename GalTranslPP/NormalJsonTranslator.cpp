@@ -103,7 +103,8 @@ void NormalJsonTranslator::init()
         m_sortMethod = toml::find_or(configData, "common", "sortMethod", "name");
         m_targetLang = toml::find_or(configData, "common", "targetLang", "zh-cn");
         m_splitFile = toml::find_or(configData, "common", "splitFile", "no");
-        m_splitFileNum = toml::find_or(configData, "common", "splitFileNum", 25);
+        m_splitFileNum = toml::find_or(configData, "common", "splitFileNum", 10);
+        m_cacheDistance = toml::find_or(configData, "common", "cacheDistance", 5);
         m_saveCacheInterval = toml::find_or(configData, "common", "saveCacheInterval", 1);
         m_linebreakSymbol = toml::find_or(configData, "common", "linebreakSymbol", "auto");
         m_maxRetries = toml::find_or(configData, "common", "maxRetries", 5);
@@ -225,7 +226,7 @@ void NormalJsonTranslator::init()
 
                 fs::path promptPath = m_projectDir / L"Prompt.toml";
                 if (!fs::exists(promptPath)) {
-                    promptPath = L"BaseConfig/Prompt.toml";
+                    promptPath = defaultPromptPath;
                     if (!fs::exists(promptPath)) {
                         throw std::runtime_error("找不到 Prompt.toml 文件");
                     }
@@ -870,6 +871,12 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                         continue;
                     }
                     if (PathMatchSpecW(entry.path().filename().wstring().c_str(), cacheSpec.c_str())) {
+                        if (m_needsCombining) {
+                            int diff = calculateCachePartIndexDiff(relInputPath.wstring(), entry.path().wstring());
+                            if (diff > m_cacheDistance) {
+                                continue;
+                            }
+                        }
                         if (!std::ranges::contains(cachePaths, entry.path())) {
                             cachePaths.push_back(entry.path());
                         }

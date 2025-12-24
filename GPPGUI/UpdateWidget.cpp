@@ -24,6 +24,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
         "5. 新增功能 导入翻译问题概览至缓存（在其它设置里）",
         "6. 优化 GUI log 输出颜色",
         "7. API 调用现在会检测系统代理，如果有设置则自动使用",
+        "8. 新增设置项 分割缓存查找距离 以规范单文件分割翻译时读取缓存的贪婪程度",
     };
 
     mainLayout->addWidget(updateTitle);

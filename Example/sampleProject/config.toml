@@ -80,12 +80,13 @@ skipKeys = [
 "是否反向替换" = false  # false=全角->半角，true=半角->全角
 
 [common]
-numPerRequestTranslate = 8 # 单次请求翻译句子数量，推荐值 < 15
-threadsNum = 5             # 最大线程数
+numPerRequestTranslate = 8  # 单次请求翻译句子数量，推荐值 < 15
+threadsNum = 5              # 最大线程数
 sortMethod = "size"         # 翻译顺序，name为文件名，size为大文件优先，多线程时大文件优先可以提高整体速度[name/size]
 targetLang = "zh-cn"        # 翻译到的目标语言，包括但不限于[zh-cn/zh-tw/en/ja/ko/ru/fr]
 splitFile = "No"            # 是否启用单文件分割。Num: 每n条分割一次，Equal: 每个文件均分n份，No: 关闭单文件分割。[No/Num/Equal]
-splitFileNum = 10            # Num时，表示n句拆分一次；Equal时，表示每个文件均分拆成n部分
+splitFileNum = 10           # Num时，表示n句拆分一次；Equal时，表示每个文件均分拆成n部分
+cacheSearchDistance = 5     # [仅在开启单文件分割时生效]将自身索引 ±N 的分割文件均视为当前分割文件的缓存，数值越大可能占用更多内存
 saveCacheInterval = 1       # 每翻译n次保存一次缓存
 linebreakSymbol = "auto"    # 这个项目在json中使用的换行符
 maxRetries = 5              # 最大重试次数

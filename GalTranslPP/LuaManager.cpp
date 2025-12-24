@@ -516,6 +516,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 		"m_sortMethod", &NormalJsonTranslator::m_sortMethod,
 		"m_splitFile", &NormalJsonTranslator::m_splitFile,
 		"m_splitFileNum", &NormalJsonTranslator::m_splitFileNum,
+		"m_cacheDistance", &NormalJsonTranslator::m_cacheDistance,
 		"m_linebreakSymbol", &NormalJsonTranslator::m_linebreakSymbol,
 		"m_needsCombining", &NormalJsonTranslator::m_needsCombining,
 		"m_splitFilePartsToJson", NESTED_CVT(NormalJsonTranslator, m_splitFilePartsToJson),

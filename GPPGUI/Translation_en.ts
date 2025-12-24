@@ -848,7 +848,7 @@
         <translation type="vanished">Num: split every n sentences; Equal: split every file to n parts equally.</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="153"/>
+        <location filename="CommonSettingsPage.cpp" line="152"/>
         <source>分割数量</source>
         <translation>Split num</translation>
     </message>
@@ -857,32 +857,32 @@
         <translation type="vanished">n.</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="173"/>
+        <location filename="CommonSettingsPage.cpp" line="186"/>
         <source>缓存保存间隔</source>
         <translation>Save interval</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="173"/>
+        <location filename="CommonSettingsPage.cpp" line="186"/>
         <source>每翻译n次保存一次缓存</source>
         <translation>Save cache after every n translation rounds</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="186"/>
+        <location filename="CommonSettingsPage.cpp" line="199"/>
         <source>最大重试次数</source>
         <translation>Max retry count</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="200"/>
+        <location filename="CommonSettingsPage.cpp" line="213"/>
         <source>携带上文数量</source>
         <translation>Num of context to attached</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="216"/>
+        <location filename="CommonSettingsPage.cpp" line="229"/>
         <source>智能重试</source>
         <translation>Smart retry</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="229"/>
+        <location filename="CommonSettingsPage.cpp" line="242"/>
         <source>运行时动态检测key额度，自动从 API 池中删除额度不足的 key</source>
         <translation>Check quota dynamically during running, removing expired API from API pool automatically</translation>
     </message>
@@ -891,7 +891,7 @@
         <translation type="vanished">If parsing the result fails, try re-translating by halving the content and clearing the context to avoid ineffective retries.</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="229"/>
+        <location filename="CommonSettingsPage.cpp" line="242"/>
         <source>额度检测</source>
         <translation>Check quota</translation>
     </message>
@@ -905,83 +905,99 @@
         <translation>Num: split every n sentences; Equal: split every file to n parts equally</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="153"/>
+        <location filename="CommonSettingsPage.cpp" line="152"/>
         <source>Num时，表示n句拆分一次；Equal时，表示每个文件均分拆成n部分</source>
         <translation>n</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="216"/>
+        <location filename="CommonSettingsPage.cpp" line="166"/>
+        <source>分割缓存查找距离</source>
+        <oldsource>分割缓存贪婪查找</oldsource>
+        <translation>Splitted cache search distance</translation>
+    </message>
+    <message>
+        <location filename="CommonSettingsPage.cpp" line="166"/>
+        <source>将自身索引 ±N 的分割文件均视为当前分割文件的缓存</source>
+        <translation>Regard splitted files in the range self&apos;s index ±N as current file&apos;s cache</translation>
+    </message>
+    <message>
+        <location filename="CommonSettingsPage.cpp" line="166"/>
+        <source>数值越大可能占用更多内存</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="CommonSettingsPage.cpp" line="229"/>
         <source>解析结果失败时尝试折半重翻与清空上下文</source>
         <translation>If parsing the result fails, try re-translating by halving the content and clearing the context</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="242"/>
+        <location filename="CommonSettingsPage.cpp" line="255"/>
         <source>日志级别</source>
         <translation>Log level</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="266"/>
+        <location filename="CommonSettingsPage.cpp" line="279"/>
         <source>保存项目日志</source>
         <translation>Save project logs</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="276"/>
+        <location filename="CommonSettingsPage.cpp" line="289"/>
         <source>分词器设置</source>
         <translation>Tokenizer settings</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="279"/>
+        <location filename="CommonSettingsPage.cpp" line="292"/>
         <source>用于生成字典和查错的分词器后端及其设置(应选择适合原文的后端/模型/字典)</source>
         <oldsource>用于生成字典和查错的分词器后端及其设置(针对原文)</oldsource>
         <translation>Tokenizer used to generate dict and analyze problems with its configs(should choose a backend/model/dict fit to source lang)</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="287"/>
+        <location filename="CommonSettingsPage.cpp" line="300"/>
         <source>分词器后端</source>
         <translation>Tokenizer backend</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="287"/>
+        <location filename="CommonSettingsPage.cpp" line="300"/>
         <source>除了MeCab，剩下的都依赖Python，所以速度变慢或内存占用变大是正常的</source>
         <translation>spaCy and Stanza depend on Python</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="305"/>
+        <location filename="CommonSettingsPage.cpp" line="318"/>
         <source>MeCab词典目录</source>
         <translation>MeCab dict dir</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="305"/>
+        <location filename="CommonSettingsPage.cpp" line="318"/>
         <source>MeCab词典目录，程序自带一个</source>
         <translation>Dir of MeCab&apos;s dictionary</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="317"/>
+        <location filename="CommonSettingsPage.cpp" line="330"/>
         <source>选择MeCab词典目录</source>
         <translation>Choose MeCab dict dir</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="328"/>
+        <location filename="CommonSettingsPage.cpp" line="341"/>
         <source>spaCy模型名称</source>
         <translation>spaCy model name</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="328"/>
+        <location filename="CommonSettingsPage.cpp" line="341"/>
         <source>spaCy模型名称，新模型下载后需重启程序</source>
         <translation>spaCy model name, you need reboot app after downloading a new model</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="328"/>
+        <location filename="CommonSettingsPage.cpp" line="341"/>
         <source>sm模型的效果有点一言难尽，有条件的建议上trf模型</source>
         <translation>sm model is not so satisfying, use trf model if conditions allowing</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="348"/>
+        <location filename="CommonSettingsPage.cpp" line="361"/>
         <source>Stanza语言ID</source>
         <translation>Stanza lang id</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="348"/>
+        <location filename="CommonSettingsPage.cpp" line="361"/>
         <source>Stanza语言ID，新模型下载后需重启程序</source>
         <translation>Stanza lang id, you need reboot app after downloading a new model</translation>
     </message>
@@ -994,9 +1010,9 @@
         <translation type="vanished">can use relative path</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="313"/>
-        <location filename="CommonSettingsPage.cpp" line="336"/>
-        <location filename="CommonSettingsPage.cpp" line="356"/>
+        <location filename="CommonSettingsPage.cpp" line="326"/>
+        <location filename="CommonSettingsPage.cpp" line="349"/>
+        <location filename="CommonSettingsPage.cpp" line="369"/>
         <source>浏览</source>
         <translation>browse</translation>
     </message>
@@ -1005,23 +1021,23 @@
         <translation type="vanished">Choose dict dir</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="370"/>
+        <location filename="CommonSettingsPage.cpp" line="383"/>
         <source>本项目所使用的换行符</source>
         <translation>Linebreak symbol used in this project</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="373"/>
+        <location filename="CommonSettingsPage.cpp" line="386"/>
         <source>将换行符统一规范为 &amp;lt;br&amp;gt; 以方便检错和修复，也可以让如全角半角转化等插件方便忽略换行。&lt;br&gt;具体替换时机详见使用说明，auto为自动检测</source>
         <oldsource>将换行符统一规范为 &amp;lt;br&amp;gt; 以方便检错和修复，也可以让如全角半角转化等插件方便忽略换行，具体替换时机详见使用说明，auto为自动检测</oldsource>
         <translation>All linebreak symbols will be replaced to &amp;lt;br&amp;gt; for programming use</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="420"/>
+        <location filename="CommonSettingsPage.cpp" line="434"/>
         <source>解析失败</source>
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="420"/>
+        <location filename="CommonSettingsPage.cpp" line="434"/>
         <source>linebreakSymbol不符合 toml 规范</source>
         <translation>linebreakSymbol is nonconforming</translation>
     </message>

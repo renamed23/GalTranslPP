@@ -128,8 +128,7 @@ void CommonSettingsPage::_setupUI()
 	connect(splitGroup, &QButtonGroup::buttonToggled, this, [=](QAbstractButton* button, bool checked)
 		{
 			if (checked) {
-				std::string value = button->text().toStdString();
-				if (value == "No") {
+				if (button->text() == "No") {
 					splitArea->collapse();
 				}
 				else {
@@ -147,7 +146,7 @@ void CommonSettingsPage::_setupUI()
 
 	// Num时，表示n句拆分一次；Equal时，表示每个文件均分拆成n部分。
 	int splitNum = toml::find_or(_projectConfig, "common", "splitFileNum", 1024);
-	QWidget* splitNumArea = new QWidget(splitArea);
+	ElaScrollPageArea* splitNumArea = new ElaScrollPageArea(splitArea);
 	QHBoxLayout* splitNumLayout = new QHBoxLayout(splitNumArea);
 	ElaDoubleText* splitNumTextWidget = new ElaDoubleText(splitNumArea,
 		tr("分割数量"), 16, tr("Num时，表示n句拆分一次；Equal时，表示每个文件均分拆成n部分"), 10, "");
@@ -158,6 +157,20 @@ void CommonSettingsPage::_setupUI()
 	splitNumSpinBox->setValue(splitNum);
 	splitNumLayout->addWidget(splitNumSpinBox);
 	splitArea->addDrawer(splitNumArea);
+
+	// 分割缓存查找距离
+	int cacheSearchDistance = toml::find_or(_projectConfig, "common", "cacheSearchDistance", 5);
+	ElaScrollPageArea* cacheSearchDistanceArea = new ElaScrollPageArea(splitArea);
+	QHBoxLayout* cacheSearchDistanceLayout = new QHBoxLayout(cacheSearchDistanceArea);
+	ElaDoubleText* cacheSearchDistanceTextWidget = new ElaDoubleText(cacheSearchDistanceArea,
+		tr("分割缓存查找距离"), 16, tr("将自身索引 ±N 的分割文件均视为当前分割文件的缓存"), 10, tr("数值越大可能占用更多内存"));
+	cacheSearchDistanceLayout->addWidget(cacheSearchDistanceTextWidget);
+	cacheSearchDistanceLayout->addStretch();
+	ElaSpinBox* cacheSearchDistanceSpinBox = new ElaSpinBox(cacheSearchDistanceArea);
+	cacheSearchDistanceSpinBox->setRange(0, 10000);
+	cacheSearchDistanceSpinBox->setValue(cacheSearchDistance);
+	cacheSearchDistanceLayout->addWidget(cacheSearchDistanceSpinBox);
+	splitArea->addDrawer(cacheSearchDistanceArea);
 	if (split == "No") {
 		splitArea->collapse();
 	}
@@ -394,6 +407,7 @@ void CommonSettingsPage::_setupUI()
 			insertToml(_projectConfig, "common.targetLang", targetLineEdit->text().toStdString());
 			insertToml(_projectConfig, "common.splitFile", splitGroup->checkedButton()->text().toStdString());
 			insertToml(_projectConfig, "common.splitFileNum", splitNumSpinBox->value());
+			insertToml(_projectConfig, "common.cacheSearchDistance", cacheSearchDistanceSpinBox->value());
 			insertToml(_projectConfig, "common.saveCacheInterval", cacheSpinBox->value());
 			insertToml(_projectConfig, "common.maxRetries", retrySpinBox->value());
 			insertToml(_projectConfig, "common.contextHistorySize", contextSpinBox->value());

@@ -37,6 +37,8 @@ export {
 
     std::vector<json> splitJsonArrayEqual(const json& originalData, int numParts);
 
+    int calculateCachePartIndexDiff(const std::wstring& path1, const std::wstring& path2);
+
     json toml2Json(const toml::value& value);
     ordered_json toml2Json(const toml::ordered_value& tomlData);
 }
@@ -593,6 +595,16 @@ std::vector<json> splitJsonArrayEqual(const json& originalData, int numParts) {
         currentIndex += currentPartSize;
     }
     return parts;
+}
+
+int calculateCachePartIndexDiff(const std::wstring& path1, const std::wstring& path2) {
+    auto getIndexFunc = [](const std::wstring& path) -> int
+        {
+            size_t pos1 = path.find_last_of(L'_') + 1;
+            size_t pos2 = path.find_last_of(L'.');
+            return std::stoi(path.substr(pos1, pos2 - pos1));
+        };
+    return getIndexFunc(path1) - getIndexFunc(path2);
 }
 
 json toml2Json(const toml::value& value) {
