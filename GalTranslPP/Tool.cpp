@@ -4,10 +4,7 @@ module;
 #ifdef _WIN32
 #include <Windows.h>
 #pragma comment(lib, "Shlwapi.lib")
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "crypt32.lib")
-#pragma comment(lib, "Iphlpapi.lib")
-#pragma comment(lib, "Secur32.lib")
+#pragma comment(lib, "winhttp.lib")
 #endif
 
 #define BIT7Z_AUTO_FORMAT

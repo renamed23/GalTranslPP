@@ -25,7 +25,10 @@ export {
 
     class NormalJsonTranslator : public ITranslator {
     public:
+        friend void pybind11_init_gpp_plugin_api(::pybind11::module_& m);
+        friend class LuaManager;
 
+    protected:
         TransEngine m_transEngine;
         std::shared_ptr<IController> m_controller;
         std::shared_ptr<spdlog::logger> m_logger;

@@ -1,5 +1,7 @@
 ﻿module;
 
+#define PYBIND11_HEADERS
+#include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 
@@ -15,9 +17,11 @@ using json = nlohmann::json;
 export {
 
     class PDFTranslator : public NormalJsonTranslator {
-
     public:
+        friend void pybind11_init_gpp_plugin_api(::pybind11::module_& m);
+        friend class LuaManager;
 
+    protected:
         fs::path m_pdfInputDir;
         fs::path m_pdfOutputDir;
 

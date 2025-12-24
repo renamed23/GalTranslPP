@@ -1,5 +1,9 @@
 ﻿module;
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winhttp.h>
+#endif
 #include <spdlog/spdlog.h>
 #include <boost/regex.hpp>
 #include <cpr/cpr.h>
@@ -40,6 +44,44 @@ export {
 
 module :private;
 
+#ifdef _WIN32
+// Windows下获取系统代理的辅助函数
+std::string getSystemProxyUrl() {
+    std::string proxyUrl;
+    WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyConfig;
+    // 获取当前用户的代理配置
+    if (WinHttpGetIEProxyConfigForCurrentUser(&proxyConfig)) {
+        if (proxyConfig.lpszProxy) {
+            // lpszProxy 是宽字符 (wstring)，需要转换为 string
+            proxyUrl = wide2Ascii(proxyConfig.lpszProxy);
+            // 这里的 proxyUrl 可能是 "127.0.0.1:7890" 这种格式
+            // 或者是 "http=127.0.0.1:7890;https=..." 这种复杂格式
+            // 为了简单起见，如果包含分号，我们只取第一个
+            if (size_t pos = proxyUrl.find(';'); pos != std::string::npos) {
+                proxyUrl = proxyUrl.substr(0, pos);
+            }
+            // 如果没有协议头，补上 http:// (cpr需要)
+            if (!proxyUrl.contains("://") && !proxyUrl.contains("=")) {
+                proxyUrl = "http://" + proxyUrl;
+            }
+            GlobalFree(proxyConfig.lpszProxy);
+        }
+        if (proxyConfig.lpszAutoConfigUrl) GlobalFree(proxyConfig.lpszAutoConfigUrl);
+        if (proxyConfig.lpszProxyBypass) GlobalFree(proxyConfig.lpszProxyBypass);
+    }
+    return proxyUrl;
+}
+#else
+// Linux/Mac 下获取环境变量
+std::string getSystemProxyUrl() {
+    const char* proxy = std::getenv("http_proxy");
+    if (proxy) return std::string(proxy);
+    proxy = std::getenv("HTTP_PROXY");
+    if (proxy) return std::string(proxy);
+    return "";
+}
+#endif
+
 ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi, int threadId,
     std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, const int apiTimeOutMs) {
     ApiResponse apiResponse;
@@ -66,6 +108,13 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
         payloadStr = onPerformApi(payloadStr);
     }
 
+    cpr::Proxies proxies;
+    if (std::string systemProxy = getSystemProxyUrl(); !systemProxy.empty()) {
+        // 同时设置 http 和 https 代理
+        logger->debug("使用系统代理: [{}]", systemProxy);
+        proxies = cpr::Proxies{ {"http", systemProxy}, {"https", systemProxy} };
+    }
+
     if (api.stream) {
         // =================================================
         // ===========   流式请求处理路径   ================
@@ -74,7 +123,7 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
         std::string sseBuffer;
 
         // 1. 定义一个符合 cpr::WriteCallback 构造函数要求的 lambda
-        auto callbackLambda = [&](const std::string_view& data, intptr_t userdata) -> bool
+        auto callbackLambda = [&](std::string_view data, intptr_t userdata) -> bool
             {
                 // 将接收到的数据块(string_view)追加到缓冲区(string)
                 logger->trace("[线程 {}] 接收到流式数据块: {}", threadId, replaceStr(std::string(data), "\n", "[n]"));
@@ -114,7 +163,8 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
             cpr::Body{ payloadStr },
             cpr::Header{ {"Content-Type", "application/json"}, {"Authorization", "Bearer " + api.apikey} },
             cpr::Timeout{ apiTimeOutMs },
-            writeCallbackInstance // 传递类的实例
+            writeCallbackInstance, // 传递类的实例
+            proxies
         );
 
         apiResponse.statusCode = response.status_code;
@@ -136,7 +186,8 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
             cpr::Url{ api.apiurl },
             cpr::Body{ payloadStr },
             cpr::Header{ {"Content-Type", "application/json"}, {"Authorization", "Bearer " + api.apikey} },
-            cpr::Timeout{ apiTimeOutMs }
+            cpr::Timeout{ apiTimeOutMs },
+            proxies
         );
 
         apiResponse.statusCode = response.status_code;

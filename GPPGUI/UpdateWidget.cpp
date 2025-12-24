@@ -23,6 +23,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
         "4. 新增翻译模式 NameTrans",
         "5. 新增功能 导入翻译问题概览至缓存（在其它设置里）",
         "6. 优化 GUI log 输出颜色",
+        "7. API 调用现在会检测系统代理，如果有设置则自动使用",
     };
 
     mainLayout->addWidget(updateTitle);

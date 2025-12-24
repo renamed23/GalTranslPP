@@ -1,5 +1,7 @@
 ﻿module;
 
+#define PYBIND11_HEADERS
+#include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <unicode/regex.h>
 #include <unicode/unistr.h>
@@ -46,9 +48,11 @@ export {
     };
 
     class EpubTranslator : public NormalJsonTranslator {
-
     public:
+        friend void pybind11_init_gpp_plugin_api(::pybind11::module_& m);
+        friend class LuaManager;
 
+    protected:
         fs::path m_epubInputDir;
         fs::path m_epubOutputDir;
         fs::path m_tempUnpackDir;

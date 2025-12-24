@@ -286,11 +286,9 @@ void StartSettingsPage::_setupUI()
 						else if (line.contains(" debug]", Qt::CaseInsensitive)) {
 							fmt.setForeground(QColor(Qt::darkBlue));
 						}
-
 						// 应用格式并插入文本
 						tempCursor.setCharFormat(fmt);
 						tempCursor.insertText(line);
-
 						// 补回换行符 (因为 split 去掉了换行符)
 						// 如果不是最后一行，则插入换行
 						if (i < lines.size() - 1) {
