@@ -82,6 +82,9 @@
 copy "$(TargetPath)" "$(TargetDir)..\GUICORE\$(TargetName)_new$(TargetExt)"
 if exist "$(TargetDir)..\GPPGUI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GPPGUI_PRIVATE\$(TargetName)_new$(TargetExt)"</Command>
     </PostBuildEvent>
+    <Link>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\OpenCC\out\install\x64-Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>

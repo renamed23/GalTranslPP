@@ -48,12 +48,7 @@ cd GalTranslPP
 
 ## 4. 编译依赖
 
-### 4.1 配置 Python 库
-
-- 1、 在 `GalTranslPP` 根目录下手动创建一个名为 `lib` 的新文件夹。
-- 2、 将 `GalTranslPP` 文件夹中的 `Python.zip` 解压到当前文件夹，程序会用到里面的头文件。
-
-### 4.2 配置 Visual Studio 与 Qt
+### 4.1 配置 Visual Studio 与 Qt
 
 - 1、  **安装 VS 插件**:
   - 启动 Visual Studio，在顶部菜单栏选择 `扩展` → `管理扩展`。
@@ -63,22 +58,27 @@ cd GalTranslPP
   - 重启后，在菜单栏选择 `扩展` → `Qt VS Tools` → `Qt Versions`。
   - 点击 `Add New Qt Version`，将路径指向你安装的 Qt MSVC 目录 (例如: `C:\Qt\6.9.2\msvc2022_64`)，并将其设置为默认版本。
 
-### 4.3 编译 ElaWidgetTools
+### 4.2 编译 ElaWidgetTools
 
 - 1、  使用 Visual Studio 打开 `3rdParty\ElaWidgetTools` 文件夹。
 - 2、  在顶部工具栏中，将生成配置从 `Qt-Debug` 切换为 **`Qt-Release`**。
-- 3、  在菜单栏中选择 `生成` → `全部生成` (如果使用Visual Studio且严格按照上述步骤执行，则无需更改CMakeLists中的QT_SDK_DIR)。
-- 4、  **部署编译产物**:
-  - 将 `3rdParty\ElaWidgetTools\out\build\Release\ElaWidgetTools` 目录下的 `ElaWidgetTools.lib` 文件移动到在上一步创建的 `lib\` 文件夹中。
+- 3、  在菜单栏中选择 `生成` → `生成 ElaWidgetTools.dll(安装)`
+
+      (如果使用Visual Studio且严格按照上述步骤执行，则无需更改CMakeLists中的QT_SDK_DIR)。
+- 4、  **确认编译产物**:
+  - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\include` 文件夹存在，程序会用到里面的头文件
+  - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib\ElaWidgetTools.lib` 文件存在
+  - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\bin\ElaWidgetTools.dll` 文件存在
 
 ### 4.4 编译 OpenCC
 
 - 1、  使用 Visual Studio 打开 `3rdParty\OpenCC` 文件夹。
 - 2、  如果编译选项没有 `x64-Release`，就先点到管理配置，点击绿色加号，选择 `x64-Release`，Ctrl + S 保存。
 - 3、  选择 `x64-Release`，生成 opencc.dll(安装) (lib\opencc.dll)。
-- 4、  **部署编译产物**
-  - 将`3rdParty\OpenCC\out\install\x64-Release\lib` 目录下的 `marisa.lib` 和 `opencc.lib` 文件移动到 `lib\` 文件夹中。
+- 4、  **确认编译产物**
   - 确保 `3rdParty\OpenCC\out\install\x64-Release\include` 文件夹存在，程序会用到里面的头文件
+  - 确保 `3rdParty\OpenCC\out\install\x64-Release\lib` 目录下存在文件 `marisa.lib` 和 `opencc.lib`
+  - 确保 `3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll` 文件存在
 
 ## 5. 编译 GalTranslPP (主项目)
 
@@ -98,7 +98,7 @@ cd GalTranslPP
   - 再次打开 `GalTranslPP` 项目的属性页。
   - 将 **平台工具集** 切换回 **`Visual Studio v18 (v145)`**。
   - 点击 `应用` 并关闭属性窗口。
-  - 为确保所有模块都被正确编译，在`生成` → `批生成`编译目标模块时应选择`全部重新生成`(如果实在过不了就用VS2022把工具集切回v143编译)。
+  - 为确保所有模块都被正确编译，在`生成` → `批生成`编译目标模块时应选择`全部重新生成`(如果实在过不了编就直接开VS2022的IDE把工具集切回v143编译)。
 
 ## 6. 完成与运行
 
@@ -110,23 +110,16 @@ cd GalTranslPP
 
 ### 6.1 GPPCLI
 
-- 1、  将`Example`文件夹内的`BaseConfig`和`sampleProject`文件夹复制到`GalTranslPP\Release\GPPCLI`
-- 2、  将以下文件复制到程序根目录
-  -  `3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll`
+- 1、  将`Example`文件夹内的`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPCLI`
 
 ### 6.2 GPPGUI
 
 - 1、  将`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPGUI`
-- 2、  在`GalTranslPP\Release\GPPGUI`新建`Projects`文件夹并将`sampleProject`文件夹整体复制进去
-- 3、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
+- 2、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
 
 ```cmd
 windeployqt path/to/GalTranslPP_GUI.exe
 ```
-
-- 4、将以下文件复制到程序根目录
-  - `3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll`
-  - `3rdParty\ElaWidgetTools\out\build\Release\ElaWidgetTools\ElaWidgetTools.dll`
 
 ### 6.3 私人部署（非必需）
 

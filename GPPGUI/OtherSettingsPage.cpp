@@ -44,7 +44,6 @@ void OtherSettingsPage::_setupUI()
 
 	// 项目路径
 	ElaScrollPageArea* pathArea = new ElaScrollPageArea(mainWidget);
-	pathArea->setFixedHeight(100);
 	QHBoxLayout* pathLayout = new QHBoxLayout(pathArea);
 	ElaText* pathLabel = new ElaText(pathArea);
 	pathLabel->setText(tr("项目路径"));
@@ -54,7 +53,7 @@ void OtherSettingsPage::_setupUI()
 	ElaLineEdit* pathEdit = new ElaLineEdit(pathArea);
 	pathEdit->setReadOnly(true);
 	pathEdit->setText(QString(_projectDir.wstring()));
-	pathEdit->setFixedWidth(550);
+	pathEdit->setFixedWidth(650);
 	pathLayout->addWidget(pathEdit);
 	ElaPushButton* openButton = new ElaPushButton(pathArea);
 	openButton->setText(tr("打开文件夹"));
@@ -64,6 +63,18 @@ void OtherSettingsPage::_setupUI()
 			QDesktopServices::openUrl(dirUrl);
 		});
 	pathLayout->addWidget(openButton);
+	mainLayout->addWidget(pathArea);
+
+
+	// 项目移动/更名
+	ElaScrollPageArea* moveRenameArea = new ElaScrollPageArea(mainWidget);
+	QHBoxLayout* moveRenameLayout = new QHBoxLayout(moveRenameArea);
+	ElaText* moveRenameLabel = new ElaText(moveRenameArea);
+	moveRenameLabel->setWordWrap(false);
+	moveRenameLabel->setText(tr("项目移动/更名"));
+	moveRenameLabel->setTextPixelSize(16);
+	moveRenameLayout->addWidget(moveRenameLabel);
+	moveRenameLayout->addStretch();
 	ElaPushButton* moveButton = new ElaPushButton(pathArea);
 	moveButton->setText(tr("移动项目"));
 	connect(moveButton, &ElaPushButton::clicked, this, [=]()
@@ -80,7 +91,7 @@ void OtherSettingsPage::_setupUI()
 			insertToml(_globalConfig, "lastProjectPath", newProjectParentPath.toStdString());
 			fs::path newProjectPath = fs::path(newProjectParentPath.toStdWString()) / _projectDir.filename();
 			if (fs::exists(newProjectPath)) {
-				ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("移动失败"), tr("目录下已有同名文件夹"), 3000);
+				ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("移动失败"), tr("目录下已有同名文件或文件夹"), 3000);
 				return;
 			}
 
@@ -95,21 +106,9 @@ void OtherSettingsPage::_setupUI()
 			pathEdit->setText(QString(_projectDir.wstring()));
 			ElaMessageBar::success(ElaMessageBarType::TopRight, tr("移动成功"), QString(_projectDir.filename().wstring()) + tr(" 项目已移动到新文件夹"), 3000);
 		});
-	pathLayout->addWidget(moveButton);
-	mainLayout->addWidget(pathArea);
-
-
-	// 项目更名
-	ElaScrollPageArea* renameArea = new ElaScrollPageArea(mainWidget);
-	QHBoxLayout* renameLayout = new QHBoxLayout(renameArea);
-	ElaText* renameLabel = new ElaText(renameArea);
-	renameLabel->setWordWrap(false);
-	renameLabel->setText(tr("项目更名"));
-	renameLabel->setTextPixelSize(16);
-	renameLayout->addWidget(renameLabel);
-	renameLayout->addStretch();
-	ElaPushButton* renameButton = new ElaPushButton(renameArea);
-	renameButton->setText(tr("更名"));
+	moveRenameLayout->addWidget(moveButton);
+	ElaPushButton* renameButton = new ElaPushButton(moveRenameArea);
+	renameButton->setText(tr("项目更名"));
 	connect(renameButton, &ElaPushButton::clicked, this, [=]()
 		{
 			if (toml::find_or(_projectConfig, "GUIConfig", "isRunning", true)) {
@@ -147,8 +146,8 @@ void OtherSettingsPage::_setupUI()
 			Q_EMIT changeProjectNameSignal(newProjectName);
 			ElaMessageBar::success(ElaMessageBarType::TopRight, tr("更名成功"), tr("项目已更名为 ") + newProjectName, 3000);
 		});
-	renameLayout->addWidget(renameButton);
-	mainLayout->addWidget(renameArea);
+	moveRenameLayout->addWidget(renameButton);
+	mainLayout->addWidget(moveRenameArea);
 
 
 	// 导入翻译问题概览至翻译缓存

@@ -154,7 +154,7 @@
       <BuildStlModules>true</BuildStlModules>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>.\Python\;..\3rdParty\OpenCC\out\install\x64-Release\include\;..\3rdParty\sol2\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcpkg_installed\x64-windows\x64-windows\include\python3.12;python3.12;..\3rdParty\OpenCC\out\install\x64-Release\include;..\3rdParty\sol2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -165,7 +165,6 @@
   <ItemGroup>
     <ClCompile Include="APIPool.ixx" />
     <ClCompile Include="API_Tool.ixx" />
-    <ClCompile Include="base64.cpp" />
     <ClCompile Include="CodePageChecker.ixx" />
     <ClCompile Include="ConditionTool.ixx" />
     <ClCompile Include="Dictionary.ixx" />

@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <QProcess>
 #include <QDir>
-#pragma comment(lib, "../lib/GalTranslPP.lib")
+#pragma comment(lib, "GalTranslPP.lib")
 
 
 #ifdef Q_OS_WIN

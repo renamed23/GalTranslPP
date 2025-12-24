@@ -128,15 +128,17 @@
       <EnableModules>true</EnableModules>
       <BuildStlModules>true</BuildStlModules>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>..\GalTranslPP\Python;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcpkg_installed\x64-windows\x64-windows\include\python3.12;..\GalTranslPP\python3.12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\OpenCC\out\install\x64-Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>if exist "$(TargetDir)..\GPPCLI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GPPCLI_PRIVATE\$(TargetName)$(TargetExt)"
+      <Command>copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
+if exist "$(TargetDir)..\GPPCLI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GPPCLI_PRIVATE\$(TargetName)$(TargetExt)" &amp; copy "$(TargetDir)opencc.dll" "$(TargetDir)..\GPPCLI_PRIVATE\opencc.dll"
 del "$(TargetDir)$(TargetName).exp"
 del "$(TargetDir)$(TargetName).lib"</Command>
     </PostBuildEvent>

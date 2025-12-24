@@ -5,7 +5,6 @@
 #include <QApplication>
 #include <QTranslator>
 #include <QCoreApplication>
-#include <QThread>
 #include <QCommandLineParser>
 #include <QSharedMemory>
 #include <QLocalServer>
@@ -18,8 +17,8 @@
 #include "ElaApplication.h"
 #include "mainwindow.h"
 
-#pragma comment(lib, "../lib/GalTranslPP.lib")
-#pragma comment(lib, "../lib/ElaWidgetTools.lib")
+#pragma comment(lib, "GalTranslPP.lib")
+#pragma comment(lib, "ElaWidgetTools.lib")
 
 import Tool;
 import PythonManager;

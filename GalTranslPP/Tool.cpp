@@ -22,10 +22,11 @@ module;
 #include <unicode/uscript.h>
 #include <unicode/translit.h>
 #include <toml.hpp>
+#include <cpp-base64/base64.cpp>
 
 #include <opencc/opencc.h>
-#pragma comment(lib, "../lib/marisa.lib")
-#pragma comment(lib, "../lib/opencc.lib")
+#pragma comment(lib, "marisa.lib")
+#pragma comment(lib, "opencc.lib")
 
 
 module Tool;
