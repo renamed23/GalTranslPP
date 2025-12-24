@@ -2953,114 +2953,114 @@
         <translation>Stop translation</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="408"/>
+        <location filename="StartSettingsPage.cpp" line="414"/>
         <source>文件格式错误</source>
         <translation>File format error</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="408"/>
+        <location filename="StartSettingsPage.cpp" line="414"/>
         <source>自定义文件插件的格式必须是 .lua 或 .py 格式。</source>
         <translation>Custom plugin must be *.lua or *.py format.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="464"/>
+        <location filename="StartSettingsPage.cpp" line="470"/>
         <source>停止中</source>
         <translation>Stopping</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="464"/>
+        <location filename="StartSettingsPage.cpp" line="470"/>
         <source>正在等待最后一批翻译完成，请稍候...</source>
         <translation>Waiting for the last batch of translations...</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="476"/>
-        <location filename="StartSettingsPage.cpp" line="480"/>
-        <location filename="StartSettingsPage.cpp" line="487"/>
+        <location filename="StartSettingsPage.cpp" line="482"/>
+        <location filename="StartSettingsPage.cpp" line="486"/>
+        <location filename="StartSettingsPage.cpp" line="493"/>
         <source>翻译失败</source>
         <translation>Fail to translate</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="476"/>
-        <location filename="StartSettingsPage.cpp" line="481"/>
+        <location filename="StartSettingsPage.cpp" line="482"/>
         <location filename="StartSettingsPage.cpp" line="487"/>
-        <location filename="StartSettingsPage.cpp" line="491"/>
-        <location filename="StartSettingsPage.cpp" line="494"/>
-        <location filename="StartSettingsPage.cpp" line="521"/>
-        <location filename="StartSettingsPage.cpp" line="525"/>
+        <location filename="StartSettingsPage.cpp" line="493"/>
+        <location filename="StartSettingsPage.cpp" line="497"/>
+        <location filename="StartSettingsPage.cpp" line="500"/>
+        <location filename="StartSettingsPage.cpp" line="527"/>
+        <location filename="StartSettingsPage.cpp" line="531"/>
         <source>项目 </source>
         <translation>Project </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="476"/>
-        <location filename="StartSettingsPage.cpp" line="481"/>
+        <location filename="StartSettingsPage.cpp" line="482"/>
+        <location filename="StartSettingsPage.cpp" line="487"/>
         <source> 的翻译任务失败，请检查日志输出。</source>
         <translation> &apos;s task failed, please check logs.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="487"/>
+        <location filename="StartSettingsPage.cpp" line="493"/>
         <source> 连工厂函数都失败了，玩毛啊</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="491"/>
-        <location filename="StartSettingsPage.cpp" line="493"/>
-        <location filename="StartSettingsPage.cpp" line="500"/>
-        <location filename="StartSettingsPage.cpp" line="502"/>
+        <location filename="StartSettingsPage.cpp" line="497"/>
+        <location filename="StartSettingsPage.cpp" line="499"/>
+        <location filename="StartSettingsPage.cpp" line="506"/>
+        <location filename="StartSettingsPage.cpp" line="508"/>
         <source>生成完成</source>
         <translation>Generation completed</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="491"/>
-        <location filename="StartSettingsPage.cpp" line="494"/>
+        <location filename="StartSettingsPage.cpp" line="497"/>
+        <location filename="StartSettingsPage.cpp" line="500"/>
         <source> 的生成任务已完成。</source>
         <translation> &apos;s gerneration task has completed.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="500"/>
-        <location filename="StartSettingsPage.cpp" line="503"/>
+        <location filename="StartSettingsPage.cpp" line="506"/>
+        <location filename="StartSettingsPage.cpp" line="509"/>
         <source>请在 show_normal 文件夹中查收项目 </source>
         <translation>Please go to show_normal dir to check out </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="500"/>
-        <location filename="StartSettingsPage.cpp" line="503"/>
+        <location filename="StartSettingsPage.cpp" line="506"/>
+        <location filename="StartSettingsPage.cpp" line="509"/>
         <source> 的预处理结果。</source>
         <translation> &apos;s preproc result.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="509"/>
-        <location filename="StartSettingsPage.cpp" line="511"/>
+        <location filename="StartSettingsPage.cpp" line="515"/>
+        <location filename="StartSettingsPage.cpp" line="517"/>
         <source>翻译完成</source>
         <translation>Translation completed</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="509"/>
-        <location filename="StartSettingsPage.cpp" line="512"/>
+        <location filename="StartSettingsPage.cpp" line="515"/>
+        <location filename="StartSettingsPage.cpp" line="518"/>
         <source>请在 gt_output 文件夹中查收项目 </source>
         <translation>Please go to gt_output dir to check out </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="512"/>
+        <location filename="StartSettingsPage.cpp" line="518"/>
         <source> 的翻译结果。</source>
         <translation> &apos;s translation result.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="520"/>
+        <location filename="StartSettingsPage.cpp" line="526"/>
         <source>翻译停止</source>
         <translation>Translation stopped</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="521"/>
+        <location filename="StartSettingsPage.cpp" line="527"/>
         <source> 的翻译任务停止成功。</source>
         <translation> &apos;s task stopped successfully.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="525"/>
+        <location filename="StartSettingsPage.cpp" line="531"/>
         <source>停止成功</source>
         <translation>Stopped succeesfully</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="525"/>
+        <location filename="StartSettingsPage.cpp" line="531"/>
         <source> 的翻译任务已终止</source>
         <translation> &apos;s task has been stoped</translation>
     </message>

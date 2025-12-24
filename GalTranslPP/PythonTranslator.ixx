@@ -25,7 +25,6 @@ export {
 		std::weak_ptr<py::object> m_pythonRunFunc;
 		std::string m_modulePath;
 		std::string m_translatorName;
-		bool m_needReboot = false;
 
 	public:
 		virtual void run() override
@@ -51,19 +50,20 @@ export {
 		PythonTranslator(const std::string& modulePath, Args&&... args) :
 			Base(std::forward<Args>(args)...), m_modulePath(modulePath)
 		{
+			bool needRoot = false;
 			this->m_pythonTranslator = true;
 			m_translatorName = wide2Ascii(fs::path(ascii2Wide(m_modulePath)).stem());
-			std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = this->m_pythonManager.registerFunction(m_modulePath, "init", m_needReboot);
+			std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = this->m_pythonManager.registerFunction(m_modulePath, "init", needRoot);
 			if (!pythonInterpreterOpt.has_value()) {
 				throw std::runtime_error("PythonTranslator 获取 init 函数失败！");
 			}
-			pythonInterpreterOpt = this->m_pythonManager.registerFunction(m_modulePath, "run", m_needReboot);
+			pythonInterpreterOpt = this->m_pythonManager.registerFunction(m_modulePath, "run", needRoot);
 			if (!pythonInterpreterOpt.has_value()) {
 				throw std::runtime_error("PythonTranslator 获取 run 函数失败！");
 			}
 			m_pythonInterpreter = pythonInterpreterOpt.value();
 			m_pythonRunFunc = m_pythonInterpreter->functions["run"];
-			this->m_pythonManager.registerFunction(m_modulePath, "unload", m_needReboot);
+			this->m_pythonManager.registerFunction(m_modulePath, "unload", needRoot);
 
 			m_pythonInterpreter->submitTask([&]()
 				{
@@ -78,7 +78,7 @@ export {
 						throw std::runtime_error("初始化 PythonTranslator 时发生错误: " + std::string(e.what()));
 					}
 				}).get();
-			if (m_needReboot) {
+			if (needRoot) {
 				throw std::runtime_error("PythonTranslator 需要重启程序");
 			}
 			this->m_logger->info("PythonTranslator 已加载模块: {}", m_translatorName);
@@ -93,6 +93,7 @@ export {
 							(*unloadFuncPtr)();
 						}
 						this->m_onFileProcessed = {};
+						this->m_onPerformApi = {};
 					}
 					catch (const py::error_already_set& e) {
 						throw std::runtime_error("卸载 PythonTranslator 时发生错误: " + std::string(e.what()));

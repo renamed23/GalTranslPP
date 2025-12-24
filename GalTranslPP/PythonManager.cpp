@@ -325,6 +325,7 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
 
     std::lock_guard<std::mutex> lock(m_mutex);
     if (auto moduleFuncLocked = m_nlpModuleFunctions[moduleName][modelName].lock()) {
+        logger->debug("模块 {} 的模型 {} 已在内存中，直接获取", moduleName, modelName);
         return moduleFuncLocked;
     }
     std::shared_ptr<py::object> pythonNLPModuleFunc;

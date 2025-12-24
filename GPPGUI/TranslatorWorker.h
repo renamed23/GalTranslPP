@@ -23,7 +23,7 @@ Q_SIGNALS:
     void translationFinished(int exitCode);
 
     void makeBarSignal(int totalSentences, int totalThreads);
-    void writeLogSignal(QString log);
+    void writeLogSignal(const QString& log);
     void addThreadNumSignal();
     void reduceThreadNumSignal();
     void updateBarSignal(int ticks);

@@ -48,7 +48,7 @@ public:
     virtual void flush() override
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        if (!_log.empty()) {
+        if (!_log.isEmpty()) {
             _writeLogCallback(_log);
             _log.clear();
         }
@@ -56,7 +56,7 @@ public:
         _progress = 0;
     }
 
-    GUIController(std::function<void(int, int)> makeBarCallback, std::function<void(const std::string&)> writeLogCallback,
+    GUIController(std::function<void(int, int)> makeBarCallback, std::function<void(const QString&)> writeLogCallback,
         std::function<void()> addThreadNumCallback, std::function<void()> reduceThreadNumCallback, std::function<void(int)> updateBarCallback, 
         std::function<bool()> shouldStopCallback) :
         _makeBarCallback{ makeBarCallback }, _writeLogCallback{ writeLogCallback }, _addThreadNumCallback{ addThreadNumCallback },
@@ -66,7 +66,7 @@ public:
         _flushThread = std::thread([this]()
             {
                 while (_controlling.load()) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
                     flush();
                 }
             });
@@ -82,7 +82,7 @@ public:
 
 private:
     std::function<void(int, int)> _makeBarCallback;
-    std::function<void(const std::string&)> _writeLogCallback;
+    std::function<void(const QString&)> _writeLogCallback;
     std::function<void()> _addThreadNumCallback;
     std::function<void()> _reduceThreadNumCallback;
     std::function<void(int)> _updateBarCallback;
@@ -91,7 +91,7 @@ private:
     std::atomic<bool> _controlling = true;
     std::mutex _mutex;
     int _progress = 0;
-    std::string _log;
+    QString _log;
 };
 
 TranslatorWorker::TranslatorWorker(const fs::path& projectDir, QObject* parent)
@@ -107,9 +107,9 @@ void TranslatorWorker::doTranslation()
         {
             Q_EMIT makeBarSignal(totalSentences, totalThreads);
         };
-    auto writeLogCallback = [this](const std::string& log)
+    auto writeLogCallback = [this](const QString& log)
         {
-            Q_EMIT writeLogSignal(QString::fromStdString(log));
+            Q_EMIT writeLogSignal(log);
         };
     auto addThreadNumCallback = [this]()
         {

@@ -233,7 +233,7 @@ void StartSettingsPage::_setupUI()
 			_estimator.reset();
 			
 		});
-	connect(_worker, &TranslatorWorker::writeLogSignal, this, [=](QString log)
+	connect(_worker, &TranslatorWorker::writeLogSignal, this, [=](const QString& log)
 		{
 			constexpr int MAX_LOG_LINE_COUNT = 10000;
 
@@ -262,7 +262,7 @@ void StartSettingsPage::_setupUI()
 				{
 					QStringList lines = l.split('\n');
 					for (int i = 0; i < lines.size(); ++i) {
-						QString line = lines[i];
+						QString& line = lines[i];
 						line = line.trimmed();
 						// 如果是最后一行且为空（通常是因为 log 以 \n 结尾），则跳过，避免多余空行
 						if (i == lines.size() - 1 && line.isEmpty()) break;
@@ -297,14 +297,15 @@ void StartSettingsPage::_setupUI()
 					}
 				};
 			if (log.contains("```\n问题概览:")) {
+				QString logCopy = log;
 				QString pre, overview, post;
 				int index = log.indexOf("```\n问题概览:");
-				pre = log.left(index);
-				log = log.mid(index);
-				index = log.indexOf("问题概览结束\n```");
-				overview = log.left(index + 10);
-				log = log.mid(index + 10);
-				post = log;
+				pre = logCopy.left(index);
+				logCopy = logCopy.mid(index);
+				index = logCopy.indexOf("问题概览结束\n```");
+				overview = logCopy.left(index + 10);
+				logCopy = logCopy.mid(index + 10);
+				post = std::move(logCopy);
 				processLogFunc(pre);
 				QTextCharFormat format;
 				format.setForeground(QColor(255, 0, 0));
@@ -313,7 +314,12 @@ void StartSettingsPage::_setupUI()
 				processLogFunc(post);
 			}
 			else {
-				processLogFunc(log);
+				if (log.length() > 512 * 3) {
+					tempCursor.insertText(log);
+				}
+				else {
+					processLogFunc(log);
+				}
 			}
 			// --- 高亮代码逻辑结束 ---
 
