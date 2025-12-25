@@ -868,7 +868,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     if (PathMatchSpecW(entry.path().filename().wstring().c_str(), cacheSpec.c_str())) {
                         if (m_needsCombining) {
                             int diff = calculateCachePartIndexDiff(relInputPath.wstring(), entry.path().wstring());
-                            if (diff > m_cacheSearchDistance) {
+                            if (std::abs(diff) > m_cacheSearchDistance) {
                                 continue;
                             }
                         }

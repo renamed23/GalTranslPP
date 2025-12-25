@@ -17,8 +17,8 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
         "1. 修复了 分割缓存查找距离 选项不生效的 bug",
-
-        "\nv2.2.0更新: ",
+        "v2.2.1略过",
+        "v2.2.0更新: ",
         "0. 【重要！】修改/增加了 GenDict 和 NameTrans 这两个模式的提示词解析方式，请注意为自己已有项目的提示词进行更新，避免解析失败",
         "1. 新增保留原 json 中的其它元数据",
         "2. 字典未使用检查所使用的分词也会被缓存了",
