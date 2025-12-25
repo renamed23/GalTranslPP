@@ -154,7 +154,7 @@ void DefaultPromptPage::_setupUI()
 			gendictApplyFunc();
 			nametransApplyFunc();
 			std::ofstream ofs(defaultPromptPath);
-			ofs << _promptConfig;
+			ofs << toml::format(_promptConfig);
 			ofs.close();
 		};
 

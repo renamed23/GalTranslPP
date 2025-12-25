@@ -170,6 +170,7 @@
     <ClCompile Include="Dictionary.ixx" />
     <ClCompile Include="DictionaryGenerator.ixx" />
     <ClCompile Include="EpubTranslator.ixx" />
+    <ClCompile Include="GPPDefines.cpp" />
     <ClCompile Include="GPPDefines.ixx" />
     <ClCompile Include="IPlugin.cpp" />
     <ClCompile Include="IPlugin.ixx" />

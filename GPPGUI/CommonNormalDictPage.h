@@ -30,8 +30,9 @@ private:
     QList<NormalTabEntry> _normalTabEntries;
     QWidget* _mainWindow;
 
-    std::string _modePath;
-    std::string _modeConfig;
+    std::string _mode;
+    std::string _modeConfigKey;
+    fs::path _modeDictDir;
 };
 
 #endif // COMMONNORMALDICTPAGE_H

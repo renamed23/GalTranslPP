@@ -158,7 +158,7 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
         .def_readwrite("m_sortMethod", &NormalJsonTranslator::m_sortMethod)
         .def_readwrite("m_splitFile", &NormalJsonTranslator::m_splitFile)
         .def_readwrite("m_splitFileNum", &NormalJsonTranslator::m_splitFileNum)
-        .def_readwrite("m_cacheDistance", &NormalJsonTranslator::m_cacheDistance)
+        .def_readwrite("m_cacheSearchDistance", &NormalJsonTranslator::m_cacheSearchDistance)
         .def_readwrite("m_linebreakSymbol", &NormalJsonTranslator::m_linebreakSymbol)
         .def_readwrite("m_needsCombining", &NormalJsonTranslator::m_needsCombining)
         .def_readwrite("m_splitFilePartsToJson", &NormalJsonTranslator::m_splitFilePartsToJson)

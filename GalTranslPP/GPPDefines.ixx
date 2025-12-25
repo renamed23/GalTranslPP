@@ -6,24 +6,24 @@ namespace fs = std::filesystem;
 
 export {
 
-    const std::string GPPVERSION = "2.2.0";
-    const std::string PYTHONVERSION = "1.0.0";
-    const std::string PROMPTVERSION = "2.0.0";
-    const std::string DICTVERSION = "1.0.2";
-    const std::string QTVERSION = "6.9.2";
-    const std::string ICUVERSION = "7.8.0";
+    extern const std::string GPPVERSION;
+    extern const std::string PYTHONVERSION;
+    extern const std::string PROMPTVERSION;
+    extern const std::string DICTVERSION;
+    extern const std::string QTVERSION;
+    extern const std::string ICUVERSION;
 
-    const fs::path baseConfigPath = fs::current_path() / L"BaseConfig";
-    const fs::path globalConfigPath = baseConfigPath / L"globalConfig.toml";
-    const fs::path defaultPromptPath = baseConfigPath / L"Prompt.toml";
-    const fs::path defaultDictPath = baseConfigPath / L"Dict";
-    const fs::path defaultGptDictPath = defaultDictPath / L"gpt";
-    const fs::path defaultPreDictPath = defaultDictPath / L"pre";
-    const fs::path defaultPostDictPath = defaultDictPath / L"post";
-    const fs::path pluginConfigsPath = baseConfigPath / L"pluginConfigs";
-    const fs::path filePluginConfigPath = pluginConfigsPath / L"filePlugins";
-    const fs::path prePluginConfigPath = pluginConfigsPath / L"textPrePlugins";
-    const fs::path postPluginConfigPath = pluginConfigsPath / L"textPostPlugins";
+    extern const fs::path baseConfigPath;
+    extern const fs::path globalConfigPath;
+    extern const fs::path defaultPromptPath;
+    extern const fs::path defaultDictPath;
+    extern const fs::path defaultGptDictPath;
+    extern const fs::path defaultPreDictPath;
+    extern const fs::path defaultPostDictPath;
+    extern const fs::path pluginConfigsPath;
+    extern const fs::path filePluginConfigPath;
+    extern const fs::path prePluginConfigPath;
+    extern const fs::path postPluginConfigPath;
 
     enum class NameType
     {

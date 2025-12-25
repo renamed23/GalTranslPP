@@ -104,7 +104,7 @@ void NormalJsonTranslator::init()
         m_targetLang = toml::find_or(configData, "common", "targetLang", "zh-cn");
         m_splitFile = toml::find_or(configData, "common", "splitFile", "no");
         m_splitFileNum = toml::find_or(configData, "common", "splitFileNum", 10);
-        m_cacheDistance = toml::find_or(configData, "common", "cacheDistance", 5);
+        m_cacheSearchDistance = toml::find_or(configData, "common", "cacheSearchDistance", 5);
         m_saveCacheInterval = toml::find_or(configData, "common", "saveCacheInterval", 1);
         m_linebreakSymbol = toml::find_or(configData, "common", "linebreakSymbol", "auto");
         m_maxRetries = toml::find_or(configData, "common", "maxRetries", 5);
@@ -615,7 +615,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
     }
 
     int retryCount = 0;
-    std::string contextHistory = buildContextHistory(batch, m_transEngine, m_contextHistorySize, 2048 * 3);
+    std::string contextHistory = buildContextHistory(batch, m_transEngine, m_contextHistorySize, 1024);
     std::string glossary = m_gptDictionary->generatePrompt(batch, m_transEngine);
 
     while (retryCount < m_maxRetries) {
@@ -835,26 +835,21 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         auto insertJsonArrToCacheMap = [&](const json& jsonArr)
             {
                 for (size_t i = 0; i < jsonArr.size(); ++i) {
-                    const auto& item = jsonArr[i];
-                    std::string prevText = "None", currentText, nextText = "None";
-                    currentText = getNameString(item) + item.value("original_text", "") + item.value("pre_processed_text", "");
-                    if (i > 0) {
-                        prevText = getNameString(jsonArr[i - 1]) + jsonArr[i - 1].value("original_text", "") + jsonArr[i - 1].value("pre_processed_text", "");
-                    }
-                    if (i + 1 < jsonArr.size()) {
-                        nextText = getNameString(jsonArr[i + 1]) + jsonArr[i + 1].value("original_text", "") + jsonArr[i + 1].value("pre_processed_text", "");
-                    }
-                    cacheMap.insert({ prevText + currentText + nextText, item });
+                    std::string cacheKey = generateCacheKey(jsonArr, i);
+                    cacheMap.insert({ std::move(cacheKey), jsonArr[i] });
                 }
             };
 
         auto usePotentialPartFileCacheToInsertCacheMap = [&](const fs::path& potentialCachePath)
             {
-                std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
                 try {
-                    ifs.open(potentialCachePath);
-                    json jsonArr = json::parse(ifs);
-                    ifs.close();
+                    json jsonArr;
+                    {
+                        std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
+                        ifs.open(potentialCachePath);
+                        jsonArr = json::parse(ifs);
+                        ifs.close();
+                    }
                     insertJsonArrToCacheMap(jsonArr);
                 }
                 catch (const json::exception& e) {
@@ -873,7 +868,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     if (PathMatchSpecW(entry.path().filename().wstring().c_str(), cacheSpec.c_str())) {
                         if (m_needsCombining) {
                             int diff = calculateCachePartIndexDiff(relInputPath.wstring(), entry.path().wstring());
-                            if (diff > m_cacheDistance) {
+                            if (diff > m_cacheSearchDistance) {
                                 continue;
                             }
                         }
@@ -914,21 +909,27 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
         }
 
+
         // 再尽量覆盖一些边缘情况
-        json totalCacheJsonList = json::array();
-        for (const auto& cp : cachePaths) {
-            std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
-            try {
-                ifs.open(cp);
-                json cacheJsonList = json::parse(ifs);
-                ifs.close();
-                totalCacheJsonList.insert(totalCacheJsonList.end(), cacheJsonList.begin(), cacheJsonList.end());
+        {
+            json totalCacheJsonList = json::array();
+            for (const auto& cp : cachePaths) {
+                try {
+                    json cacheJsonList;
+                    {
+                        std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
+                        ifs.open(cp);
+                        cacheJsonList = json::parse(ifs);
+                        ifs.close();
+                    }
+                    totalCacheJsonList.insert(totalCacheJsonList.end(), cacheJsonList.begin(), cacheJsonList.end());
+                }
+                catch (const json::exception& e) {
+                    throw std::runtime_error(std::format("[线程 {}] 缓存文件 {} 解析失败: {}", threadId, wide2Ascii(cp), e.what()));
+                }
             }
-            catch (const json::exception& e) {
-                throw std::runtime_error(std::format("[线程 {}] 缓存文件 {} 解析失败: {}", threadId, wide2Ascii(cp), e.what()));
-            }
+            insertJsonArrToCacheMap(totalCacheJsonList);
         }
-        insertJsonArrToCacheMap(totalCacheJsonList);
 
 
         for (auto& se : sentences) {

@@ -478,12 +478,12 @@
         <translation>Common preDict settings</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="40"/>
+        <location filename="CommonNormalDictPage.cpp" line="41"/>
         <source>错误</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="40"/>
+        <location filename="CommonNormalDictPage.cpp" line="41"/>
         <source>未知通用字典模式</source>
         <translation>Unkown common dict mode</translation>
     </message>
@@ -492,22 +492,22 @@
         <translation type="vanished">Fail to analyze</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="63"/>
+        <location filename="CommonNormalDictPage.cpp" line="64"/>
         <source>通用译前字典</source>
         <translation>Common preDict</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="66"/>
+        <location filename="CommonNormalDictPage.cpp" line="67"/>
         <source>通用译后字典</source>
         <translation>Common postDict</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="70"/>
+        <location filename="CommonNormalDictPage.cpp" line="71"/>
         <source>导入字典页</source>
         <translation>Import dict page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="72"/>
+        <location filename="CommonNormalDictPage.cpp" line="73"/>
         <source>添加新字典页</source>
         <translation>Add new dict page</translation>
     </message>
@@ -516,141 +516,141 @@
         <translation type="obsolete">remove current page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="96"/>
+        <location filename="CommonNormalDictPage.cpp" line="97"/>
         <source>纯文本模式</source>
         <translation>Plaintext mode</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="98"/>
+        <location filename="CommonNormalDictPage.cpp" line="99"/>
         <source>表模式</source>
         <translation>Table mode</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="100"/>
+        <location filename="CommonNormalDictPage.cpp" line="101"/>
         <source>默认启用</source>
         <translation>Default on</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="104"/>
+        <location filename="CommonNormalDictPage.cpp" line="105"/>
         <source>保存所有页</source>
         <translation>Save all pages</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="108"/>
+        <location filename="CommonNormalDictPage.cpp" line="109"/>
         <source>保存当前页</source>
         <translation>Save current page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="112"/>
+        <location filename="CommonNormalDictPage.cpp" line="113"/>
         <source>删除当前页</source>
         <translation>Remove current page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="116"/>
+        <location filename="CommonNormalDictPage.cpp" line="117"/>
         <source>重命名当前页</source>
         <translation>Rename current page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="120"/>
+        <location filename="CommonNormalDictPage.cpp" line="121"/>
         <source>撤回删除行</source>
         <translation>Cancel deleted row</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="125"/>
+        <location filename="CommonNormalDictPage.cpp" line="126"/>
         <source>刷新当前页</source>
         <translation>Refresh current page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="129"/>
+        <location filename="CommonNormalDictPage.cpp" line="130"/>
         <source>添加词条</source>
         <translation>Add new dict</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="133"/>
+        <location filename="CommonNormalDictPage.cpp" line="134"/>
         <source>删除词条</source>
         <translation>Remove current dict</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="212"/>
-        <location filename="CommonNormalDictPage.cpp" line="298"/>
+        <location filename="CommonNormalDictPage.cpp" line="213"/>
+        <location filename="CommonNormalDictPage.cpp" line="299"/>
         <source>保存成功</source>
         <translation>Saved successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="212"/>
+        <location filename="CommonNormalDictPage.cpp" line="213"/>
         <source>所有默认字典配置均已保存</source>
         <translation>All dicts are saved successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="228"/>
+        <location filename="CommonNormalDictPage.cpp" line="229"/>
         <source>保存失败</source>
         <translation>Fail to save</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="228"/>
+        <location filename="CommonNormalDictPage.cpp" line="229"/>
         <source>无法打开字典: </source>
         <translation>Fail to open dict: </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="298"/>
-        <location filename="CommonNormalDictPage.cpp" line="354"/>
-        <location filename="CommonNormalDictPage.cpp" line="386"/>
-        <location filename="CommonNormalDictPage.cpp" line="417"/>
-        <location filename="CommonNormalDictPage.cpp" line="421"/>
-        <location filename="CommonNormalDictPage.cpp" line="482"/>
-        <location filename="CommonNormalDictPage.cpp" line="550"/>
-        <location filename="CommonNormalDictPage.cpp" line="582"/>
+        <location filename="CommonNormalDictPage.cpp" line="299"/>
+        <location filename="CommonNormalDictPage.cpp" line="355"/>
+        <location filename="CommonNormalDictPage.cpp" line="387"/>
+        <location filename="CommonNormalDictPage.cpp" line="418"/>
+        <location filename="CommonNormalDictPage.cpp" line="422"/>
+        <location filename="CommonNormalDictPage.cpp" line="483"/>
+        <location filename="CommonNormalDictPage.cpp" line="551"/>
+        <location filename="CommonNormalDictPage.cpp" line="583"/>
         <source>字典 </source>
         <translation>Dict </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="299"/>
+        <location filename="CommonNormalDictPage.cpp" line="300"/>
         <source> 已保存</source>
         <translation> is saved</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="354"/>
+        <location filename="CommonNormalDictPage.cpp" line="355"/>
         <source>刷新成功</source>
         <translation>Refreshed successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="355"/>
+        <location filename="CommonNormalDictPage.cpp" line="356"/>
         <source> 已刷新</source>
         <translation> is refreshed</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="369"/>
+        <location filename="CommonNormalDictPage.cpp" line="370"/>
         <source>请输入新名称</source>
         <translation>Please type in new name</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="369"/>
+        <location filename="CommonNormalDictPage.cpp" line="370"/>
         <source>重命名字典</source>
         <translation>Renamed dict</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="377"/>
-        <location filename="CommonNormalDictPage.cpp" line="421"/>
+        <location filename="CommonNormalDictPage.cpp" line="378"/>
+        <location filename="CommonNormalDictPage.cpp" line="422"/>
         <source>重命名失败</source>
         <translation>Fail to rename</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="417"/>
+        <location filename="CommonNormalDictPage.cpp" line="418"/>
         <source>重命名成功</source>
         <translation>Renamed successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="418"/>
+        <location filename="CommonNormalDictPage.cpp" line="419"/>
         <source> 已重命名为 </source>
         <translation> has been renamed to </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="422"/>
+        <location filename="CommonNormalDictPage.cpp" line="423"/>
         <source> 重命名失败</source>
         <translation> fails to be renamed</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="448"/>
+        <location filename="CommonNormalDictPage.cpp" line="449"/>
         <source> 吗？</source>
         <translation> ?</translation>
     </message>
@@ -664,13 +664,13 @@
         <translation type="vanished"> is nonconforming</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="528"/>
+        <location filename="CommonNormalDictPage.cpp" line="529"/>
         <source>选择字典文件</source>
         <translation>Choose dict file</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="541"/>
-        <location filename="CommonNormalDictPage.cpp" line="550"/>
+        <location filename="CommonNormalDictPage.cpp" line="542"/>
+        <location filename="CommonNormalDictPage.cpp" line="551"/>
         <source>导入失败</source>
         <translation>Fail to import</translation>
     </message>
@@ -679,70 +679,70 @@
         <translation type="vanished">Fail to delete file</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="387"/>
-        <location filename="CommonNormalDictPage.cpp" line="551"/>
-        <location filename="CommonNormalDictPage.cpp" line="583"/>
+        <location filename="CommonNormalDictPage.cpp" line="388"/>
+        <location filename="CommonNormalDictPage.cpp" line="552"/>
+        <location filename="CommonNormalDictPage.cpp" line="584"/>
         <source> 已存在</source>
         <translation> has already existed</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="541"/>
+        <location filename="CommonNormalDictPage.cpp" line="542"/>
         <source>原文件删除失败</source>
         <translation>Fail to remove original file</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="557"/>
+        <location filename="CommonNormalDictPage.cpp" line="558"/>
         <source>创建成功</source>
         <translation>Created successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="557"/>
-        <location filename="CommonNormalDictPage.cpp" line="598"/>
+        <location filename="CommonNormalDictPage.cpp" line="558"/>
+        <location filename="CommonNormalDictPage.cpp" line="599"/>
         <source>字典页 </source>
         <translation>Dict page </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="557"/>
-        <location filename="CommonNormalDictPage.cpp" line="599"/>
+        <location filename="CommonNormalDictPage.cpp" line="558"/>
+        <location filename="CommonNormalDictPage.cpp" line="600"/>
         <source> 已创建</source>
         <translation> is created successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="564"/>
+        <location filename="CommonNormalDictPage.cpp" line="565"/>
         <source>请输入字典表名称</source>
         <translation>Please type in dict name</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="564"/>
+        <location filename="CommonNormalDictPage.cpp" line="565"/>
         <source>新建字典</source>
         <translation>Create a new dict page</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="386"/>
-        <location filename="CommonNormalDictPage.cpp" line="572"/>
-        <location filename="CommonNormalDictPage.cpp" line="582"/>
-        <location filename="CommonNormalDictPage.cpp" line="589"/>
+        <location filename="CommonNormalDictPage.cpp" line="387"/>
+        <location filename="CommonNormalDictPage.cpp" line="573"/>
+        <location filename="CommonNormalDictPage.cpp" line="583"/>
+        <location filename="CommonNormalDictPage.cpp" line="590"/>
         <source>新建失败</source>
         <translation>Fail to create</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="377"/>
-        <location filename="CommonNormalDictPage.cpp" line="572"/>
+        <location filename="CommonNormalDictPage.cpp" line="378"/>
+        <location filename="CommonNormalDictPage.cpp" line="573"/>
         <source>字典名称不能为空，且不能包含点号、斜杠或反斜杠！</source>
         <translation>Dict name can not be empty or contain point symbol, slash, backslash!</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="589"/>
+        <location filename="CommonNormalDictPage.cpp" line="590"/>
         <source>无法创建 </source>
         <translation>Fail to create </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="590"/>
+        <location filename="CommonNormalDictPage.cpp" line="591"/>
         <source> 文件</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="598"/>
+        <location filename="CommonNormalDictPage.cpp" line="599"/>
         <source>新建成功</source>
         <translation>Created successfully</translation>
     </message>
@@ -751,37 +751,37 @@
         <translation type="obsolete">Choose a dict page first!</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="441"/>
+        <location filename="CommonNormalDictPage.cpp" line="442"/>
         <source>是</source>
         <translation>Yes</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="442"/>
+        <location filename="CommonNormalDictPage.cpp" line="443"/>
         <source>思考人生</source>
         <translation>Thinking of life</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="443"/>
+        <location filename="CommonNormalDictPage.cpp" line="444"/>
         <source>否</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="448"/>
+        <location filename="CommonNormalDictPage.cpp" line="449"/>
         <source>你确定要删除 </source>
         <translation>Are you sure to delete </translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="453"/>
+        <location filename="CommonNormalDictPage.cpp" line="454"/>
         <source>将永久删除该字典文件，如有需要请先备份！</source>
         <translation>The dict file will be deleted forever, make a backup if you need!</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="482"/>
+        <location filename="CommonNormalDictPage.cpp" line="483"/>
         <source>删除成功</source>
         <translation>Deleted successfully</translation>
     </message>
     <message>
-        <location filename="CommonNormalDictPage.cpp" line="483"/>
+        <location filename="CommonNormalDictPage.cpp" line="484"/>
         <source> 已从字典管理和磁盘中移除！</source>
         <translation> has been removed from dict management and disk!</translation>
     </message>

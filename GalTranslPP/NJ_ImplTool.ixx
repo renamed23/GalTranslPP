@@ -4,7 +4,6 @@
 #include <toml.hpp>
 #include <unicode/regex.h>
 #include <unicode/unistr.h>
-#include <unicode/brkiter.h>
 #include <boost/regex.hpp>
 
 export module NJ_ImplTool;
@@ -18,8 +17,9 @@ namespace fs = std::filesystem;
 export {
 
     std::string generateCacheKey(const Sentence* s);
+    std::string generateCacheKey(const json& jsonArr, size_t i);
 
-    std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine transEngine, int contextHistorySize, int maxTokens);
+    std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine transEngine, int contextHistorySize, int maxChars);
 
     void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, std::string& inputBlock, TransEngine transEngine);
 
@@ -51,24 +51,33 @@ module :private;
 * @brief 根据句子的上下文生成唯一的缓存键，复刻 GalTransl 逻辑
 */
 std::string generateCacheKey(const Sentence* s) {
-    std::string prevText = "None";
-    const Sentence* temp = s->prev;
-    if (temp) {
-        prevText = getNameString(temp) + temp->original_text + temp->pre_processed_text;
+    std::string prevText = "None", currentText, nextText = "None";
+    currentText = getNameString(s) + s->original_text + s->pre_processed_text;
+    if (s->prev) {
+        prevText = getNameString(s->prev) + s->prev->original_text + s->prev->pre_processed_text;
     }
-
-    std::string currentText = getNameString(s) + s->original_text + s->pre_processed_text;
-
-    std::string nextText = "None";
-    temp = s->next;
-    if (temp) {
-        nextText = getNameString(temp) + temp->original_text + temp->pre_processed_text;
+    if (s->next) {
+        nextText = getNameString(s->next) + s->next->original_text + s->next->pre_processed_text;
     }
-
     return prevText + currentText + nextText;
 }
 
-std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine transEngine, int contextHistorySize, int maxTokens) {
+std::string generateCacheKey(const json& jsonArr, size_t i) {
+    const auto& item = jsonArr[i];
+    std::string prevText = "None", currentText, nextText = "None";
+    currentText = getNameString(item) + item.value("original_text", "") + item.value("pre_processed_text", "");
+    if (i > 0) {
+        const auto& lastItem = jsonArr[i - 1];
+        prevText = getNameString(lastItem) + lastItem.value("original_text", "") + lastItem.value("pre_processed_text", "");
+    }
+    if (i + 1 < jsonArr.size()) {
+        const auto& nextItem = jsonArr[i + 1];
+        nextText = getNameString(nextItem) + nextItem.value("original_text", "") + nextItem.value("pre_processed_text", "");
+    }
+    return prevText + currentText + nextText;
+}
+
+std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine transEngine, int contextHistorySize, int maxChars) {
     if (batch.empty() || !batch[0]->prev) {
         return {};
     }
@@ -173,8 +182,12 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
     }
 
     // 缺tiktoken这一块
-    if (history.length() > maxTokens) {
-        history = history.substr(history.length() - maxTokens);
+    UErrorCode errorCode = U_ZERO_ERROR;
+    icu::UnicodeString uString = icu::UnicodeString::fromUTF8(history);
+    int32_t startIndex = uString.moveIndex32(uString.length(), -maxChars);
+    if (startIndex != 0) {
+        history = "...";
+        uString.tempSubString(startIndex).toUTF8String(history);
     }
     return history;
 }
@@ -250,17 +263,11 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             backgroudText = std::move(background);
             UErrorCode errorCode = U_ZERO_ERROR;
             icu::UnicodeString uString = icu::UnicodeString::fromUTF8(backgroudText);
-            std::unique_ptr<icu::BreakIterator> breakIterator(
-                icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
-            );
-            if (U_FAILURE(errorCode)) {
-                throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
-            }
-            breakIterator->setText(uString);
-            int32_t pos = breakIterator->next(256);
-            if (pos != icu::BreakIterator::DONE) {
+            int32_t endIndex = uString.moveIndex32(0, 256);
+            if (endIndex < uString.length()) {
                 backgroudText.clear();
-                uString.tempSubString(0, pos).toUTF8String(backgroudText);
+                uString.tempSubString(0, endIndex).toUTF8String(backgroudText);
+                backgroudText += "...";
             }
         }
         if (!showBackgroundText) {

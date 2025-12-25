@@ -72,7 +72,7 @@ export {
         std::string m_sortMethod;
         std::string m_splitFile;
         int m_splitFileNum;
-        int m_cacheDistance;
+        int m_cacheSearchDistance;
         std::string m_linebreakSymbol;
         std::vector<CheckSeCondFunc> m_retranslKeys;
         // first: 要忽略的 problem 正则表达式 pattern，second: 忽略条件

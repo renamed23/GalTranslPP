@@ -28,13 +28,14 @@ CommonNormalDictPage::CommonNormalDictPage(const std::string& mode, toml::ordere
 	setTitleVisible(false);
 	setContentsMargins(5, 5, 5, 5);
 
-	if (mode == "pre") {
-		_modeConfig = "commonPreDicts";
-		_modePath = "pre";
+	_mode = mode;
+	if (_mode == "pre") {
+		_modeConfigKey = "commonPreDicts";
+		_modeDictDir = defaultPreDictPath;
 	}
-	else if (mode == "post") {
-		_modeConfig = "commonPostDicts";
-		_modePath = "post";
+	else if (_mode == "post") {
+		_modeConfigKey = "commonPostDicts";
+		_modeDictDir = defaultPostDictPath;
 	}
 	else {
 		QMessageBox::critical(parent, tr("错误"), tr("未知通用字典模式"), QMessageBox::Ok);
@@ -59,10 +60,10 @@ void CommonNormalDictPage::_setupUI()
 	ElaText* dictNameLabel = new ElaText(mainButtonWidget);
 	dictNameLabel->setTextPixelSize(18);
 	QString dictNameText;
-	if (_modePath == "pre") {
+	if (_mode == "pre") {
 		dictNameText = tr("通用译前字典");
 	}
-	else if (_modePath == "post") {
+	else if (_mode == "post") {
 		dictNameText = tr("通用译后字典");
 	}
 	dictNameLabel->setText(dictNameText);
@@ -83,7 +84,7 @@ void CommonNormalDictPage::_setupUI()
 
 	auto createNormalTab = [=](const fs::path& orgDictPath) -> QWidget*
 		{
-			fs::path dictPath = defaultDictPath / ascii2Wide(_modePath) / orgDictPath.filename().replace_extension(L".toml");
+			fs::path dictPath = _modeDictDir / orgDictPath.filename().replace_extension(L".toml");
 			std::string dictName = wide2Ascii(orgDictPath.stem().wstring());
 			NormalTabEntry normalTabEntry;
 
@@ -164,21 +165,21 @@ void CommonNormalDictPage::_setupUI()
 			model->loadData(normalData);
 			tableView->setModel(model);
 			stackedWidget->addWidget(tableView);
-			stackedWidget->setCurrentIndex(toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "openMode", 1));
-			tableView->setColumnWidth(0, toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "columnWidth", "0", 200));
-			tableView->setColumnWidth(1, toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "columnWidth", "1", 150));
-			tableView->setColumnWidth(2, toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "columnWidth", "2", 100));
-			tableView->setColumnWidth(3, toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "columnWidth", "3", 172));
-			tableView->setColumnWidth(4, toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "columnWidth", "4", 75));
-			tableView->setColumnWidth(5, toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "columnWidth", "5", 60));
+			stackedWidget->setCurrentIndex(toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "openMode", 1));
+			tableView->setColumnWidth(0, toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "columnWidth", "0", 200));
+			tableView->setColumnWidth(1, toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "columnWidth", "1", 150));
+			tableView->setColumnWidth(2, toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "columnWidth", "2", 100));
+			tableView->setColumnWidth(3, toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "columnWidth", "3", 172));
+			tableView->setColumnWidth(4, toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "columnWidth", "4", 75));
+			tableView->setColumnWidth(5, toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "columnWidth", "5", 60));
 			pageMainLayout->addWidget(stackedWidget, 1);
 
 			plainTextModeButton->setEnabled(stackedWidget->currentIndex() != 0);
 			tableModeButton->setEnabled(stackedWidget->currentIndex() != 1);
 			addDictButton->setEnabled(stackedWidget->currentIndex() == 1);
 			removeDictButton->setEnabled(stackedWidget->currentIndex() == 1);
-			defaultOnButton->setIsToggled(toml::find_or(_globalConfig, _modeConfig, "spec", dictName, "defaultOn", true));
-			insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".defaultOn", defaultOnButton->getIsToggled());
+			defaultOnButton->setIsToggled(toml::find_or(_globalConfig, _modeConfigKey, "spec", dictName, "defaultOn", true));
+			insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".defaultOn", defaultOnButton->getIsToggled());
 
 			connect(plainTextModeButton, &ElaPushButton::clicked, this, [=]()
 				{
@@ -202,7 +203,7 @@ void CommonNormalDictPage::_setupUI()
 
 			connect(defaultOnButton, &ElaToggleButton::toggled, this, [=](bool checked)
 				{
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName
 						+ ".defaultOn", checked);
 				});
 
@@ -258,7 +259,7 @@ void CommonNormalDictPage::_setupUI()
 						plainTextEdit->setPlainText(ReadDicts::readDictsStr(it->dictPath));
 					}
 
-					auto& dictNamesArr = _globalConfig[_modeConfig]["dictNames"];
+					auto& dictNamesArr = _globalConfig[_modeConfigKey]["dictNames"];
 					if (!dictNamesArr.is_array()) {
 						dictNamesArr = toml::array{ tmpDictName };
 					}
@@ -273,13 +274,13 @@ void CommonNormalDictPage::_setupUI()
 						}
 					}
 
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".openMode", stackedWidget->currentIndex());
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".columnWidth.0", tableView->columnWidth(0));
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".columnWidth.1", tableView->columnWidth(1));
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".columnWidth.2", tableView->columnWidth(2));
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".columnWidth.3", tableView->columnWidth(3));
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".columnWidth.4", tableView->columnWidth(4));
-					insertToml(_globalConfig, _modeConfig + ".spec." + dictName + ".columnWidth.5", tableView->columnWidth(5));
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".openMode", stackedWidget->currentIndex());
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".columnWidth.0", tableView->columnWidth(0));
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".columnWidth.1", tableView->columnWidth(1));
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".columnWidth.2", tableView->columnWidth(2));
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".columnWidth.3", tableView->columnWidth(3));
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".columnWidth.4", tableView->columnWidth(4));
+					insertToml(_globalConfig, _modeConfigKey + ".spec." + dictName + ".columnWidth.5", tableView->columnWidth(5));
 					return true;
 				};
 			normalTabEntry.saveFunc = saveFunc;
@@ -390,7 +391,7 @@ void CommonNormalDictPage::_setupUI()
 
 					fs::path oldDictPath = it->dictPath;
 					std::string oldDictName = wide2Ascii(oldDictPath.stem().wstring());
-					fs::path newDictPath = defaultDictPath / ascii2Wide(_modePath) / (newDictName.toStdWString() + L".toml");
+					fs::path newDictPath = _modeDictDir / (newDictName.toStdWString() + L".toml");
 					try {
 						if (fs::exists(oldDictPath)) {
 							try {
@@ -399,7 +400,7 @@ void CommonNormalDictPage::_setupUI()
 							catch(...) { }
 						}
 						it->dictPath = newDictPath;
-						auto& dictNames = _globalConfig[_modeConfig]["dictNames"];
+						auto& dictNames = _globalConfig[_modeConfigKey]["dictNames"];
 						if (dictNames.is_array()) {
 							auto it = std::ranges::find_if(dictNames.as_array(), [=](const auto& elem)
 								{
@@ -465,7 +466,7 @@ void CommonNormalDictPage::_setupUI()
 							}
 							catch(...) { }
 							_normalTabEntries.erase(it);
-							auto& dictNames = _globalConfig[_modeConfig]["dictNames"];
+							auto& dictNames = _globalConfig[_modeConfigKey]["dictNames"];
 							if (dictNames.is_array()) {
 								auto it = std::ranges::find_if(dictNames.as_array(), [=](const auto& elem)
 									{
@@ -499,7 +500,7 @@ void CommonNormalDictPage::_setupUI()
 			return pageMainWidget;
 		};
 
-	auto& commonNormalDicts = _globalConfig[_modeConfig]["dictNames"];
+	auto& commonNormalDicts = _globalConfig[_modeConfigKey]["dictNames"];
 	if (commonNormalDicts.is_array()) {
 		auto it = commonNormalDicts.as_array().begin();
 		while (it != commonNormalDicts.as_array().end()) {
@@ -507,7 +508,7 @@ void CommonNormalDictPage::_setupUI()
 				it = commonNormalDicts.as_array().erase(it);
 				continue;
 			}
-			fs::path dictPath = defaultDictPath / ascii2Wide(_modePath) / (ascii2Wide(it->as_string()) + L".toml");
+			fs::path dictPath = _modeDictDir / (ascii2Wide(it->as_string()) + L".toml");
 			if (!fs::exists(dictPath)) {
 				it = commonNormalDicts.as_array().erase(it);
 				continue;
@@ -532,7 +533,7 @@ void CommonNormalDictPage::_setupUI()
 			}
 			insertToml(_globalConfig, "lastCommonNormalDictPath", importDictPathStr.toStdString());
 			fs::path importDictPath = importDictPathStr.toStdWString();
-			fs::path newDictPath = defaultDictPath / ascii2Wide(_modePath) / (importDictPath.stem().wstring() + L".toml");
+			fs::path newDictPath = _modeDictDir / (importDictPath.stem().wstring() + L".toml");
 			if (fs::exists(newDictPath) && !fs::equivalent(importDictPath, newDictPath)) {
 				try {
 					fs::remove(newDictPath);
@@ -573,7 +574,7 @@ void CommonNormalDictPage::_setupUI()
 				return;
 			}
 
-			fs::path newDictPath = defaultDictPath / ascii2Wide(_modePath) / (dictName.toStdWString() + L".toml");
+			fs::path newDictPath = _modeDictDir / (dictName.toStdWString() + L".toml");
 			bool hasSameNameTab = std::ranges::any_of(_normalTabEntries, [=](const NormalTabEntry& entry)
 				{
 					return entry.dictPath.stem().wstring() == dictName.toStdWString();
@@ -619,9 +620,9 @@ void CommonNormalDictPage::_setupUI()
 				dictNamesArr.push_back(dictName);
 			}
 
-			insertToml(_globalConfig, _modeConfig + ".dictNames", dictNamesArr);
+			insertToml(_globalConfig, _modeConfigKey + ".dictNames", dictNamesArr);
 
-			auto& spec = _globalConfig[_modeConfig]["spec"];
+			auto& spec = _globalConfig[_modeConfigKey]["spec"];
 			if (spec.is_table()) {
 				for (const auto& [key, value] : spec.as_table()) {
 					if (
