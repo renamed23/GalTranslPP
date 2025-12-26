@@ -33,10 +33,10 @@ export {
 
     void saveCache(const std::vector<Sentence>& allSentences, const fs::path& cachePath);
 
-    std::vector<json> splitJsonArrayNum(const json& originalData, int chunkSize);
+    std::vector<ordered_json> splitJsonArrayNum(const ordered_json& originalData, int chunkSize);
+    std::vector<ordered_json> splitJsonArrayEqual(const ordered_json& originalData, int numParts);
 
-    std::vector<json> splitJsonArrayEqual(const json& originalData, int numParts);
-
+    int getSplittedFileIndex(const std::wstring& path);
     int calculateCachePartIndexDiff(const std::wstring& path1, const std::wstring& path2);
 
     json toml2Json(const toml::value& value);
@@ -46,6 +46,13 @@ export {
 
 
 module :private;
+
+int getSplittedFileIndex(const std::wstring& path)
+{
+    size_t pos1 = path.find_last_of(L'_') + 1;
+    size_t pos2 = path.find_last_of(L'.');
+    return std::stoi(path.substr(pos1, pos2 - pos1));
+}
 
 /**
 * @brief 根据句子的上下文生成唯一的缓存键，复刻 GalTransl 逻辑
@@ -250,8 +257,11 @@ void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, std::m
 
 void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName, bool showBackgroundText,
     std::string& backgroudText, TransEngine transEngine, bool& parseError, int& parsedCount, std::shared_ptr<IController> controller, std::atomic<int>& completedSentences) {
-    if (size_t pos = content.find("</think>"); pos != std::string::npos) {
+    if (size_t pos = content.rfind("</think>"); pos != std::string::npos) {
         content = content.substr(pos + 8);
+    }
+    else if (pos = content.rfind("<end_think>"); pos != std::string::npos) {
+        content = content.substr(pos + 11);
     }
 
     {
@@ -449,14 +459,7 @@ void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::
 
     std::ranges::sort(partPaths, [&](const fs::path& a, const fs::path& b)
         {
-            size_t posA = a.filename().wstring().rfind(L"_part_");
-            size_t posB = b.filename().wstring().rfind(L"_part_");
-            if (posA == std::wstring::npos || posB == std::wstring::npos) {
-                return false;
-            }
-            std::wstring numA = a.filename().wstring().substr(posA + 6, a.filename().wstring().length() - posA - 11);
-            std::wstring numB = b.filename().wstring().substr(posB + 6, b.filename().wstring().length() - posB - 11);
-            return std::stoi(numA) < std::stoi(numB);
+            return getSplittedFileIndex(a.wstring()) < getSplittedFileIndex(b.wstring());
         });
 
     for (const auto& relPartPath : partPaths) {
@@ -559,59 +562,44 @@ void saveCache(const std::vector<Sentence>& allSentences, const fs::path& cacheP
 }
 
 
-std::vector<json> splitJsonArrayNum(const json& originalData, int chunkSize) {
-    if (chunkSize <= 0 || !originalData.is_array() || originalData.empty()) {
+std::vector<ordered_json> splitJsonArrayNum(const ordered_json& originalData, int chunkSize) {
+    if (chunkSize <= 1 || originalData.empty()) {
         return { originalData };
     }
-
-    std::vector<json> parts;
+    std::vector<ordered_json> parts;
+    parts.reserve((originalData.size() + chunkSize - 1) / chunkSize);
     size_t totalSize = originalData.size();
-
     for (size_t i = 0; i < totalSize; i += chunkSize) {
         size_t end = std::min(i + chunkSize, totalSize);
-        json part = json::array();
-        for (size_t j = i; j < end; ++j) {
-            part.push_back(originalData[j]);
-        }
-        parts.push_back(part);
+        parts.emplace_back(originalData.begin() + i, originalData.begin() + end);
     }
     return parts;
 }
 
 
-std::vector<json> splitJsonArrayEqual(const json& originalData, int numParts) {
-    if (numParts <= 1 || !originalData.is_array() || originalData.empty()) {
+std::vector<ordered_json> splitJsonArrayEqual(const ordered_json& originalData, int numParts) {
+    if (numParts == 1 || originalData.empty()) {
         return { originalData };
     }
-
-    std::vector<json> parts;
+    std::vector<ordered_json> parts;
+    parts.reserve(numParts);
     size_t totalSize = originalData.size();
     size_t partSize = totalSize / numParts;
     size_t remainder = totalSize % numParts;
     size_t currentIndex = 0;
-
     for (int i = 0; i < numParts; ++i) {
         size_t currentPartSize = partSize + (i < remainder ? 1 : 0);
-        if (currentPartSize == 0) continue;
-
-        json part = json::array();
-        for (size_t j = 0; j < currentPartSize; ++j) {
-            part.push_back(originalData[currentIndex + j]);
+        if (currentPartSize == 0) {
+            continue;
         }
-        parts.push_back(part);
+        parts.emplace_back(originalData.begin() + currentIndex, originalData.begin() + currentIndex + currentPartSize);
         currentIndex += currentPartSize;
     }
     return parts;
 }
 
 int calculateCachePartIndexDiff(const std::wstring& path1, const std::wstring& path2) {
-    auto getIndexFunc = [](const std::wstring& path) -> int
-        {
-            size_t pos1 = path.find_last_of(L'_') + 1;
-            size_t pos2 = path.find_last_of(L'.');
-            return std::stoi(path.substr(pos1, pos2 - pos1));
-        };
-    return getIndexFunc(path1) - getIndexFunc(path2);
+    return getSplittedFileIndex(path1) - getSplittedFileIndex(path2);
 }
 
 json toml2Json(const toml::value& value) {

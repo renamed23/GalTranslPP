@@ -763,26 +763,26 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     createParent(outputPath);
     createParent(cachePath);
-    ordered_json jData;
+    ordered_json jSentences;
     std::vector<Sentence> sentences;
 
     // 解析输入文件
     try {
         ifs.open(inputPath);
-        jData = json::parse(ifs);
+        jSentences = ordered_json::parse(ifs);
         ifs.close();
-        for (const auto& [index, item] : jData | std::views::enumerate) {
+        for (const auto& [index, item] : jSentences | std::views::enumerate) {
             Sentence se;
             se.index = (int)index;
             if (item.contains("name")) {
                 se.nameType = NameType::Single;
-                se.name = item.value("name", "");
+                se.name = item["name"].get<std::string>();
             }
             else if (item.contains("names")) {
                 se.nameType = NameType::Multiple;
                 se.names = item["names"].get<std::vector<std::string>>();
             }
-            se.original_text = item.value("message", "");
+            se.original_text = item["message"].get<std::string>();
             sentences.push_back(std::move(se));
         }
         for (size_t i = 0; i < sentences.size(); ++i) {
@@ -1072,7 +1072,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
     }
     // 最终保存缓存逻辑结束
 
-    for (auto [se, item] : std::views::zip(sentences, jData)) {
+    for (auto [se, item] : std::views::zip(sentences, jSentences)) {
         if (se.nameType == NameType::Single) {
             item["name"] = se.name_preview;
         }
@@ -1086,7 +1086,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
     }
 
     std::ofstream ofs(outputPath);
-    ofs << jData.dump(2);
+    ofs << jSentences.dump(2);
     ofs.close();
 
     m_logger->info("[线程 {}] [文件 {}] 处理完成。", threadId, wide2Ascii(relInputPath));
@@ -1312,7 +1312,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
 
     // 单文件分割
     {
-        auto splitFunc = [&](std::function<std::vector<json>(const json&, int)> splitImplFunc)
+        auto splitFunc = [&](const std::function<std::vector<ordered_json>(const ordered_json&, int)>& splitImplFunc)
             {
                 if (m_splitFileNum <= 0) {
                     throw std::invalid_argument("文件分割数必须大于 0");
@@ -1322,10 +1322,10 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 for (const auto& relJsonPath : relJsonPaths) {
                     try {
                         ifs.open(m_inputDir / relJsonPath);
-                        json data = json::parse(ifs);
+                        ordered_json data = ordered_json::parse(ifs);
                         ifs.close();
-                        const std::vector<json> parts = splitImplFunc(data, m_splitFileNum);
-                        std::wstring relStem = relJsonPath.parent_path() / relJsonPath.stem();
+                        const std::vector<ordered_json> parts = splitImplFunc(data, m_splitFileNum);
+                        const std::wstring relStem = relJsonPath.parent_path() / relJsonPath.stem();
                         for (size_t i = 0; i < parts.size(); ++i) {
                             const fs::path relPartPath = relStem + L"_part_" + std::to_wstring(i) + relJsonPath.extension().wstring();
                             m_splitFilePartsToJson[relPartPath] = relJsonPath;
