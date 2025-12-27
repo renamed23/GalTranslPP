@@ -1,11 +1,9 @@
 module;
 
 #define PYBIND11_HEADERS
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
-#include <unicode/unistr.h>
-#include <unicode/uchar.h>
-#include <unicode/regex.h>
 #include <cpp-base64/base64.h>
 #include <toml.hpp>
 #include <sol/sol.hpp>
@@ -61,16 +59,14 @@ SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfi
             if (elem.is_string()) {
                 GppConditionPattern pattern;
                 pattern.conditionTarget = CachePart::PreprocText;
-                icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(elem.as_string());
-                UErrorCode status = U_ZERO_ERROR;
-                pattern.conditionReg = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
-                if (U_FAILURE(status)) {
+                pattern.conditionReg.setPattern(elem.as_string()).setModifier(defaultRegCompileModifier).compile();
+                if (!pattern.conditionReg) {
                     throw std::runtime_error(std::format("skipKeys 正则表达式 [{}] 编译失败", elem.as_string()));
                 }
-                GPPCondition gppCondition{ pattern };
-                CheckSeCondFunc checkFunc = [=](const Sentence* se) -> bool
+                GPPCondition gppCondition{ std::move(pattern) };
+                CheckSeCondFunc checkFunc = [condr = std::move(gppCondition)](const Sentence* se) -> bool
                     {
-                        return checkGppCondition(gppCondition, se);
+                        return checkGppCondition(condr, se);
                     };
                 m_skipKeys.push_back(std::move(checkFunc));
             }

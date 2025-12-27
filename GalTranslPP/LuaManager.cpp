@@ -544,7 +544,8 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 		"metadata", &JsonInfo::metadata,
 		"htmlPath", &JsonInfo::htmlPath,
 		"epubPath", &JsonInfo::epubPath,
-		"normalPostPath", &JsonInfo::normalPostPath
+		"normalPostPath", &JsonInfo::normalPostPath,
+		"content", &JsonInfo::content
 	);
 	lua.new_usertype<EpubTranslator>("EpubTranslator",
 		sol::base_classes, sol::bases<ITranslator, NormalJsonTranslator>(),
@@ -608,7 +609,10 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 		};
 	utilsTable["splitIntoTokens"] = &::splitIntoTokens;
 	utilsTable["splitIntoGraphemes"] = &splitIntoGraphemes;
-	utilsTable["countGraphemes"] = &countGraphemes;
+	utilsTable["countGraphemes"] = [](const std::string& str) -> size_t
+		{
+			return countGraphemes(str);
+		};
 	utilsTable["countSubstring"] = &countSubstring;
 	utilsTable["getSubstringPositions"] = &getSubstringPositions;
 	utilsTable["replaceStr"] = [](const std::string& str, const std::string& org, const std::string& rep) -> std::string

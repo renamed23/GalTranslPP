@@ -12,10 +12,8 @@ module;
 #include <bit7z/bitfileextractor.hpp>
 #include <spdlog/spdlog.h>
 #include <unicode/unistr.h>
-#include <unicode/uchar.h>
 #include <unicode/brkiter.h>
 #include <unicode/schriter.h>
-#include <unicode/regex.h>
 #include <unicode/uscript.h>
 #include <unicode/translit.h>
 #include <toml.hpp>
@@ -426,27 +424,35 @@ std::vector<std::string> splitIntoGraphemes(const std::string& sourceString) {
     return resultVector;
 }
 
+auto countGraphemesFunc = [](auto&& sourceString) -> size_t
+    {
+        if (sourceString.empty()) {
+            return 0;
+        }
+        UErrorCode errorCode = U_ZERO_ERROR;
+        icu::UnicodeString uString = icu::UnicodeString::fromUTF8(sourceString);
+        std::unique_ptr<icu::BreakIterator> breakIterator(
+            icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
+        );
+        if (U_FAILURE(errorCode)) {
+            throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
+        }
+        breakIterator->setText(uString);
+
+        int32_t start = breakIterator->first();
+        size_t count = 0;
+        for (int32_t end = breakIterator->next(); end != icu::BreakIterator::DONE; end = breakIterator->next()) {
+            ++count;
+        }
+        return count;
+    };
+
+size_t countGraphemes(std::string_view sourceString) {
+    countGraphemesFunc(sourceString);
+}
+
 size_t countGraphemes(const std::string& sourceString) {
-    if (sourceString.empty()) {
-        return 0;
-    }
-    UErrorCode errorCode = U_ZERO_ERROR;
-    icu::UnicodeString uString = icu::UnicodeString::fromUTF8(sourceString);
-    std::unique_ptr<icu::BreakIterator> breakIterator(
-        icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
-    );
-    if (U_FAILURE(errorCode)) {
-        throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
-    }
-    breakIterator->setText(uString);
-
-    int32_t start = breakIterator->first();
-    size_t count = 0;
-    for (int32_t end = breakIterator->next(); end != icu::BreakIterator::DONE; end = breakIterator->next()) {
-        ++count;
-    }
-
-    return count;
+    countGraphemesFunc(sourceString);
 }
 
 // 计算子串出现次数

@@ -185,7 +185,8 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
         .def_readwrite("metadata", &JsonInfo::metadata)
         .def_readwrite("htmlPath", &JsonInfo::htmlPath)
         .def_readwrite("epubPath", &JsonInfo::epubPath)
-        .def_readwrite("normalPostPath", &JsonInfo::normalPostPath);
+        .def_readwrite("normalPostPath", &JsonInfo::normalPostPath)
+        .def_readwrite("content", &JsonInfo::content);
 
     py::class_<EpubTranslator, NormalJsonTranslator>(m, "EpubTranslator")
         .def_readwrite("m_epubInputDir", &EpubTranslator::m_epubInputDir)

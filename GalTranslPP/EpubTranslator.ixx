@@ -1,10 +1,9 @@
 ﻿module;
 
 #define PYBIND11_HEADERS
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
-#include <unicode/regex.h>
-#include <unicode/unistr.h>
 #include <zip.h>
 #include <gumbo.h>
 #include <toml.hpp>
@@ -25,16 +24,16 @@ export {
     };
 
     struct CallbackPattern {
-        std::shared_ptr<icu::RegexPattern> org;
-        icu::UnicodeString rep;
+        jpc::Regex org;
+        jpc::RegexReplace rep;
     };
 
     struct RegexPattern {
-        std::shared_ptr<icu::RegexPattern> org;
-        icu::UnicodeString rep;
+        jpc::Regex org;
+        jpc::RegexReplace rep;
 
-        bool isCallback;
         std::multimap<int, CallbackPattern> callbackPatterns;
+        bool isCallback;
     };
 
     struct JsonInfo {
@@ -45,10 +44,12 @@ export {
         fs::path epubPath;
         // 存储json文件相对路径到 normal_post 完整路径的映射
         fs::path normalPostPath;
+        // HTML 预处理正则替换后的内容
+        std::string content;
     };
 
     class EpubTranslator : public NormalJsonTranslator {
-    public:
+
         friend void pybind11_init_gpp_plugin_api(::pybind11::module_& m);
         friend class LuaManager;
 
@@ -104,7 +105,7 @@ void extractTextNodes(GumboNode* node, std::vector<std::pair<std::string, EpubTe
         EpubTextNodeInfo info;
         info.offset = node->v.text.start_pos.offset;
         info.length = text.length();
-        sentences.push_back({ text, info });
+        sentences.push_back({ std::move(text), info });
         return;
     }
 
@@ -148,17 +149,18 @@ void EpubTranslator::init()
         auto readRegexArr = [](const toml::array& regexArr, std::vector<RegexPattern>& patterns)
             {
                 for (const auto& regexTbl : regexArr) {
-                    std::string regexOrg = regexTbl.contains("org") ? toml::find_or(regexTbl, "org", "") :
+                    const std::string regexOrg = regexTbl.contains("org") ? toml::find_or(regexTbl, "org", "") :
                         toml::find_or(regexTbl, "searchStr", "");
                     if (regexOrg.empty()) {
                         continue;
                     }
 
                     RegexPattern regexPattern;
-                    icu::UnicodeString regexUStr = icu::UnicodeString::fromUTF8(regexOrg);
-                    UErrorCode status = U_ZERO_ERROR;
-                    regexPattern.org = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(regexUStr, 0, status));
-                    if (U_FAILURE(status)) {
+                    const std::string compileModifier = toml::find_or(regexTbl, "compile_modifier", defaultRegCompileModifier);
+                    const std::string replaceModifier = toml::find_or(regexTbl, "replace_modifier", defaultRegReplaceModifier);
+                    regexPattern.org.setPattern(regexOrg).setModifier(compileModifier).compile();
+                    regexPattern.rep.setModifier(replaceModifier);
+                    if (!regexPattern.org) {
                         throw std::runtime_error("预处理正则编译失败: " + regexOrg);
                     }
                     regexPattern.isCallback = regexTbl.contains("callback");
@@ -174,30 +176,31 @@ void EpubTranslator::init()
                             if (group == 0) {
                                 continue;
                             }
-                            const std::string& callbackOrg = callbackTbl.contains("org") ? toml::find_or(callbackTbl, "org", "") :
+                            const std::string callbackOrg = callbackTbl.contains("org") ? toml::find_or(callbackTbl, "org", "") :
                                 toml::find_or(callbackTbl, "searchStr", "");
                             if (callbackOrg.empty()) {
                                 continue;
                             }
-                            const std::string& callbackRep = callbackTbl.contains("rep") ? toml::find_or(callbackTbl, "rep", "") :
+                            const std::string callbackRep = callbackTbl.contains("rep") ? toml::find_or(callbackTbl, "rep", "") :
                                 toml::find_or(callbackTbl, "replaceStr", "");
-                            icu::UnicodeString callbackUStr = icu::UnicodeString::fromUTF8(callbackOrg);
-                            callbackPattern.org = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(callbackUStr, 0, status));
-                            if (U_FAILURE(status)) {
-                                throw std::runtime_error("预处理正则回调正则编译失败: " + callbackOrg);
+                            const std::string callbackCompileModifier = toml::find_or(callbackTbl, "compile_modifier", defaultRegCompileModifier);
+                            const std::string callbackReplaceModifier = toml::find_or(callbackTbl, "replace_modifier", defaultRegReplaceModifier);
+                            callbackPattern.org.setPattern(callbackOrg).setModifier(callbackCompileModifier).compile();
+                            callbackPattern.rep.setModifier(callbackReplaceModifier);
+                            if (!callbackPattern.org) {
+                                throw std::runtime_error(std::format("预处理正则回调正则编译失败: [{}]", callbackOrg));
                             }
-                            callbackPattern.rep = icu::UnicodeString::fromUTF8(callbackRep);
-                            regexPattern.callbackPatterns.insert(std::make_pair(group, callbackPattern));
+                            callbackPattern.rep.setReplaceWith(callbackRep);
+                            regexPattern.callbackPatterns.insert({ group, std::move(callbackPattern) });
                         }
                     }
                     else {
                         const std::string& regexRep = regexTbl.contains("rep") ? toml::find_or(regexTbl, "rep", "") :
                             toml::find_or(regexTbl, "replaceStr", "");
-                        icu::UnicodeString repUStr = icu::UnicodeString::fromUTF8(regexRep);
-                        regexPattern.rep = repUStr;
+                        regexPattern.rep.setReplaceWith(regexRep);
                     }
 
-                    patterns.push_back(regexPattern);
+                    patterns.push_back(std::move(regexPattern));
                 }
             };
 
@@ -238,51 +241,29 @@ void EpubTranslator::beforeRun()
     }
 
     // 正则替换
-    auto regexReplace = [this](const std::vector<RegexPattern>& regexPatterns, std::string& content)
+    auto regexReplace = [this](std::vector<RegexPattern>& regexPatterns, std::string& content)
         {
-            icu::UnicodeString contentUStr = icu::UnicodeString::fromUTF8(content);
-            for (const auto& reg : regexPatterns) {
-                UErrorCode status = U_ZERO_ERROR;
-                std::unique_ptr<icu::RegexMatcher> matcher(reg.org->matcher(contentUStr, status));
-                if (U_FAILURE(status)) {
-                    m_logger->error("预处理正则匹配失败");
-                    continue;
-                }
+            for (RegexPattern& reg : regexPatterns) {
+                reg.rep.setRegexObject(&reg.org).setSubject(&content);
                 if (reg.isCallback) {
-                    icu::UnicodeString newContentUstr;
-                    while (matcher->find() && U_SUCCESS(status)) {
-                        icu::UnicodeString patternUstr;
-                        for (int32_t i = 1; i < matcher->groupCount() + 1; i++) {
-                            icu::UnicodeString groupUstr = matcher->group(i, status);
-                            auto equalRange = reg.callbackPatterns.equal_range(i);
-                            for (auto it = equalRange.first; it != equalRange.second; ++it) {
-                                std::unique_ptr<icu::RegexMatcher> callbackMatcher(it->second.org->matcher(groupUstr, status));
-                                if (U_FAILURE(status)) {
-                                    m_logger->error("预处理正则回调匹配失败");
-                                    continue;
+                    content = reg.rep.nreplace(jpc::MatchEvaluator([&](const jpc::NumSub& m1, void*, void*)
+                        {
+                            std::string result;
+                            for (size_t i = 1; i < m1.size(); i++) {
+                                std::string groupStr = m1[i];
+                                auto equalRange = reg.callbackPatterns.equal_range((int)i);
+                                for (auto it = equalRange.first; it != equalRange.second; ++it) {
+                                    groupStr = it->second.rep.setRegexObject(&it->second.org).setSubject(&groupStr).replace();
                                 }
-                                groupUstr = callbackMatcher->replaceAll(it->second.rep, status);
-                                if (U_FAILURE(status)) {
-                                    m_logger->error("预处理正则回调替换失败");
-                                    continue;
-                                }
+                                result.append(groupStr);
                             }
-                            patternUstr.append(groupUstr);
-                        }
-                        matcher->appendReplacement(newContentUstr, patternUstr, status);
-                    }
-                    matcher->appendTail(newContentUstr);
-                    contentUStr = std::move(newContentUstr);
+                            return result;
+                        }));
                 }
                 else {
-                    contentUStr = matcher->replaceAll(reg.rep, status);
-                    if (U_FAILURE(status)) {
-                        m_logger->error("预处理正则替换失败");
-                    }
+                    content = reg.rep.replace();
                 }
             }
-            content.clear();
-            contentUStr.toUTF8String(content);
         };
 
 
@@ -327,7 +308,8 @@ void EpubTranslator::beforeRun()
                 info.htmlPath = htmlEntry.path();
                 info.epubPath = epubPath;
                 info.normalPostPath = showNormalPostHtmlPath;
-                m_epubToJsonsMap[epubPath].insert(std::make_pair(relJsonPath, false));
+                info.content = std::move(content);
+                m_epubToJsonsMap[epubPath].insert({ relJsonPath, false });
 
                 // 存储元数据
                 std::ranges::sort(sentences, [](const auto& a, const auto& b)
@@ -351,7 +333,7 @@ void EpubTranslator::beforeRun()
 
                 createParent(showNormalHtmlPath);
                 ofs.open(showNormalHtmlPath, std::ios::binary);
-                ofs << content;
+                ofs << info.content;
                 ofs.close();
             }
         }
@@ -360,7 +342,7 @@ void EpubTranslator::beforeRun()
     m_onFileProcessed = [this, regexReplace](fs::path relProcessedFile)
         {
             if (!m_jsonToInfoMap.contains(relProcessedFile)) {
-                m_logger->warn("未找到与 {} 对应的元数据，跳过", wide2Ascii(relProcessedFile));
+                m_logger->error("[文件 {}] 未找到对应的元数据", wide2Ascii(relProcessedFile));
                 return;
             }
             const JsonInfo& info = m_jsonToInfoMap[relProcessedFile];
@@ -386,19 +368,15 @@ void EpubTranslator::beforeRun()
                 const auto& metadata = jsonInfo.metadata;
 
                 // 替换 HTML 内容的逻辑
-                std::ifstream ifs(rebuiltHtmlPath, std::ios::binary);
-                std::string originalContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-                ifs.close();
-
-                // 预处理正则替换
-                regexReplace(m_preRegexPatterns, originalContent);
+                std::ifstream ifs;
+                const std::string& originalContent = jsonInfo.content;
 
                 ifs.open(m_outputDir / relJsonPath);
                 json translatedData = json::parse(ifs);
                 ifs.close();
 
                 if (metadata.size() != translatedData.size()) {
-                    throw std::runtime_error(std::format("元数据和翻译数据数量不匹配，无法重组: {}meta / {}trans,文件: [{}]", metadata.size(), translatedData.size(), wide2Ascii(rebuiltHtmlPath)));
+                    throw std::runtime_error(std::format("[文件 {}] 元数据和翻译数据数量不匹配，无法重组({}meta/{}trans)", wide2Ascii(rebuiltHtmlPath), metadata.size(), translatedData.size()));
                 }
 
                 std::string newContent;
@@ -406,7 +384,7 @@ void EpubTranslator::beforeRun()
                 size_t lastPos = 0;
 
                 for (size_t i = 0; i < metadata.size(); ++i) {
-                    std::string translatedText = translatedData[i].value("message", "");
+                    std::string translatedText = translatedData[i]["message"].get<std::string>();
                     std::string replacement = m_bilingualOutput ?
                         (translatedText + "<br/><span style=\"color:" + m_originalTextColor + "; font-size:" + m_originalTextScale +
                             "em;\">" + originalContent.substr(metadata[i].offset, metadata[i].length) + "</span>")

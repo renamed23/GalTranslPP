@@ -56,10 +56,13 @@ org = '<ruby><rb>(.+?)</rb><rt>(.+?)</rt></ruby>'
 rep = '[$2/$1]'
 
 [[plugins.Epub.preprocRegex]]
-org = '(<p[^>/]*>)(.*?)(</p>)'
-callback = [
-  { org = '<[^>]*>', rep = '', group = 2 },
-]
+# 基本等效于: 
+# org = '(<p[^>/]*>)(.*?)(</p>)'
+# callback = [
+#   { org = '<[^>]*>', rep = '', group = 2 },
+# ]
+org = '((?i)(?:<p\b[^>]*>|\G(?!\A))[^<]*\K<(?!/p>)[^>]*>)'
+rep = ''
 
 [[plugins.Epub.postprocRegex]]
 

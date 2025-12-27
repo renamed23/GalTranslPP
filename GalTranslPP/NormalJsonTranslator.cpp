@@ -1,14 +1,13 @@
 module;
 
 #define PYBIND11_HEADERS
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #ifdef _WIN32
 #include <Windows.h>
 #include <Shlwapi.h>
 #endif
 #include <spdlog/spdlog.h>
-#include <unicode/regex.h>
-#include <unicode/unistr.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
@@ -60,7 +59,7 @@ void NormalJsonTranslator::init()
         bool needReboot = false;
         const auto configData = toml::parse(configPath);
 
-        const std::string& transEngineStr = toml::find_or(configData, "plugins", "transEngine", "ForGalJson");
+        const std::string transEngineStr = toml::find_or(configData, "plugins", "transEngine", "ForGalJson");
         if (transEngineStr == "ForGalJson") {
             m_transEngine = TransEngine::ForGalJson;
         }
@@ -117,10 +116,10 @@ void NormalJsonTranslator::init()
         m_usePreDictInMsg = toml::find_or(configData, "dictionary", "usePreDictInMsg", true);
         m_usePostDictInMsg = toml::find_or(configData, "dictionary", "usePostDictInMsg", true);
         m_useGptDictToReplaceName = toml::find_or(configData, "dictionary", "useGPTDictInName", false);
-        const std::string& defaultDictFolder = toml::find_or(configData, "dictionary", "defaultDictFolder", "BaseConfig/Dict");
+        const std::string defaultDictFolder = toml::find_or(configData, "dictionary", "defaultDictFolder", "BaseConfig/Dict");
         const fs::path defaultDictFolderPath = ascii2Wide(defaultDictFolder);
 
-        auto loadDictsFunc = [&](const std::string& dictType, auto& dict)
+        auto loadDictsFunc = [&]<typename DictionaryType>(const std::string& dictType, DictionaryType& dict)
             {
                 const auto& dictFileNames = toml::find<
                     std::optional<std::vector<std::string>>
@@ -287,21 +286,21 @@ void NormalJsonTranslator::init()
 
             if (m_transEngine != TransEngine::NameTrans) {
                 // 需要翻译预处理
-                const std::string& tokenizerBackend = toml::find_or(configData, "common", "tokenizerBackend", "MeCab");
+                const std::string tokenizerBackend = toml::find_or(configData, "common", "tokenizerBackend", "MeCab");
                 if (tokenizerBackend == "MeCab") {
-                    const std::string& mecabDictDir = toml::find_or(configData, "common", "mecabDictDir", "BaseConfig/mecabDict/mecab-ipadic-utf8");
+                    const std::string mecabDictDir = toml::find_or(configData, "common", "mecabDictDir", "BaseConfig/mecabDict/mecab-ipadic-utf8");
                     m_logger->info("正在检查 MeCab 环境...");
                     m_tokenizeSourceLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
                     m_logger->info("MeCab 环境检查完毕。");
                 }
                 else if (tokenizerBackend == "spaCy") {
-                    const std::string& spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
+                    const std::string spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
                     m_logger->info("正在检查 spaCy 环境...");
                     m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
                     m_logger->info("spaCy 环境检查完毕。");
                 }
                 else if (tokenizerBackend == "Stanza") {
-                    const std::string& stanzaLang = toml::find_or(configData, "common", "stanzaLang", "zh");
+                    const std::string stanzaLang = toml::find_or(configData, "common", "stanzaLang", "zh");
                     m_logger->info("正在检查 Stanza 环境...");
                     m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
                     m_logger->info("Stanza 环境检查完毕。");
@@ -357,16 +356,14 @@ void NormalJsonTranslator::init()
                         if (elem.is_string()) {
                             GppConditionPattern pattern;
                             pattern.conditionTarget = CachePart::Problems;
-                            icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(elem.as_string());
-                            UErrorCode status = U_ZERO_ERROR;
-                            pattern.conditionReg = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
-                            if (U_FAILURE(status)) {
+                            pattern.conditionReg.setPattern(elem.as_string()).setModifier(defaultRegCompileModifier).compile();
+                            if (!pattern.conditionReg) {
                                 throw std::runtime_error(std::format("retranslKeys 正则表达式 [{}] 编译失败", elem.as_string()));
                             }
-                            GPPCondition cond{ pattern };
-                            CheckSeCondFunc checkFunc = [=](const Sentence* se) -> bool
+                            GPPCondition cond{ std::move(pattern) };
+                            CheckSeCondFunc checkFunc = [condr = std::move(cond)](const Sentence* se) -> bool
                                 {
-                                    return checkGppCondition(cond, se);
+                                    return checkGppCondition(condr, se);
                                 };
                             m_retranslKeys.push_back(std::move(checkFunc));
                         }
@@ -382,31 +379,21 @@ void NormalJsonTranslator::init()
 
                 const auto& skipProblems = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "skipProblems");
                 if (skipProblems) {
-                    auto compileProblemRegexFunc = [](const std::string& patternStr) -> std::shared_ptr<icu::RegexPattern>
-                        {
-                            icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(patternStr);
-                            UErrorCode status = U_ZERO_ERROR;
-                            std::shared_ptr<icu::RegexPattern> pattern = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
-                            if (U_FAILURE(status)) {
-                                throw std::runtime_error(std::format("skipProblems Problem正则表达式 [{}] 编译失败", patternStr));
-                            }
-                            return pattern;
-                        };
                     for (const auto& elem : *skipProblems) {
                         if (elem.is_string()) {
-                            m_skipProblems.push_back({ compileProblemRegexFunc(elem.as_string()), std::nullopt });
+                            m_skipProblems.push_back({ jpc::Regex(elem.as_string()), std::nullopt });
                         }
                         else if (elem.is_array() && elem.size() > 0) {
                             if (!elem[0].is_string()) {
                                 throw std::invalid_argument("skipProblems 的内联表数组第一个元素必须是字符串");
                             }
-                            std::shared_ptr<icu::RegexPattern> pattern = compileProblemRegexFunc(elem[0].as_string());
+                            jpc::Regex pattern(elem[0].as_string());
                             if (elem.size() == 1) {
-                                m_skipProblems.push_back({ pattern, std::nullopt });
+                                m_skipProblems.push_back({ std::move(pattern), std::nullopt });
                             }
                             else {
                                 CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot);
-                                m_skipProblems.push_back({ pattern, std::move(checkFunc) });
+                                m_skipProblems.push_back({ std::move(pattern), std::move(checkFunc) });
                             }
                         }
                         else {
@@ -579,7 +566,7 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
 
     std::erase_if(se->problems, [&](auto& problem)
         {
-            return std::ranges::any_of(m_skipProblems, [&](const SkipProblemCondition& skipProblemCondition)
+            return std::ranges::any_of(m_skipProblems, [&](SkipProblemCondition& skipProblemCondition)
                 {
                     bool problemMatch = checkString(skipProblemCondition.first, problem);
                     if (!skipProblemCondition.second.has_value()) {
@@ -834,9 +821,9 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
         auto insertJsonArrToCacheMap = [&](const json& jsonArr)
             {
-                for (size_t i = 0; i < jsonArr.size(); ++i) {
-                    std::string cacheKey = generateCacheKey(jsonArr, i);
-                    cacheMap.insert({ std::move(cacheKey), jsonArr[i] });
+                for (const auto& [index, item] : jsonArr | std::views::enumerate) {
+                    std::string cacheKey = generateCacheKey(jsonArr, index);
+                    cacheMap.insert({ std::move(cacheKey), item });
                 }
             };
 

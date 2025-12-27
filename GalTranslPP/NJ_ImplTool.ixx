@@ -2,7 +2,6 @@
 
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
-#include <unicode/regex.h>
 #include <unicode/unistr.h>
 #include <boost/regex.hpp>
 

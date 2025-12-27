@@ -1,8 +1,6 @@
 ﻿module;
 
 #include <spdlog/spdlog.h>
-#include <unicode/unistr.h>
-#include <unicode/regex.h>
 #include <unicode/uscript.h>
 #include <toml.hpp>
 
@@ -32,18 +30,22 @@ export {
 
     bool createParent(const fs::path& path);
 
+    std::wstring str2Lower(std::wstring_view str) {
+        return str | std::views::transform([](const auto c) { return std::tolower(c); }) | std::ranges::to<std::wstring>();
+    }
+    std::string str2Lower(std::string_view str) {
+        return str | std::views::transform([](const auto c) { return std::tolower(c); }) | std::ranges::to<std::string>();
+    }
     template <typename CharT, typename Traits, typename Alloc>
     auto str2Lower(const std::basic_string<CharT, Traits, Alloc>& str) {
-        auto result = str;
-        std::transform(str.begin(), str.end(), result.begin(), [](const auto& c) { return std::tolower(c); });
-        return result;
+        return str2Lower(std::basic_string_view<CharT>(str));
     }
     std::wstring str2Lower(const fs::path& path) {
-        return str2Lower(path.wstring());
+        return str2Lower(path.native());
     }
     template <typename CharT, typename Traits, typename Alloc>
     auto& str2LowerInplace(std::basic_string<CharT, Traits, Alloc>& str) {
-        std::transform(str.begin(), str.end(), str.begin(), [](const auto& c) { return std::tolower(c); });
+        std::transform(str.begin(), str.end(), str.begin(), [](const auto c) { return std::tolower(c); });
         return str;
     }
 
@@ -57,6 +59,7 @@ export {
         };
     std::vector<std::string> splitString(const std::string& str, char delimiter) { return splitStringFunc(str, delimiter); }
     std::vector<std::string> splitString(const std::string& str, std::string_view delimiter) { return splitStringFunc(str, delimiter); }
+    std::vector<std::string_view> splitStringView(std::string_view strv, std::string_view delimiter) { return splitStringFunc(strv, delimiter); }
 
     std::vector<std::string> splitTsvLine(const std::string& line, const std::vector<std::string>& delimiters);
 
@@ -76,6 +79,7 @@ export {
 
     std::vector<std::string> splitIntoGraphemes(const std::string& sourceString);
 
+    size_t countGraphemes(std::string_view sourceString);
     size_t countGraphemes(const std::string& sourceString);
 
     int countSubstring(const std::string& text, std::string_view sub);

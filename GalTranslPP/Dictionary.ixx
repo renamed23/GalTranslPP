@@ -1,10 +1,9 @@
 ﻿module;
 
 #define PYBIND11_HEADERS
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
-#include <unicode/regex.h>
-#include <unicode/unistr.h>
 #include <toml.hpp>
 #include <sol/sol.hpp>
 
@@ -20,23 +19,23 @@ namespace fs = std::filesystem;
 export {
 
     struct GptDictEntry {
-        int priority;
         std::string searchStr;
         std::string replaceStr;
         std::string note;
+        int priority;
     };
 
     class GptDictionary {
     private:
+        std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
+        std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
         fs::path m_projectDir;
         fs::path m_tokenizeCachePath;
-        std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
-        std::shared_mutex m_tokenizeCacheMapMutex;
         std::vector<GptDictEntry> m_entries;
+        std::shared_ptr<spdlog::logger> m_logger;
+        std::shared_mutex m_tokenizeCacheMapMutex;
         LuaManager& m_luaManager;
         PythonManager& m_pythonManager;
-        std::shared_ptr<spdlog::logger> m_logger;
-        std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
 
     public:
 
@@ -60,24 +59,23 @@ export {
 
 
     struct NormalDictEntry {
-        int priority;
-
         std::string searchStr;
         std::string replaceStr;
-        bool isReg;
-        std::shared_ptr<icu::RegexPattern> searchReg;
-
+        std::unique_ptr<jpc::Regex> searchReg;
+        std::unique_ptr<std::string> replaceModifier;
         // 条件字典相关
-        CheckSeCondFunc dictCondition;
+        std::unique_ptr<CheckSeCondFunc> dictCondition;
+        int priority;
+        bool isReg;
     };
 
     class NormalDictionary {
     private:
         fs::path m_projectDir;
-        LuaManager& m_luaManager;
-        PythonManager& m_pythonManager;
         std::vector<NormalDictEntry> m_entries;
         std::shared_ptr<spdlog::logger> m_logger;
+        LuaManager& m_luaManager;
+        PythonManager& m_pythonManager;
 
     public:
 
@@ -118,7 +116,7 @@ void GptDictionary::sort() {
 std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) {
     std::string batchText;
     for (const auto& s : batch) {
-        batchText += s->name + ":" + s->pre_processed_text + "\n";
+        batchText += s->name + ": " + s->pre_processed_text + "\n";
     }
 
     std::string promptContent;
@@ -326,18 +324,19 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
             }
             entry.isReg = toml::find_or(el, "isReg", false);
 
-            std::string str = el.contains("org") ? el.at("org").as_string() : el.at("searchStr").as_string();
+            const std::string str = el.contains("org") ? el.at("org").as_string() : el.at("searchStr").as_string();
             if (str.empty()) {
                 continue;
             }
 
             if (entry.isReg) {
-                UErrorCode status = U_ZERO_ERROR;
-                icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(str));
-                entry.searchReg = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
-                if (U_FAILURE(status)) {
+                const std::string compileModifier = toml::find_or(el, "compile_modifier", defaultRegCompileModifier);
+                entry.searchReg = std::make_unique<jpc::Regex>(str, compileModifier);
+                if (!*entry.searchReg) {
                     throw std::runtime_error(std::format("Normal 字典文件格式错误(正则表达式错误): {}  ——  {}", wide2Ascii(filePath), str));
                 }
+                const std::string replaceModifier = toml::find_or(el, "replace_modifier", defaultRegReplaceModifier);
+                entry.replaceModifier = std::make_unique<std::string>(replaceModifier);
             }
             else {
                 entry.searchStr = str;
@@ -347,7 +346,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
             entry.priority = toml::find_or(el, "priority", 0);
 
             if (getConditionType(el) != ConditionType::None) {
-                entry.dictCondition = getCheckSeCondFunc(el, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot);
+                entry.dictCondition = std::make_unique<CheckSeCondFunc>(getCheckSeCondFunc(el, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot));
             }
             m_entries.push_back(std::move(entry));
             ++count;
@@ -380,23 +379,15 @@ void NormalDictionary::sort() {
 std::string NormalDictionary::doReplace(const Sentence* sentence, CachePart targetToModify) {
     std::string textToModify = chooseString(sentence, targetToModify);
 
-    for (const auto& entry : m_entries
-        | std::views::filter([&](const auto& entry)
+    for (const NormalDictEntry& entry : m_entries
+        | std::views::filter([&](const NormalDictEntry& entry)
             {
-                return !entry.dictCondition.operator bool() || entry.dictCondition(sentence);
+                return !entry.dictCondition.operator bool() || entry.dictCondition->operator ()(sentence);
             })) 
     {
         if (entry.isReg) {
-            icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(textToModify));
-            UErrorCode status = U_ZERO_ERROR;
-            std::unique_ptr<icu::RegexMatcher> matcher(entry.searchReg->matcher(ustr, status));
-            if (U_FAILURE(status)) {
-                m_logger->error("正则表达式创建matcher失败: {}, 句子: [{}]", u_errorName(status), textToModify);
-                return textToModify;
-            }
-            icu::UnicodeString result = matcher->replaceAll(icu::UnicodeString::fromUTF8(entry.replaceStr), status);
-            textToModify.clear();
-            result.toUTF8String(textToModify);
+            jpc::RegexReplace rr(entry.searchReg.get());
+            textToModify = rr.setModifier(*entry.replaceModifier).setSubject(&textToModify).setReplaceWith(&entry.replaceStr).replace();
         }
         else {
             replaceStrInplace(textToModify, entry.searchStr, entry.replaceStr);

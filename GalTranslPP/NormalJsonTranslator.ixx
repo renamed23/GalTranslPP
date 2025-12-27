@@ -1,10 +1,9 @@
 ﻿module;
 
 #define PYBIND11_HEADERS
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
-#include <unicode/regex.h>
-#include <unicode/unistr.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
@@ -24,7 +23,7 @@ namespace fs = std::filesystem;
 export {
 
     class NormalJsonTranslator : public ITranslator {
-    public:
+
         friend void pybind11_init_gpp_plugin_api(::pybind11::module_& m);
         friend class LuaManager;
 
@@ -76,7 +75,7 @@ export {
         std::string m_linebreakSymbol;
         std::vector<CheckSeCondFunc> m_retranslKeys;
         // first: 要忽略的 problem 正则表达式 pattern，second: 忽略条件
-        using SkipProblemCondition = std::pair<std::shared_ptr<icu::RegexPattern>, std::optional<CheckSeCondFunc>>;
+        using SkipProblemCondition = std::pair<jpc::Regex, std::optional<CheckSeCondFunc>>;
         std::vector<SkipProblemCondition> m_skipProblems;
 
         PythonManager m_pythonManager;

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "galtranslpp",
-  "version": "2.2.0",
+  "version": "2.2.4",
   "dependencies": [
     "nlohmann-json",
     "toml11",
@@ -18,7 +18,8 @@
     "lua",
     "proxy",
     "pybind11",
-    "bit7z"
+    "bit7z",
+    "pcre2"
   ],
   "overrides": [
     {

@@ -17,7 +17,7 @@ using json = nlohmann::json;
 export {
 
     class PDFTranslator : public NormalJsonTranslator {
-    public:
+
         friend void pybind11_init_gpp_plugin_api(::pybind11::module_& m);
         friend class LuaManager;
 

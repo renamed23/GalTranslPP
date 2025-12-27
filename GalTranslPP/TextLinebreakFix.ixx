@@ -92,21 +92,21 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 
 		if (m_useTokenizer) {
 			m_tokenizeCacheMap = loadTokenizeCache(m_tokenizeCachePath, m_logger);
-			const std::string& tokenizerBackend = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.tokenizerBackend");
+			const std::string tokenizerBackend = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.tokenizerBackend");
 			if (tokenizerBackend == "MeCab") {
-				const std::string& mecabDictDir = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.mecabDictDir");
+				const std::string mecabDictDir = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.mecabDictDir");
 				m_logger->info("TextLinebreakFix 正在检查 MeCab 环境...");
 				m_tokenizeTargetLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
 				m_logger->info("TextLinebreakFix MeCab 环境检查完毕。");
 			}
 			else if (tokenizerBackend == "spaCy") {
-				const std::string& spaCyModelName = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.spaCyModelName");
+				const std::string spaCyModelName = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.spaCyModelName");
 				m_logger->info("TextLinebreakFix 正在检查 spaCy 环境...");
 				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, m_needReboot);
 				m_logger->info("TextLinebreakFix spaCy 环境检查完毕。");
 			}
 			else if (tokenizerBackend == "Stanza") {
-				const std::string& stanzaLang = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.stanzaLang");
+				const std::string stanzaLang = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.stanzaLang");
 				m_logger->info("TextLinebreakFix 正在检查 Stanza 环境...");
 				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, m_needReboot);
 				m_logger->info("TextLinebreakFix Stanza 环境检查完毕。");
@@ -164,11 +164,16 @@ void TextLinebreakFix::run(Sentence* se)
 
 	auto checkLineCharCountFunc = [&](const std::string& transViewToModify)
 		{
-			if (transViewToModify.length() > m_errorThreshold && (int)countGraphemes(transViewToModify) > m_errorThreshold) {
-				std::vector<std::string> newLines = splitString(transViewToModify, "<br>");
-				for (const auto& [index, newLine] : newLines | std::views::enumerate) {
-					if (size_t charCount = countGraphemes(newLine); charCount > m_errorThreshold) {
-						m_logger->trace("句子[{}](原有{}行)其中的 译文行[{}]超出报错阈值[{}/{}]", se->pre_processed_text, origLinebreakCount + 1, newLine, charCount, m_errorThreshold);
+			if (transViewToModify.length() > m_errorThreshold) {
+				for (const auto& [index, newLineView] : transViewToModify | std::views::split(std::string_view{ "<br>" })
+					| std::views::transform([](const auto& subStrView)
+						{
+							return std::string_view(subStrView.begin(), subStrView.end());
+						}) 
+					| std::views::enumerate)
+				{
+					if (size_t charCount = countGraphemes(newLineView); charCount > m_errorThreshold) {
+						m_logger->trace("句子[{}](原有{}行)其中的 译文行[{}]超出报错阈值[{}/{}]", se->pre_processed_text, origLinebreakCount + 1, newLineView, charCount, m_errorThreshold);
 						se->problems.push_back(std::format("第 {} 行字数超出报错阈值[{}/{}]", index + 1, charCount, m_errorThreshold));
 					}
 				}

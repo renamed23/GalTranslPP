@@ -4,7 +4,7 @@ module GPPDefines;
 
 namespace fs = std::filesystem;
 
-const std::string GPPVERSION = "2.2.3";
+const std::string GPPVERSION = "2.2.4";
 const std::string PYTHONVERSION = "1.0.0";
 const std::string PROMPTVERSION = "2.0.0";
 const std::string DICTVERSION = "1.0.2";
@@ -22,3 +22,6 @@ const fs::path pluginConfigsPath = baseConfigPath / L"pluginConfigs";
 const fs::path filePluginConfigPath = pluginConfigsPath / L"filePlugins";
 const fs::path prePluginConfigPath = pluginConfigsPath / L"textPrePlugins";
 const fs::path postPluginConfigPath = pluginConfigsPath / L"textPostPlugins";
+
+const std::string defaultRegCompileModifier = "mnjS";
+const std::string defaultRegReplaceModifier = "gxE";

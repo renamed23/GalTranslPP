@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define _RANGES_
 #define SPDLOG_WCHAR_FILENAMES
 
@@ -10,6 +11,11 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/embed.h>
 #include <pybind11/subinterpreter.h>
+#endif
+
+#ifdef PCRE2_HEADERS
+#include <jpcre2.hpp>
+typedef jpcre2::select<char> jpc;
 #endif
 
 #define NESTED_CVT(className, memberName) sol::property([](className& self) \

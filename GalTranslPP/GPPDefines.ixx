@@ -25,6 +25,9 @@ export {
     extern const fs::path prePluginConfigPath;
     extern const fs::path postPluginConfigPath;
 
+    extern const std::string defaultRegCompileModifier;
+    extern const std::string defaultRegReplaceModifier;
+
     enum class NameType
     {
         None, Single, Multiple

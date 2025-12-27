@@ -1,12 +1,10 @@
 module;
 
 #define PYBIND11_HEADERS
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <toml.hpp>
 #include <spdlog/spdlog.h>
-#include <unicode/unistr.h>
-#include <unicode/uchar.h>
-#include <unicode/regex.h>
 #include <sol/sol.hpp>
 
 export module ConditionTool;
@@ -29,11 +27,11 @@ export {
     struct GppConditionPattern {
         CachePart conditionTarget = CachePart::None;
         int sentenceOffset = 0;
-        std::shared_ptr<icu::RegexPattern> conditionReg;
+        jpc::Regex conditionReg;
     };
     using GPPCondition = std::vector<GppConditionPattern>;
 
-    bool checkString(std::shared_ptr<icu::RegexPattern> conditionReg, const std::string& str);
+    bool checkString(const jpc::Regex& conditionReg, const std::string& str);
     bool checkGppCondition(const GPPCondition& gppCondition, const Sentence* se);
 
     template<typename TC>
@@ -57,28 +55,27 @@ export {
                 if (conditionRegStr.empty()) {
                     return;
                 }
-                icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(conditionRegStr));
-                UErrorCode status = U_ZERO_ERROR;
-                pattern.conditionReg = std::shared_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
-                if (U_FAILURE(status)) {
-                    throw std::runtime_error(std::format("Failed to compile regex pattern: {}", conditionRegStr));
+                const std::string modifier = toml::find_or(conditionTbl, "compile_modifier", defaultRegCompileModifier);
+                pattern.conditionReg.setPattern(conditionRegStr).setModifier(modifier).compile();
+                if (!pattern.conditionReg) {
+                    throw std::runtime_error(std::format("Failed to compile regex pattern: [{}]", conditionRegStr));
                 }
-                patterns.push_back(pattern);
+                patterns.push_back(std::move(pattern));
             };
         if (conditionPatterns.is_array()) {
             for (const auto& condition : conditionPatterns.as_array()
                 | std::views::filter([](const auto& condition) { return condition.is_table(); }))
             {
-                appendPatternFunc(condition.as_table());
+                appendPatternFunc(condition);
             }
         }
         else if (conditionPatterns.is_table()) {
-            appendPatternFunc(conditionPatterns.as_table());
+            appendPatternFunc(conditionPatterns);
             if (conditionPatterns.contains("additionalPatterns") && conditionPatterns.at("additionalPatterns").is_array()) {
                 for (const auto& condition : conditionPatterns.at("additionalPatterns").as_array()
                     | std::views::filter([](const auto& condition) { return condition.is_table(); }))
                 {
-                    appendPatternFunc(condition.as_table());
+                    appendPatternFunc(condition);
                 }
             }
         }
@@ -118,9 +115,9 @@ export {
                 case ConditionType::Gpp:
                 {
                     GPPCondition gppCondition = createGppCondition(tbl);
-                    CheckSeCondFunc checkFunc = [=](const Sentence* se) -> bool
+                    CheckSeCondFunc checkFunc = [condr = std::move(gppCondition)](const Sentence* se) -> bool
                         {
-                            return checkGppCondition(gppCondition, se);
+                            return checkGppCondition(condr, se);
                         };
                     funcs.push_back(std::move(checkFunc));
                 }
@@ -154,6 +151,7 @@ export {
                     }
                 }
                 break;
+
                 case ConditionType::Python:
                 {
                     std::string conditionPythonStr = tbl.at("conditionScript").as_string();
@@ -230,15 +228,9 @@ export {
 
 module :private;
 
-bool checkString(std::shared_ptr<icu::RegexPattern> conditionReg, const std::string& str) {
-    icu::UnicodeString textToInspect = icu::UnicodeString::fromUTF8(str);
-    UErrorCode status = U_ZERO_ERROR;
-    std::unique_ptr<icu::RegexMatcher> matcher(conditionReg->matcher(textToInspect, status));
-    if (U_FAILURE(status)) {
-        std::string textToInspectU8;
-        throw std::runtime_error(std::format("正则表达式创建matcher失败: {}, 句子: [{}]", u_errorName(status), textToInspect.toUTF8String(textToInspectU8)));
-    }
-    return (bool)matcher->find();
+bool checkString(const jpc::Regex& conditionReg, const std::string& str) {
+    jpc::RegexMatch rm(&conditionReg);
+    return rm.setSubject(&str).match() > 0;
 }
 
 bool checkGppCondition(const GPPCondition& gppCondition, const Sentence* se) {
