@@ -36,8 +36,8 @@ export {
         long statusCode = 0;   // HTTP 状态码
     };
 
-    ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi, int threadId,
-        std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, int apiTimeOutMs);
+    ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi,
+        std::shared_ptr<IController>& controller, std::shared_ptr<spdlog::logger>& logger, int threadId, int apiTimeOutMs);
 
     std::string cvt2StdApiUrl(const std::string& url);
 }
@@ -83,8 +83,8 @@ std::string getSystemProxyUrl() {
 }
 #endif
 
-ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi, int threadId,
-    std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, const int apiTimeOutMs) {
+ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi,
+    std::shared_ptr<IController>& controller, std::shared_ptr<spdlog::logger>& logger, int threadId, int apiTimeOutMs) {
     ApiResponse apiResponse;
 
     payload["model"] = api.modelName;

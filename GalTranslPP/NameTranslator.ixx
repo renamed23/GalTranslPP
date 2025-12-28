@@ -131,7 +131,7 @@ void NameTranslator::translateBatch(std::vector<std::string>& batchNames, std::u
         }
         logBlock += "\ninputBlock:\n" + inputBlock;
         m_logger->info("正在翻译人名表:\n{}", logBlock);
-        ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, 0, m_controller, m_logger, m_apiTimeoutMs);
+        ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, m_controller, m_logger, 0, m_apiTimeoutMs);
 
         /*bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
             const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,

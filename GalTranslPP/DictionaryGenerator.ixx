@@ -312,7 +312,7 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
         }
         logBlock += "\ninputBlock:\n" + text;
         m_logger->info("[线程 {}] 开始从段落中生成术语表:\n{}", threadId, logBlock);
-        ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, threadId, m_controller, m_logger, m_apiTimeoutMs);
+        ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, m_controller, m_logger, threadId, m_apiTimeoutMs);
 
         /*bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
             const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,

@@ -104,7 +104,7 @@ export {
 
     template<typename TC>
     CheckSeCondFunc getCheckSeCondFunc(const toml::basic_value<TC>& condElem, const fs::path& projectDir,
-        PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger, bool& needReboot) {
+        PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger>& logger, bool& needReboot) {
         std::vector<CheckSeCondFunc> funcs;
 
         auto appendFunctionFunc = [&](const auto& tbl)
