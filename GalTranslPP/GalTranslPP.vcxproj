@@ -154,7 +154,7 @@
       <BuildStlModules>true</BuildStlModules>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\vcpkg_installed\x64-windows\x64-windows\include\python3.12;python3.12;..\3rdParty\OpenCC\out\install\x64-Release\include;..\3rdParty\sol2\include;jpcre2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\vcpkg_installed\x64-windows\x64-windows\include\python3.12;python3.12;..\3rdParty\OpenCC\out\install\x64-Release\include;..\3rdParty\sol2\include;..\3rdParty\jpcre2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

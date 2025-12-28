@@ -59,7 +59,7 @@ void NormalJsonTranslator::init()
         bool needReboot = false;
         const auto configData = toml::parse(configPath);
 
-        const std::string transEngineStr = toml::find_or(configData, "plugins", "transEngine", "ForGalJson");
+        const std::string transEngineStr = toml::find_or(configData, "plugins", "transEngine", "");
         if (transEngineStr == "ForGalJson") {
             m_transEngine = TransEngine::ForGalJson;
         }
