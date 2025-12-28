@@ -16,6 +16,7 @@ module;
 #include <unicode/schriter.h>
 #include <unicode/uscript.h>
 #include <unicode/translit.h>
+#include <boost/crc.hpp>
 #include <toml.hpp>
 #include <cpp-base64/base64.cpp>
 
@@ -537,7 +538,7 @@ std::string extractCJK(const std::string& sourceString) {
     return extractCharactersByScripts(sourceString, { USCRIPT_HAN });
 }
 
-std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger> logger)
+std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger>& logger)
 {
     // 是否需要线程安全？(似乎是不需要)
     static std::function<std::string(const std::string&)> result;
@@ -654,7 +655,7 @@ std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadToken
     return result;
 }
 void saveTokenizeCache
-(const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger) {
+(const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger>& logger) {
     try {
         createParent(cachePath);
         json j = cache;
@@ -700,7 +701,21 @@ void extractZipExclude(const fs::path& zipPath, const fs::path& outputDir, const
     bit7z::BitFileExtractor extractor{ library, bit7z::BitFormat::Auto };
     extractor.setOverwriteMode(bit7z::OverwriteMode::Overwrite);
     extractor.extractItems(wide2Ascii(zipPath), indices, wide2Ascii(outputDir));
+}
 
+uint64_t calculateFileCRC64(const fs::path& filePath) {
+    std::ifstream ifs(filePath, std::ios::binary);
+    boost::crc_optimal<64, 0x42F0E1EBA9EA3693, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, true, true> crc;
+    constexpr size_t BUFFER_SIZE = 1024 * 1024;
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
+    while (ifs) {
+        ifs.read((char*)buffer.data(), BUFFER_SIZE);
+        auto readCount = ifs.gcount();
+        if (readCount > 0) {
+            crc.process_bytes(buffer.data(), (size_t)readCount);
+        }
+    }
+    return crc.checksum();
 }
 
 bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& isCompatible)

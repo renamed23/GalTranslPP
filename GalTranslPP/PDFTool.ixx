@@ -19,7 +19,7 @@ export {
     std::tuple<bool, std::string> rejectPDF(const fs::path& orgPDFPath, const fs::path& translatedJsonPath, const fs::path& outputPDFPath,
         bool noMono = false, bool noDual = false, bool showProgress = false);
 
-    void checkPDFDependency(std::shared_ptr<spdlog::logger> logger);
+    void checkPDFDependency(std::shared_ptr<spdlog::logger>& logger);
 }
 
 
@@ -55,6 +55,6 @@ std::tuple<bool, std::string> rejectPDF(const fs::path& orgPDFPath, const fs::pa
     return std::make_tuple(success, message);
 }
 
-void checkPDFDependency(std::shared_ptr<spdlog::logger> logger) {
+void checkPDFDependency(std::shared_ptr<spdlog::logger>& logger) {
     checkPythonDependencies({ "babeldoc" }, logger);
 }

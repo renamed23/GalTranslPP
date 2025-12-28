@@ -1,7 +1,6 @@
 ﻿module;
 
 #include <spdlog/spdlog.h>
-#include <boost/regex.hpp>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 
@@ -52,8 +51,8 @@ export {
         void callLLMToGenerate(int segmentIndex, int threadId);
 
     public:
-        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc, const fs::path& otherCacheDir,
-            std::function<void(Sentence*)> preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
+        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
+            const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
             int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota);
         void generate(const std::vector<fs::path>& jsonFiles, const fs::path& outputFilePath);
 
@@ -66,8 +65,8 @@ export {
 
 module :private;
 
-DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, std::function<NLPResult(const std::string&)> tokenizeFunc, const fs::path& otherCacheDir,
-    std::function<void(Sentence*)> preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
+DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
+    const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
     int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota)
     : m_controller(controller), m_logger(logger), m_apiPool(apiPool), m_tokenizeSourceLangFunc(tokenizeFunc), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_dictgen.json"),
     m_preProcessFunc(preProcessFunc), m_onPerformApi(onPerformApi), m_systemPrompt(systemPrompt), m_userPrompt(userPrompt), m_apiStrategy(apiStrategy), m_targetLang(targetLang),
@@ -282,7 +281,7 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
         }
     }
     if (!hint.empty()) {
-        hint = "输入文本中的这些词语是一定要加入术语表的: \n" + hint;
+        hint = "These words in the input text should always be added into glossary: \n" + hint;
     }
 
     std::string prompt = m_userPrompt;
@@ -307,13 +306,19 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
         const TranslationApi& currentApi = apiOpt.value();
         json payload = { {"messages", messages} };
 
-        m_logger->info("[线程 {}] 开始从段落中生成术语表\ninputBlock: \n{}", threadId, text);
+        std::string logBlock;
+        if (!hint.empty()) {
+            logBlock += "\nHint:\n" + hint;
+        }
+        logBlock += "\ninputBlock:\n" + text;
+        m_logger->info("[线程 {}] 开始从段落中生成术语表:\n{}", threadId, logBlock);
         ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, threadId, m_controller, m_logger, m_apiTimeoutMs);
 
-        /*bool checkResponse(const ApiResponse & response, const TranslationApi & currentAPI, int& retryCount, const std::filesystem::path & relInputPath,
-            int threadId, bool m_checkQuota, const std::string & m_apiStrategy, APIPool & m_apiPool, std::shared_ptr<spdlog::logger> m_logger);*/
+        /*bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+            const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+            int& retryCount, int threadId, bool m_checkQuota);*/
         if (!checkResponse(
-            response, currentApi, retryCount, L"字典生成——段落输入", threadId, m_checkQuota, m_apiStrategy, m_apiPool, m_logger
+            response, m_apiPool, currentApi, L"字典生成——段落输入", m_apiStrategy, m_logger, retryCount, threadId, m_checkQuota
         )) {
             continue;
         }
@@ -326,8 +331,9 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
                     continue;
                 }
                 std::lock_guard<std::mutex> lock(m_resultMutex);
-                m_finalCounter[parts[0]]++;
-                if (m_finalCounter[parts[0]] == 2) {
+                int& counter = m_finalCounter[parts[0]];
+                ++counter;
+                if (counter == 2) {
                     m_logger->debug("发现重复术语: {}\t{}\t{}", parts[0], parts[1], parts[2]);
                 }
                 m_finalDict.emplace_back(parts[0], parts[1], parts[2]);

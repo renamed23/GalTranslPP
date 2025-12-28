@@ -197,7 +197,7 @@ void OtherSettingsPage::_setupUI()
 				}
 
 				for (const auto& [cacheFileName, overviewItems] : overviewFileMap) {
-					const fs::path cachePath = _projectDir / L"transl_cache" / ascii2Wide(cacheFileName);
+					const fs::path cachePath = _projectDir / transCacheDirName / ascii2Wide(cacheFileName);
 					if (!fs::exists(cachePath)) {
 						problems.push_back(std::format("[文件 {}] 未在 cache 中找到，跳过导入", cacheFileName));
 						continue;
@@ -376,7 +376,7 @@ void OtherSettingsPage::_setupUI()
 			connect(&helpDialog, &ElaContentDialog::rightButtonClicked, this, [=]()
 				{
 					try {
-						fs::remove_all(_projectDir / L"transl_cache");
+						fs::remove_all(_projectDir / transCacheDirName);
 					}
 					catch (const fs::filesystem_error& e) {
 						ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("删除失败"), QString(e.what()), 3000);

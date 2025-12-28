@@ -1,9 +1,10 @@
 ﻿module;
 
+#define PCRE2_HEADERS
+#include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <unicode/unistr.h>
-#include <boost/regex.hpp>
 
 export module NJ_ImplTool;
 
@@ -22,11 +23,11 @@ export {
 
     void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, std::string& inputBlock, TransEngine transEngine);
 
-    void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName, bool showBackgroundText,
-        std::string& backgroudText, TransEngine transEngine, bool& parseError, int& parsedCount, std::shared_ptr<IController> controller, std::atomic<int>& completedSentences);
+    void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+        std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
 
     void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::path, bool>& splitFileParts,
-        std::shared_ptr<spdlog::logger> logger, const fs::path& outputCacheDir, const fs::path& outputDir);
+        const fs::path& outputCacheDir, const fs::path& outputDir, std::shared_ptr<spdlog::logger>& logger);
 
     bool hasRetranslKey(const std::vector<CheckSeCondFunc>& retranslKeys, const json& item, const Sentence* currentSe);
 
@@ -96,12 +97,11 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
         history = "NAME\tDST\tID\n"; // Or DST\tID for novel
         std::vector<std::string> contextLines;
         const Sentence* current = batch[0]->prev;
-        int count = 0;
-        while (current && count < contextHistorySize) {
+        int limit = contextHistorySize * 2;
+        for (int i = 0; current && (int)contextLines.size() < contextHistorySize && i < limit; i++) {
             if (current->complete) {
                 std::string name = current->nameType == NameType::None ? "null" : getNameString(current);
                 contextLines.push_back(name + "\t" + current->pre_translated_text + "\t" + std::to_string(current->index));
-                count++;
             }
             current = current->prev;
         }
@@ -117,11 +117,10 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
         history = "DST\tID\n"; // Or DST\tID for novel
         std::vector<std::string> contextLines;
         const Sentence* current = batch[0]->prev;
-        int count = 0;
-        while (current && count < contextHistorySize) {
+        int limit = contextHistorySize * 2;
+        for (int i = 0; current && (int)contextLines.size() < contextHistorySize && i < limit; i++) {
             if (current->complete) {
                 contextLines.push_back(current->pre_translated_text + "\t" + std::to_string(current->index));
-                count++;
             }
             current = current->prev;
         }
@@ -137,17 +136,16 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
     {
         json historyJson = json::array();
         const Sentence* current = batch[0]->prev;
-        int count = 0;
-        while (current && count < contextHistorySize) {
-            if (current->complete) { // current->complete
+        int limit = contextHistorySize * 2;
+        for (int i = 0; current && (int)historyJson.size() < contextHistorySize && i < limit; i++) {
+            if (current->complete) {
                 json item;
                 item["id"] = current->index;
                 if (current->nameType != NameType::None) {
                     item["name"] = getNameString(current);
                 }
                 item["dst"] = current->pre_translated_text;
-                historyJson.push_back(item);
-                count++;
+                historyJson.push_back(std::move(item));
             }
             current = current->prev;
         }
@@ -162,9 +160,9 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
     case TransEngine::Sakura:
     {
         const Sentence* current = batch[0]->prev;
-        int count = 0;
         std::vector<std::string> contextLines;
-        while (current && count < contextHistorySize) {
+        int limit = contextHistorySize * 2;
+        for (int i = 0; current && (int)contextLines.size() < contextHistorySize && i < limit; i++) {
             if (current->complete) {
                 if (current->nameType != NameType::None) {
                     contextLines.push_back(getNameString(current) + ":::::" + current->pre_translated_text); // :::::
@@ -172,7 +170,6 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
                 else {
                     contextLines.push_back(current->pre_translated_text);
                 }
-                count++;
             }
             current = current->prev;
         }
@@ -254,22 +251,22 @@ void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, std::m
     }
 }
 
-void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName, bool showBackgroundText,
-    std::string& backgroudText, TransEngine transEngine, bool& parseError, int& parsedCount, std::shared_ptr<IController> controller, std::atomic<int>& completedSentences) {
-    if (size_t pos = content.rfind("</think>"); pos != std::string::npos) {
+void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText) {
+    if (size_t pos = content.find("</think>"); pos != std::string::npos) {
         content = content.substr(pos + 8);
     }
-    else if (pos = content.rfind("<end_think>"); pos != std::string::npos) {
+    else if (pos = content.find("<end_think>"); pos != std::string::npos) {
         content = content.substr(pos + 11);
     }
 
     {
-        static boost::regex backgroundRegex{ R"(<background>\n*([\S\s]*?)\n*</background>)" };
-        boost::smatch match;
-        if (boost::regex_search(content, match, backgroundRegex)) {
-            std::string background = match[1].str();
-            replaceStrInplace(background, "<ORIGINAL>", backgroudText);
-            backgroudText = std::move(background);
+        static jpc::Regex backgroundRegex{ R"(<background>\n*([\S\s]*?)\n*</background>)", defaultRegCompileModifier };
+        jpc::VecNum vecNum;
+        jpc::RegexMatch rm(&backgroundRegex);
+        rm.setSubject(&content).setNumberedSubstringVector(&vecNum);
+        if (rm.match() > 0 && vecNum.size() > 0 && vecNum[0].size() > 1) {
+            backgroudText = std::move(replaceStrInplace(vecNum[0][1], "<ORIGINAL>", backgroudText));
             UErrorCode errorCode = U_ZERO_ERROR;
             icu::UnicodeString uString = icu::UnicodeString::fromUTF8(backgroudText);
             int32_t endIndex = uString.moveIndex32(0, 256);
@@ -278,9 +275,11 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
                 uString.tempSubString(0, endIndex).toUTF8String(backgroudText);
                 backgroudText += "...";
             }
-        }
-        if (!showBackgroundText) {
-            content = boost::regex_replace(content, backgroundRegex, "");
+            if (!showBackgroundText) {
+                jpc::RegexReplace rr(&backgroundRegex);
+                rr.setSubject(&content);
+                content = rr.setSubject(&content).setReplaceWith(nullptr).replace();
+            }
         }
     }
 
@@ -289,26 +288,25 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
     {
         size_t start = content.find("NAME\tDST\tID");
         if (start == std::string::npos) {
-            parseError = true;
             break;
         }
 
-        std::stringstream ss(content.substr(start));
-        std::string line;
-        std::getline(ss, line); // Skip header
-
-        while (parsedCount < batchToTransThisRound.size() && std::getline(ss, line)) {
-            if (line.empty() || line.contains("```")) continue;
+        const auto lines = splitString(content.substr(start), '\n');
+        for (const auto& line : lines) {
+            if (parsedCount < batchToTransThisRound.size()) {
+                break;
+            }
+            if (line.empty() || line.contains("```")) {
+                continue;
+            }
             const auto parts = splitString(line, '\t');
             if (parts.size() < 3) {
-                parseError = true;
                 continue;
             }
             try {
                 int id = std::stoi(parts[2]);
-                if (id2SentenceMap.contains(id)) {
-                    if (parts[1].empty() && !id2SentenceMap[id]->pre_processed_text.empty()) {
-                        parseError = true;
+                if (id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
+                    if (parts[1].empty()) {
                         continue;
                     }
                     id2SentenceMap[id]->pre_translated_text = parts[1];
@@ -319,12 +317,8 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
                     parsedCount++;
                 }
             }
-            catch (...) {
-                parseError = true;
-                continue;
-            }
+            catch (...) { }
         }
-
     }
     break;
 
@@ -332,26 +326,25 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
     {
         size_t start = content.find("DST\tID"); // or DST\tID
         if (start == std::string::npos) {
-            parseError = true;
             break;
         }
 
-        std::stringstream ss(content.substr(start));
-        std::string line;
-        std::getline(ss, line); // Skip header
-
-        while (parsedCount < batchToTransThisRound.size() && std::getline(ss, line)) {
-            if (line.empty() || line.contains("```")) continue;
+        const auto lines = splitString(content.substr(start), '\n');
+        for (const auto& line : lines) {
+            if (parsedCount < batchToTransThisRound.size()) {
+                break;
+            }
+            if (line.empty() || line.contains("```")) {
+                continue;
+            }
             const auto parts = splitString(line, '\t');
             if (parts.size() < 2) {
-                parseError = true;
                 continue;
             }
             try {
                 int id = std::stoi(parts[1]);
-                if (id2SentenceMap.contains(id)) {
-                    if (parts[0].empty() && !id2SentenceMap[id]->pre_processed_text.empty()) {
-                        parseError = true;
+                if (id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
+                    if (parts[0].empty()) {
                         continue;
                     }
                     id2SentenceMap[id]->pre_translated_text = parts[0];
@@ -362,10 +355,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
                     parsedCount++;
                 }
             }
-            catch (...) {
-                parseError = true;
-                continue;
-            }
+            catch (...) { }
         }
     }
     break;
@@ -375,20 +365,22 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
     {
         size_t start = std::min(content.find("{\"id\""), content.find("{\"dst\""));
         if (start == std::string::npos) {
-            parseError = true;
             break;
         }
 
-        std::stringstream ss(content.substr(start));
-        std::string line;
-        while (parsedCount < batchToTransThisRound.size() && std::getline(ss, line)) {
-            if (line.empty() || !line.starts_with('{')) continue;
+        const auto lines = splitString(content.substr(start), '\n');
+        for (const auto& line : lines) {
+            if (parsedCount < batchToTransThisRound.size()) {
+                break;
+            }
+            if (line.empty() || !line.starts_with('{')) {
+                continue;
+            }
             try {
                 json item = json::parse(line);
                 int id = item.at("id");
-                if (id2SentenceMap.contains(id)) {
-                    if (item.at("dst").empty() && !id2SentenceMap[id]->pre_processed_text.empty()) {
-                        parseError = true;
+                if (id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
+                    if (item.at("dst").empty()) {
                         continue;
                     }
                     id2SentenceMap[id]->pre_translated_text = item.at("dst");
@@ -399,27 +391,20 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
                     parsedCount++;
                 }
             }
-            catch (...) {
-                parseError = true;
-                continue;
-            }
+            catch (...) { }
         }
     }
     break;
 
     case TransEngine::Sakura:
     {
-        const auto lines = splitString(content, '\n');
+        auto lines = splitString(content, '\n');
         // 核心检查：行数是否匹配
         if (lines.size() != batchToTransThisRound.size()) {
-            parseError = true;
             break;
         }
 
-        for (size_t i = 0; i < lines.size(); ++i) {
-            std::string translatedLine = lines[i];
-            Sentence* currentSentence = batchToTransThisRound[i];
-
+        for (auto [translatedLine, currentSentence] : std::views::zip(lines, batchToTransThisRound)) {
             // 尝试剥离说话人
             if (!currentSentence->name.empty()) {
                 size_t msgStart = translatedLine.find(":::::");
@@ -444,7 +429,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
 }
 
 void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::path, bool>& splitFileParts,
-    std::shared_ptr<spdlog::logger> logger, const fs::path& outputCacheDir, const fs::path& outputDir) {
+    const fs::path& outputCacheDir, const fs::path& outputDir, std::shared_ptr<spdlog::logger>& logger) {
 
     ordered_json combinedJson = ordered_json::array();
 

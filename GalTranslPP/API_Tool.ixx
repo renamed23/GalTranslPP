@@ -1,11 +1,12 @@
 ﻿module;
 
+#define PCRE2_HEADERS
+#include "GPPMacros.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #include <winhttp.h>
 #endif
 #include <spdlog/spdlog.h>
-#include <boost/regex.hpp>
 #include <cpr/cpr.h>
 
 export module API_Tool;
@@ -224,7 +225,7 @@ std::string cvt2StdApiUrl(const std::string& url) {
     if (ret.ends_with("/chat")) {
         return ret + "/completions";
     }
-    if (boost::regex_search(ret, boost::regex(R"(/v\d+$)"))) {
+    if (jpc::Regex(R"(/v\d+$)").match(ret) > 0) {
         return ret + "/chat/completions";
     }
     return ret + "/v1/chat/completions";

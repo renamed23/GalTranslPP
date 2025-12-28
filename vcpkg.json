@@ -8,7 +8,7 @@
     "spdlog",
     "cpr",
     "vit-vit-ctpl",
-    "boost-regex",
+    "boost-crc",
     "mecab",
     "cld3",
     "icu",

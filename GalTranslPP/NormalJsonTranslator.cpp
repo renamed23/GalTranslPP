@@ -35,8 +35,8 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, std::shar
     m_inputCacheDir = inputCacheDir.value_or(L"cache" / m_projectDir.filename() / L"gt_input_cache");
     m_outputDir = outputDir.value_or(m_projectDir / L"gt_output");
     m_outputCacheDir = outputCacheDir.value_or(L"cache" / m_projectDir.filename() / L"gt_output_cache");
-    m_transCacheDir = m_projectDir / L"transl_cache";
-    m_otherCacheDir = m_projectDir / L"other_cache";
+    m_transCacheDir = m_projectDir / transCacheDirName;
+    m_otherCacheDir = m_projectDir / otherCacheDirName;
     m_backgroundTextCachePath = m_otherCacheDir / L"backgroundTextCache.json";
     try {
         if (fs::exists(m_backgroundTextCachePath)) {
@@ -97,7 +97,7 @@ void NormalJsonTranslator::init()
         const auto pluginConfigData = toml::parse(filePluginConfigPath / L"NormalJson.toml");
         m_outputWithSrc = parseToml<bool>(configData, pluginConfigData, "plugins.NormalJson.output_with_src");
 
-        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 8);
+        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 14);
         m_threadsNum = toml::find_or(configData, "common", "threadsNum", 1);
         m_sortMethod = toml::find_or(configData, "common", "sortMethod", "name");
         m_targetLang = toml::find_or(configData, "common", "targetLang", "zh-cn");
@@ -107,8 +107,8 @@ void NormalJsonTranslator::init()
         m_saveCacheInterval = toml::find_or(configData, "common", "saveCacheInterval", 1);
         m_linebreakSymbol = toml::find_or(configData, "common", "linebreakSymbol", "auto");
         m_maxRetries = toml::find_or(configData, "common", "maxRetries", 5);
-        m_contextHistorySize = toml::find_or(configData, "common", "contextHistorySize", 8);
-        m_smartRetry = toml::find_or(configData, "common", "smartRetry", true);
+        m_contextHistorySize = toml::find_or(configData, "common", "contextHistorySize", 10);
+        m_smartRetry = toml::find_or(configData, "common", "smartRetry", false);
         m_checkQuota = toml::find_or(configData, "common", "checkQuota", true);
 
         m_usePreDictInName = toml::find_or(configData, "dictionary", "usePreDictInName", false);
@@ -121,7 +121,7 @@ void NormalJsonTranslator::init()
 
         auto loadDictsFunc = [&]<typename DictionaryType>(const std::string& dictType, DictionaryType& dict)
             {
-                const auto& dictFileNames = toml::find<
+                const auto dictFileNames = toml::find<
                     std::optional<std::vector<std::string>>
                 >(configData, "dictionary", dictType + "Dict");
                 if (!dictFileNames) {
@@ -150,12 +150,12 @@ void NormalJsonTranslator::init()
 
                 m_apiStrategy = toml::find_or(configData, "backendSpecific", "OpenAI-Compatible", "apiStrategy", "random");
                 if (m_apiStrategy != "random" && m_apiStrategy != "fallback") {
-                    throw std::invalid_argument("apiStrategy must be random or fallback in config.toml");
+                    throw std::invalid_argument("apiStrategy must be random or fallback");
                 }
                 int apiTimeOutSecond = toml::find_or(configData, "backendSpecific", "OpenAI-Compatible", "apiTimeout", 120);
                 m_apiTimeOutMs = apiTimeOutSecond * 1000;
 
-                const auto& apisArr = toml::find<
+                const auto apisArr = toml::find<
                     std::vector<toml::table>
                 >(configData, "backendSpecific", "OpenAI-Compatible", "apis");
 
@@ -216,7 +216,7 @@ void NormalJsonTranslator::init()
                     apis.push_back(std::move(api));
                 }
                 if (apis.empty()) {
-                    throw std::invalid_argument("config.toml 中找不到可用的 apikey ");
+                    throw std::invalid_argument("找不到可用的 apikey ");
                 }
                 else {
                     m_apiPool = std::make_unique<APIPool>(m_logger);
@@ -309,7 +309,7 @@ void NormalJsonTranslator::init()
                     throw std::invalid_argument("无效的 tokenizerBackend: " + tokenizerBackend);
                 }
 
-                const auto& textPrePlugins = toml::find<
+                const auto textPrePlugins = toml::find<
                     std::optional<std::vector<std::string>>
                 >(configData, "plugins", "textPrePlugins");
                 if (textPrePlugins) {
@@ -332,7 +332,7 @@ void NormalJsonTranslator::init()
                 m_postDictionary = std::make_unique<NormalDictionary>(m_projectDir, m_luaManager, m_pythonManager, m_logger);
                 loadDictsFunc("post", m_postDictionary);
 
-                const auto& textPostPlugins = toml::find<
+                const auto textPostPlugins = toml::find<
                     std::optional<std::vector<std::string>>
                 >(configData, "plugins", "textPostPlugins");
                 if (textPostPlugins) {
@@ -340,17 +340,17 @@ void NormalJsonTranslator::init()
                 }
 
                 m_problemAnalyzer = std::make_unique<ProblemAnalyzer>(m_gptDictionary, m_targetLang, m_logger);
-                const auto& problemList = toml::find<
+                const auto problemList = toml::find<
                     std::optional<std::vector<std::string>>
                 >(configData, "problemAnalyze", "problemList");
                 if (problemList) {
-                    const std::string& punctSet = toml::find_or(configData, "problemAnalyze", "punctSet", "（()）：:*[]{}<>『』「」“”;；'/\\");
-                    const std::string& codePage = toml::find_or(configData, "problemAnalyze", "codePage", "gbk");
+                    const std::string punctSet = toml::find_or(configData, "problemAnalyze", "punctSet", "（()）：:*[]{}<>『』「」“”;；'/\\");
+                    const std::string codePage = toml::find_or(configData, "problemAnalyze", "codePage", "gbk");
                     double langProbability = toml::find_or(configData, "problemAnalyze", "langProbability", 0.94);
                     m_problemAnalyzer->loadProblems(*problemList, punctSet, codePage, langProbability);
                 }
 
-                const auto& retranslKeys = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "retranslKeys");
+                const auto retranslKeys = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "retranslKeys");
                 if (retranslKeys) {
                     for (const auto& elem : *retranslKeys) {
                         if (elem.is_string()) {
@@ -377,17 +377,17 @@ void NormalJsonTranslator::init()
                     }
                 }
 
-                const auto& skipProblems = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "skipProblems");
+                const auto skipProblems = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "skipProblems");
                 if (skipProblems) {
                     for (const auto& elem : *skipProblems) {
                         if (elem.is_string()) {
-                            m_skipProblems.push_back({ jpc::Regex(elem.as_string()), std::nullopt });
+                            m_skipProblems.push_back({ jpc::Regex(elem.as_string(), defaultRegCompileModifier), std::nullopt });
                         }
                         else if (elem.is_array() && elem.size() > 0) {
                             if (!elem[0].is_string()) {
                                 throw std::invalid_argument("skipProblems 的内联表数组第一个元素必须是字符串");
                             }
-                            jpc::Regex pattern(elem[0].as_string());
+                            jpc::Regex pattern(elem[0].as_string(), defaultRegCompileModifier);
                             if (elem.size() == 1) {
                                 m_skipProblems.push_back({ std::move(pattern), std::nullopt });
                             }
@@ -402,7 +402,7 @@ void NormalJsonTranslator::init()
                     }
                 }
 
-                const auto& overwriteCompareObj = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "overwriteCompareObj");
+                const auto overwriteCompareObj = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "overwriteCompareObj");
                 if (overwriteCompareObj) {
                     for (const auto& tbl : *overwriteCompareObj) {
                         std::string problemKey = toml::find_or(tbl, "problemKey", "");
@@ -564,13 +564,16 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
     }
 
 
-    std::erase_if(se->problems, [&](auto& problem)
+    std::erase_if(se->problems, [&](std::string& problem)
         {
-            return std::ranges::any_of(m_skipProblems, [&](SkipProblemCondition& skipProblemCondition)
+            return std::ranges::any_of(m_skipProblems, [&](const SkipProblemCondition& skipProblemCondition)
                 {
                     bool problemMatch = checkString(skipProblemCondition.first, problem);
+                    if (!problemMatch) {
+                        return false;
+                    }
                     if (!skipProblemCondition.second.has_value()) {
-                        return problemMatch;
+                        return true;
                     }
                     else {
                         auto checkFunc = [&]() -> bool
@@ -580,7 +583,7 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
                                 problem = problem.substr(16);
                                 return result;
                             };
-                        return problemMatch && checkFunc();
+                        return checkFunc();
                     }
                 });
         });
@@ -657,6 +660,9 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         if (m_logger->should_log(spdlog::level::debug) && !backgroundText.empty()) {
             logBlock += "\nBackground:\n" + backgroundText + "\n";
         }
+        if (m_logger->should_log(spdlog::level::trace) && !contextHistory.empty()) {
+            logBlock += "\nContext:\n" + contextHistory;
+        }
         if (!glossary.empty()) {
             logBlock += "\nDict:\n" + glossary;
         }
@@ -686,10 +692,11 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
 
         ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, threadId, m_controller, m_logger, m_apiTimeOutMs);
 
-        /*bool checkResponse(const ApiResponse & response, const TranslationApi & currentAPI, int& retryCount, const std::filesystem::path & relInputPath,
-            int threadId, bool m_checkQuota, const std::string & m_apiStrategy, APIPool & m_apiPool, std::shared_ptr<spdlog::logger> m_logger);*/
+        /*bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+            const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+            int& retryCount, int threadId, bool m_checkQuota);*/
         if (!checkResponse(
-            response, currentApi, retryCount, relInputPath, threadId, m_checkQuota, m_apiStrategy, m_apiPool, m_logger
+            response, m_apiPool, currentApi, relInputPath, m_apiStrategy, m_logger, retryCount, threadId, m_checkQuota
         )) {
             continue;
         }
@@ -699,38 +706,36 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
 
         // --- 如果请求成功，则继续解析 ---
         int parsedCount = 0;
-        bool parseError = false;
 
-        /*void parseContent(std::string & content, std::vector<Sentence*>&batchToTransThisRound, std::map<int, Sentence*>&id2SentenceMap, const std::string & modelName,
-            std::string & backgroudText, TransEngine transEngine, bool& parseError, int& parsedCount, std::shared_ptr<IController> controller, std::atomic<int>&completedSentences);*/
-        parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName, m_logger->should_log(spdlog::level::debug),
-            backgroundText, m_transEngine, parseError, parsedCount, m_controller, m_completedSentences);
+        //void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+        //    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
+        parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
+            m_controller, backgroundText, m_completedSentences, parsedCount, m_transEngine, m_logger->should_log(spdlog::level::debug));
 
-        if (parseError || parsedCount != batchToTransThisRound.size()) {
-            retryCount++;
+        if (parsedCount != batchToTransThisRound.size()) {
+            ++retryCount;
             if (!m_controller->shouldStop()) {
                 m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试...", threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount);
             }
             continue;
         }
         else {
-            m_logger->info("[线程 {}] [文件 {}] 成功解析，解析结果: \n{}", threadId, wide2Ascii(relInputPath), response.content);
+            m_logger->info("[线程 {}] [文件 {}] 成功解析 {} 句，解析结果: \n{}", threadId, wide2Ascii(relInputPath), parsedCount, response.content);
         }
 
-        m_logger->debug("[线程 {}] 批次翻译成功，解析了 {} 句话。", threadId, parsedCount);
         return true;
     }
 
-    size_t failCount = 0;
+    size_t failedCount = 0;
     for (auto& pSentence : batch | std::views::filter([](const Sentence* pSentence) { return !pSentence->complete; })) {
-        ++failCount;
+        ++failedCount;
         pSentence->pre_translated_text = "(Failed to translate)" + pSentence->pre_processed_text;
         pSentence->complete = true;
         m_completedSentences++;
         m_controller->updateBar(); // 失败
     }
-    m_logger->error("[线程 {}] [文件 {}] 批次翻译在 {} 次重试后彻底失败，共翻译{}/{}句。",
-        threadId, wide2Ascii(relInputPath), m_maxRetries, batch.size() - failCount, batch.size());
+    m_logger->error("[线程 {}] [文件 {}] 批次翻译在 {} 次重试后彻底失败，共翻译 {} / {} 句。",
+        threadId, wide2Ascii(relInputPath), m_maxRetries, batch.size() - failedCount, batch.size());
     return false;
 }
 
@@ -975,14 +980,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
         int batchCount = 0;
         std::string backgroundText;
-        size_t fileHash = 0;
-        {
-            ifs.open(inputPath, std::ios::binary);
-            std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-            ifs.close();
-            fileHash = std::hash<std::string>{}(content);
-        }
-        std::string filePathWithHash = std::format("{}{:08X}", wide2Ascii(relInputPath), fileHash);
+        std::string filePathWithHash = std::format("{}{:08X}", wide2Ascii(relInputPath), calculateFileCRC64(inputPath));
         {
             std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
             if (auto it = m_backgroundTextCacheMap.find(filePathWithHash); it != m_backgroundTextCacheMap.end()) {
@@ -1054,7 +1052,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             tbl["problems"] = se.problems;
             tbl["translated_by"] = se.translated_by;
             tbl["translated_preview"] = se.translated_preview;
-            m_problemOverview.push_back(tbl);
+            m_problemOverview.push_back(std::move(tbl));
         }
     }
     // 最终保存缓存逻辑结束
@@ -1093,7 +1091,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
             m_logger->debug("开始合并 {} 的缓存文件...", wide2Ascii(originalRelFilePath));
         }
-        combineOutputFiles(originalRelFilePath, splitFileParts, m_logger, m_outputCacheDir, m_outputDir);
+        combineOutputFiles(originalRelFilePath, splitFileParts, m_outputCacheDir, m_outputDir, m_logger);
         std::unique_lock<std::mutex> lock(m_outputMutex);
         if (m_pythonTranslator) {
             lock.unlock(); // 非常神奇

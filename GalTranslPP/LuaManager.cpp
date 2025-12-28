@@ -725,21 +725,21 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 	auto supplyTokenizerFunc = [&](const std::string& mode)
 		{
 			if (lua[mode + "useTokenizer"].get_or(false)) {
-				const std::string& tokenizerBackend = lua[mode + "tokenizerBackend"].get<std::string>();
+				const std::string tokenizerBackend = lua[mode + "tokenizerBackend"].get<std::string>();
 				if (tokenizerBackend == "MeCab") {
-					const std::string& mecabDictDir = lua[mode + "mecabDictDir"].get<std::string>();
+					const std::string mecabDictDir = lua[mode + "mecabDictDir"].get<std::string>();
 					m_logger->info("{} 正在检查 MeCab 环境...", scriptPath);
 					utilsTable[mode + "tokenizeFunc"] = getMeCabTokenizeFunc(mecabDictDir, m_logger);
 					m_logger->info("{} MeCab 环境检查完毕。", scriptPath);
 				}
 				else if (tokenizerBackend == "spaCy") {
-					const std::string& spaCyModelName = lua[mode + "spaCyModelName"].get<std::string>();
+					const std::string spaCyModelName = lua[mode + "spaCyModelName"].get<std::string>();
 					m_logger->info("{} 正在检查 spaCy 环境...", scriptPath);
 					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
 					m_logger->info("{} spaCy 环境检查完毕。", scriptPath);
 				}
 				else if (tokenizerBackend == "Stanza") {
-					const std::string& stanzaLang = lua[mode + "stanzaLang"].get<std::string>();
+					const std::string stanzaLang = lua[mode + "stanzaLang"].get<std::string>();
 					m_logger->info("{} 正在检查 Stanza 环境...", scriptPath);
 					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
 					m_logger->info("{} Stanza 环境检查完毕。", scriptPath);

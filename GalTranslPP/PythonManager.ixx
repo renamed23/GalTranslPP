@@ -80,7 +80,7 @@ export {
         }
         
         std::shared_ptr<py::object> registerNLPFunction
-        (const std::string& moduleName, const std::string& modelName, std::shared_ptr<spdlog::logger> logger, bool& needReboot);
+        (const std::string& moduleName, const std::string& modelName, std::shared_ptr<spdlog::logger>& logger, bool& needReboot);
 
     private:
 
@@ -172,6 +172,6 @@ export {
         std::shared_ptr<spdlog::logger> m_logger;
     };
 
-    void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger> logger);
+    void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger>& logger);
 
 }

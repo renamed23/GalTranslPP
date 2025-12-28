@@ -285,7 +285,7 @@ PythonInterpreterInstance::~PythonInterpreterInstance() {
     PythonMainInterpreterManager::getInstance().submitTask(std::move(destroySubInterpreterTaskFunc)).get();
 }
 
-void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger> logger)
+void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger>& logger)
 {
     for (const auto& dependency : dependencies) {
         logger->debug("正在检查依赖 {}", dependency);
@@ -323,7 +323,7 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, std::
 }
 
 std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
-(const std::string& moduleName, const std::string& modelName, std::shared_ptr<spdlog::logger> logger, bool& needReboot) {
+(const std::string& moduleName, const std::string& modelName, std::shared_ptr<spdlog::logger>& logger, bool& needReboot) {
 
     std::lock_guard<std::mutex> lock(m_mutex);
     if (auto moduleFuncLocked = m_nlpModuleFunctions[moduleName][modelName].lock()) {

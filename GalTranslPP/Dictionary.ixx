@@ -39,7 +39,7 @@ export {
 
     public:
 
-        GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, std::function<NLPResult(const std::string&)> tokenizeSourceLangFunc,
+        GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, const std::function<NLPResult(const std::string&)>& tokenizeSourceLangFunc,
             LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger);
 
         ~GptDictionary() {
@@ -94,7 +94,7 @@ export {
 
 module :private;
 
-GptDictionary::GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, std::function<NLPResult(const std::string&)> tokenizeSourceLangFunc,
+GptDictionary::GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, const std::function<NLPResult(const std::string&)>& tokenizeSourceLangFunc,
     LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger)
     : m_projectDir(projectDir), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_gptdict.json"),
     m_tokenizeSourceLangFunc(tokenizeSourceLangFunc),

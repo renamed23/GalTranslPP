@@ -24,6 +24,8 @@ export {
     extern const fs::path filePluginConfigPath;
     extern const fs::path prePluginConfigPath;
     extern const fs::path postPluginConfigPath;
+    extern const std::wstring transCacheDirName;
+    extern const std::wstring otherCacheDirName;
 
     extern const std::string defaultRegCompileModifier;
     extern const std::string defaultRegReplaceModifier;

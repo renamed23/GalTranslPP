@@ -1,7 +1,6 @@
 module;
 
 #include <spdlog/spdlog.h>
-#include <boost/regex.hpp>
 #include <toml.hpp>
 
 export module NameTranslator;
@@ -134,8 +133,11 @@ void NameTranslator::translateBatch(std::vector<std::string>& batchNames, std::u
         m_logger->info("正在翻译人名表:\n{}", logBlock);
         ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, 0, m_controller, m_logger, m_apiTimeoutMs);
 
+        /*bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+            const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+            int& retryCount, int threadId, bool m_checkQuota);*/
         if (!checkResponse(
-            response, currentApi, retryCount, L"人名表翻译", 0, m_checkQuota, m_apiStrategy, m_apiPool, m_logger
+            response, m_apiPool, currentApi, L"人名表翻译", m_apiStrategy, m_logger, retryCount, 0, m_checkQuota
         )) {
             continue;
         }

@@ -22,6 +22,8 @@ const fs::path pluginConfigsPath = baseConfigPath / L"pluginConfigs";
 const fs::path filePluginConfigPath = pluginConfigsPath / L"filePlugins";
 const fs::path prePluginConfigPath = pluginConfigsPath / L"textPrePlugins";
 const fs::path postPluginConfigPath = pluginConfigsPath / L"textPostPlugins";
+const std::wstring transCacheDirName = L"transl_cache";
+const std::wstring otherCacheDirName = L"other_cache";
 
-const std::string defaultRegCompileModifier = "mnjS";
-const std::string defaultRegReplaceModifier = "gxE";
+const std::string defaultRegCompileModifier = "mnjS"; // m: 多行, n: unicode 支持, j: \xhh \uhhhh 语法支持, S: jit编译
+const std::string defaultRegReplaceModifier = "gxE"; // g: gloabl, x: ${n:-replace}/${n:+trueText:falseText} 语法支持

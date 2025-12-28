@@ -96,16 +96,18 @@ export {
     std::string extractHangul(const std::string& sourceString);
     std::string extractCJK(const std::string& sourceString);
 
-    std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger> logger);
+    std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger>& logger);
 
     std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadTokenizeCache
     (const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger);
     void saveTokenizeCache
-    (const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger);
+    (const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger>& logger);
 
     void extractZip(const fs::path& zipPath, const fs::path& outputDir);
     void extractFileFromZip(const fs::path& zipPath, const fs::path& outputDir, const std::string& fileName);
     void extractZipExclude(const fs::path& zipPath, const fs::path& outputDir, const std::set<std::string>& excludePrefixes);
+
+    uint64_t calculateFileCRC64(const fs::path& filePath);
 
     bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& isCompatible);
 

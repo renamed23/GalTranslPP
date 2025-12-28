@@ -32,8 +32,9 @@ export {
         bool isEmpty();
     };
 
-    bool checkResponse(const ApiResponse& response, const TranslationApi& currentAPI, int& retryCount, const std::filesystem::path& relInputPath,
-        int threadId, bool m_checkQuota, const std::string& m_apiStrategy, std::unique_ptr<APIPool>& m_apiPool, std::shared_ptr<spdlog::logger> m_logger);
+    bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+        const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+        int& retryCount, int threadId, bool m_checkQuota);
 }
 
 
@@ -110,8 +111,9 @@ bool APIPool::isEmpty() {
     return m_apis.empty();
 }
 
-bool checkResponse(const ApiResponse& response, const TranslationApi& currentAPI, int& retryCount, const std::filesystem::path& relInputPath,
-    int threadId, bool m_checkQuota, const std::string& m_apiStrategy, std::unique_ptr<APIPool>& m_apiPool, std::shared_ptr<spdlog::logger> m_logger)
+bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+    const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+    int& retryCount, int threadId, bool m_checkQuota)
 {
     if (response.success) {
         return true;
