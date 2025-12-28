@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #include "GPPMacros.hpp"
 #ifdef _WIN32
@@ -449,11 +449,11 @@ auto countGraphemesFunc = [](auto&& sourceString) -> size_t
     };
 
 size_t countGraphemes(std::string_view sourceString) {
-    countGraphemesFunc(sourceString);
+    return countGraphemesFunc(sourceString);
 }
 
 size_t countGraphemes(const std::string& sourceString) {
-    countGraphemesFunc(sourceString);
+    return countGraphemesFunc(sourceString);
 }
 
 // 计算子串出现次数
