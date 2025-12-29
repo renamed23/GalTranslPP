@@ -22,6 +22,7 @@ export {
         std::string searchStr;
         std::string replaceStr;
         std::string note;
+        std::unique_ptr<std::vector<size_t>> otherEntriesWhoseSearchStrContainsThatInThisEntry;
         int priority;
     };
 
@@ -111,6 +112,18 @@ void GptDictionary::sort() {
             }
             return a.searchStr.length() > b.searchStr.length();
         });
+    for (auto& entry : m_entries) {
+        for (const auto& [index, otherEntry] : m_entries | std::views::enumerate) {
+            if (otherEntry.searchStr.length() > entry.searchStr.length() &&
+                otherEntry.searchStr.contains(entry.searchStr)) 
+            {
+                if (!entry.otherEntriesWhoseSearchStrContainsThatInThisEntry) {
+                    entry.otherEntriesWhoseSearchStrContainsThatInThisEntry = std::make_unique<std::vector<size_t>>();
+                }
+                entry.otherEntriesWhoseSearchStrContainsThatInThisEntry->push_back(index);
+            }
+        }
+    }
 }
 
 std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) {
@@ -226,42 +239,63 @@ void GptDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
 
 std::string GptDictionary::doReplace(const Sentence* se, CachePart targetToModify) {
     std::string textToModify = chooseString(se, targetToModify);
-
     for (const auto& entry : m_entries) {
-        replaceStrInplace(textToModify, entry.searchStr, entry.replaceStr);
+        if (textToModify.contains(entry.searchStr)) {
+            replaceStrInplace(textToModify, entry.searchStr, entry.replaceStr);
+        }
     }
-
     return textToModify;
+}
+
+uint8_t checkTransIncludeReplace(const std::string& trans, const std::string& replace) {
+    return std::ranges::any_of(replace | std::views::split('/') | std::views::transform([](const auto& subStrView)
+        {
+            return std::string_view(subStrView.begin(), subStrView.end());
+        }),
+        [&](std::string_view subStr)
+        {
+            return trans.contains(subStr);
+        }) ? 1 : 2;
 }
 
 void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart check) {
     const std::string& origText = chooseStringRef(sentence, base);
     const std::string& transView = chooseStringRef(sentence, check);
-    for (const auto& entry : m_entries) {
-        // 如果原文中不包含这个词，就跳过检查
+
+    std::vector<uint8_t> checkResults(m_entries.size(), 0); // 0: 原文不包含, 1: 原文包含且译文使用字典, 2: 原文包含但译文没有使用字典
+    for (auto [checkResult, entry] : std::views::zip(checkResults, m_entries)) {
         if (!origText.contains(entry.searchStr)) {
             continue;
         }
-        // 检查译文中是否使用了对应的词
-        const auto& replaceWords = splitString(entry.replaceStr, '/');
-        bool found = false;
-        for (const auto& word : replaceWords) {
-            if (transView.contains(word)) {
-                found = true;
-                break;
-            }
-        }
-        if (found) {
-            // 出现了则默认使用了字典
+        checkResult = checkTransIncludeReplace(transView, entry.replaceStr);
+    }
+
+    for (auto [checkResult, entry] : std::views::zip(checkResults, m_entries)) {
+        // 如果原文中不包含这个词或译文中使用了对应的词，就跳过检查
+        if (checkResult == 0 || checkResult == 1) {
             continue;
         }
-        else if (entry.searchStr.length() > 15) {
-            // 如果字典长度大于 5 个汉字字符，则默认认为是字典未正确使用的情况
+        
+        if (entry.otherEntriesWhoseSearchStrContainsThatInThisEntry) {
+            auto it = std::ranges::find_if(*entry.otherEntriesWhoseSearchStrContainsThatInThisEntry, [&](size_t otherEntryIndex)
+                {
+                    return checkResults[otherEntryIndex] == 1;
+                });
+            GptDictEntry& otherEntryRef = m_entries[*it];
+            if (it != entry.otherEntriesWhoseSearchStrContainsThatInThisEntry->end()) {
+                sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用，但使用了 " +
+                    otherEntryRef.searchStr + "->" + otherEntryRef.replaceStr + " 这一包含性字典");
+                continue;
+            }
+        }
+        if (entry.searchStr.length() > 15) {
+            // 如果字典单独出现且长度大于 15 字节，则默认认为是字典未正确使用的情况
             sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用");
             continue;
         }
 
         // 未出现则分词检查原文中是否有完整的 searchStr 词组
+        bool found = false;
         auto checkTokenFunc = [&](const WordPosVec& wordPosVec)
             {
                 for (const auto& wordPos : wordPosVec) {

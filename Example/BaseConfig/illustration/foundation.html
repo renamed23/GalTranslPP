@@ -83,7 +83,7 @@
 <ul>
 <li>更好的单文件分割缓存命中</li>
 <li>优先标点的换行修复</li>
-<li>可选(带icu扩展的)正则形式的，高度自定义的译前译后字典和明确的优先级</li>
+<li>可选正则形式的，高度自定义的译前译后字典和明确的优先级</li>
 <li>高度自定义的epub提取</li>
 <li>有效的API额度耗尽检测</li>
 <li>卡片弹出式的完成提示 (仅GUI)</li>
@@ -113,6 +113,7 @@
 <li><strong><code># ForNovelTsv</code></strong>: 实际翻译模式，和 <code>ForGalTsv</code> 的区别主要是变动提示词，向AI输入和解析的时候都不带<code>name</code>键。</li>
 <li><strong><code># Sakura</code></strong>: 实际翻译模式，向AI输入自然语言形式的句子(包含<code>name</code>和<code>message</code>)，由于Sakura是翻译特化模型，不必要求即会返回同样形式的的句子，程序解析返回的自然语言。</li>
 <li><strong><code># DumpName</code></strong>: 提取所有的 <code>name</code> 键，在项目文件夹下生成 <code>人名替换表.toml</code> 以供统一替换人名(已有则仅更新)。</li>
+<li><strong><code># NameTrans</code></strong>: 翻译人名表(如果没有则先Dump)。</li>
 <li><strong><code># GenDict</code></strong>: 借助AI自动生成术语表，保存在项目文件夹下的 <code>项目GPT字典-生成.toml</code> 中。</li>
 <li><strong><code># Rebuild</code></strong>: 即使 <code>problem</code> 或 <code>orig_text</code> 中包含 <code>retranslKey</code> 也不会重翻，只根据缓存重建结果。</li>
 <li><strong><code># ShowNormal</code></strong>: 保存预处理后的内容及句子到项目文件夹下带 <code>show_normal</code> 字段的文件夹中，如Epub格式下可生成预处理后的html/xhtml文件以及生成的json，可用于检查和排错。</li>
@@ -120,7 +121,7 @@
 <h3>缓存机制</h3>
 <p>在<code>Rebuild</code>中所提到的缓存，是指翻译过后留存在项目文件夹下，<code>trans_cache</code>文件夹中的json文件，其中按顺序存储了每个文件对应的序列号，原文和译文等信息。所有的实际翻译模式都会先读取缓存，然后只挑选出缓存中还没有的原文进行翻译。</p>
 <blockquote>
-<p><strong>⚠️ 特别注意</strong>：在使用单文件分割功能的情况下，由于缓存命中结合了上下文，所以当你改变文件本身，或者分割数/分割方式时，会有一部分无关的句子不能命中缓存。理论上文件切的越碎，最终分割出的文件份数比最大线程数超过的更多，则不能命中缓存的句子越多。GalTransl++会尽可能在这种情况下保证原有缓存的命中，不过如果希望达到更好的缓存命中，最好还是不改变分割方式和分割数。为此也可以使用 <code>ShowNormal</code> 模式观察切割后的文件。</p>
+<p><strong>⚠️ 特别注意</strong>：在使用单文件分割功能的情况下，由于缓存命中结合了上下文，所以当你改变文件本身，或者分割数/分割方式时，会有一部分无关的句子不能命中缓存。理论上文件切的越碎，最终分割出的文件份数比最大线程数超过的更多，则不能命中缓存的句子越多。GalTransl++会尽可能在这种情况下保证原有缓存的命中(你也可以调整<code>分割缓存查找距离</code>来控制缓存查找)，不过如果希望达到更好的缓存命中，最好还是不改变分割方式和分割数。为此也可以使用 <code>ShowNormal</code> 模式观察切割后的文件。</p>
 </blockquote>
 <p><code>retranslKey</code>指的是重翻关键字。</p>
 <p>GalTransl++会在翻译时自动分析翻译时常见问题，并将问题输出到缓存中。</p>
@@ -159,10 +160,10 @@
 3、  填入API和key。<br>
 4、  使用 <code>GenDict</code> 自动生成术语表。<br>
 5、  调整术语表，根据需求修改字典并选择要使用的字典。<br>
-6、  如果文件支持提取name，则可 <code>DumpName</code> 并编辑人名表。<br>
+6、  如果文件支持提取name，则可 <code>DumpName</code> 并编辑人名表，也可 <code>NameTrans</code> 翻译人名表。<br>
 7、  选用合适的实际翻译模式进行翻译。<br>
 8、  查看问题。<br>
-9、  根据问题选择编辑<code>retranslKey</code>并重翻 / 直接修改缓存。<br>
+9、  根据问题选择编辑<code>retranslKey</code>/<code>skipProblems</code>重建/重翻/修改缓存/...。<br>
 10、 重翻 / 重建。<br>
 11、 在<code>gt_output</code>中查收结果。</p>
 <h3>缓存文件结构</h3>
@@ -205,8 +206,8 @@
 14、 问题分析。</p>
 <blockquote>
 <p><strong>正则引擎说明</strong></p>
-<p>虽然GalTransl++的核心为C++编写，但由于正则引擎采用<code>icu::Regex</code>，所以可自定义编辑的所有正则依然是以字符为单位的。比如即使emoji表情’😪’ 在UTF-8中占用4个字节，在正则中依然是以一个<code>.</code>来匹配的。</p>
-<p>同时也支持icu扩展正则语法，如可以使用<code>\p{P}</code>来匹配任意标点符号，<code>\p{Hangul}</code>来匹配任意韩文字符等。</p>
+<p>虽然GalTransl++的核心为C++编写，但由于正则引擎采用pcre2且默认使用unicode参数编译正则，所以可自定义编辑的所有正则依然默认是以字符为单位的。比如即使emoji表情’😪’ 在UTF-8中占用4个字节，在正则中依然是以一个<code>.</code>来匹配的。</p>
+<p>同时也支持pcre2所支持的所有扩展正则语法，如可以使用<code>\p{P}</code>来匹配任意标点符号，<code>\p{Hangul}</code>来匹配任意韩文字符等。</p>
 </blockquote>
 <h2>其它翻译说明</h2>
 <h3>问题分析 语法示例:</h3>
@@ -335,6 +336,10 @@ rep = '&lt;ruby&gt;&lt;rb&gt;$2&lt;/rb&gt;&lt;rt&gt;$1&lt;/rt&gt;&lt;/ruby&gt;'
         </svg>
       </i>
     </button><!--beforeend--></div><!--afterend--></div><p>假如我不想一个一个文件的看标签写正则，而是想要直接『删除所有<code>&lt;p&gt;&lt;/p&gt;</code>标签内的其余标签并保留非标签部分』来快速过滤的话，面对不擅长处理嵌套的简单正则，显然我们很难写出这样的正则/正则组来处理这个问题，那么此时就需要使用回调正则。</p>
+    <p>注: 2.2.4版本之后，想达到这个目的可以简化为</p>
+    <pre><code>[[plugins.Epub.postprocRegex]]
+org = '((?i)(?:&lt;p\b[^&gt;]*&gt;|\G(?!\A))[^&lt;]*\K&lt;(?!/p&gt;)[^&gt;]*&gt;)'
+rep = ''</code></pre>
 <p>我们可以编写如下回调正则，</p>
 <div><!--beforebegin--><div class="v-md-pre-wrapper copy-code-mode v-md-pre-wrapper- extra-class" extra-attr=""><!--afterbegin--><pre class="v-md-prism-"><code>[[plugins.Epub.'预处理正则']]
 org = '(&lt;p[^&gt;/]*&gt;)(.*?)(&lt;/p&gt;)'

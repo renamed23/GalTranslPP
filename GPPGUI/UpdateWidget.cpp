@@ -17,6 +17,8 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
         "1. 更换正则引擎 icu -> pcre2",
+        "2. 优化字典未使用问题的判断",
+
     };
 
     mainLayout->addWidget(updateTitle);

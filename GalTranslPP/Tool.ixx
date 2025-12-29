@@ -59,6 +59,7 @@ export {
         };
     std::vector<std::string> splitString(const std::string& str, char delimiter) { return splitStringFunc(str, delimiter); }
     std::vector<std::string> splitString(const std::string& str, std::string_view delimiter) { return splitStringFunc(str, delimiter); }
+    std::vector<std::string_view> splitStringView(std::string_view strv, char delimiter) { return splitStringFunc(strv, delimiter); }
     std::vector<std::string_view> splitStringView(std::string_view strv, std::string_view delimiter) { return splitStringFunc(strv, delimiter); }
 
     std::vector<std::string> splitTsvLine(const std::string& line, const std::vector<std::string>& delimiters);
