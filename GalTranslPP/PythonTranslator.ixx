@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
@@ -22,7 +22,7 @@ export {
 	class PythonTranslator : public Base {
 	private:
 		std::shared_ptr<PythonInterpreterInstance> m_pythonInterpreter;
-		std::weak_ptr<py::object> m_pythonRunFunc;
+		py::object* m_pythonRunFunc;
 		std::string m_modulePath;
 		std::string m_translatorName;
 
@@ -33,15 +33,10 @@ export {
 			m_pythonInterpreter->submitTask([&]()
 				{
 					try {
-						if (auto runFuncLocked = m_pythonRunFunc.lock()) {
-							(*runFuncLocked)();
-						}
-						else {
-							throw std::runtime_error("PythonTranslator run 函数已释放");
-						}
+						(*m_pythonRunFunc)();
 					}
 					catch (const std::exception& e) {
-						throw std::runtime_error("PythonTranslator 运行时异常: " + std::string(e.what()));
+						throw std::runtime_error(std::format("PythonTranslator 运行时异常: {}", e.what()));
 					}
 				}).get();
 		}
@@ -62,20 +57,20 @@ export {
 				throw std::runtime_error("PythonTranslator 获取 run 函数失败！");
 			}
 			m_pythonInterpreter = pythonInterpreterOpt.value();
-			m_pythonRunFunc = m_pythonInterpreter->functions["run"];
+			m_pythonRunFunc = m_pythonInterpreter->functions["run"].get();
 			this->m_pythonManager.registerFunction(m_modulePath, "unload", needRoot);
 
 			m_pythonInterpreter->submitTask([&]()
 				{
 					try {
-						fs::path stdModulePath = fs::weakly_canonical(ascii2Wide(m_modulePath));
-						std::string moduleName = wide2Ascii(stdModulePath.stem());
+						const fs::path stdModulePath = fs::weakly_canonical(ascii2Wide(m_modulePath));
+						const std::string moduleName = wide2Ascii(stdModulePath.stem());
 						py::module_ pythonTranslatorModule = py::module_::import(moduleName.c_str());
 						pythonTranslatorModule.attr("pythonTranslator") = (Base*)this;
 						(*(m_pythonInterpreter->functions["init"]))();
 					}
 					catch (const pybind11::error_already_set& e) {
-						throw std::runtime_error("初始化 PythonTranslator 时发生错误: " + std::string(e.what()));
+						throw std::runtime_error(std::format("初始化 PythonTranslator 时发生错误: {}", e.what()));
 					}
 				}).get();
 			if (needRoot) {
@@ -89,14 +84,14 @@ export {
 			m_pythonInterpreter->submitTask([&]()
 				{
 					try {
-						if (auto unloadFuncPtr = m_pythonInterpreter->functions["unload"]; unloadFuncPtr.operator bool()) {
+						if (auto& unloadFuncPtr = m_pythonInterpreter->functions["unload"]; unloadFuncPtr.operator bool() && py::isinstance<py::function>(*unloadFuncPtr)) {
 							(*unloadFuncPtr)();
 						}
 						this->m_onFileProcessed = {};
 						this->m_onPerformApi = {};
 					}
 					catch (const py::error_already_set& e) {
-						throw std::runtime_error("卸载 PythonTranslator 时发生错误: " + std::string(e.what()));
+						throw std::runtime_error(std::format("卸载 PythonTranslator 时发生错误: {}", e.what()));
 					}
 				}).get();
 			this->m_logger->info("所有任务已完成！PythonTranslator {} 结束。", m_translatorName);

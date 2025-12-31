@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
@@ -19,7 +19,7 @@ export {
     class PythonTextPlugin {
     private:
         std::shared_ptr<PythonInterpreterInstance> m_pythonInterpreter;
-        std::weak_ptr<py::object> m_pythonRunFunc;
+        py::object* m_pythonRunFunc;
         std::string m_modulePath;
         std::shared_ptr<spdlog::logger> m_logger;
         bool m_needReboot = false;
@@ -41,14 +41,14 @@ PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string
     m_logger->info("正在初始化 Python 插件 {}", m_modulePath);
     std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager.registerFunction(m_modulePath, "init", m_needReboot);
     if (!pythonInterpreterOpt.has_value()) {
-        throw std::runtime_error(m_modulePath + " init函数 初始化失败");
+        throw std::runtime_error(std::format("{} init函数初始化失败", m_modulePath));
     }
     pythonInterpreterOpt = pythonManager.registerFunction(m_modulePath, "run", m_needReboot);
     if (!pythonInterpreterOpt.has_value()) {
-        throw std::runtime_error(m_modulePath + " run函数 初始化失败");
+        throw std::runtime_error(std::format("{} run函数初始化失败", m_modulePath));
     }
     m_pythonInterpreter = pythonInterpreterOpt.value();
-    m_pythonRunFunc = m_pythonInterpreter->functions["run"];
+    m_pythonRunFunc = m_pythonInterpreter->functions["run"].get();
     pythonManager.registerFunction(m_modulePath, "unload", m_needReboot);
 
     m_pythonInterpreter->submitTask([&]()
@@ -57,7 +57,7 @@ PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string
                 (*(m_pythonInterpreter->functions["init"]))(projectDir);
             }
             catch (const py::error_already_set& e) {
-                throw std::runtime_error(m_modulePath + " init函数 执行失败: " + e.what());
+                throw std::runtime_error(std::format("{} init函数执行失败: {}", m_modulePath, e.what()));
             }
         }).get();
 
@@ -69,12 +69,12 @@ PythonTextPlugin::~PythonTextPlugin()
     m_pythonInterpreter->submitTask([&]()
         {
             try {
-                if (auto unloadFunc = m_pythonInterpreter->functions["unload"]; unloadFunc.operator bool() && py::isinstance<py::function>(*unloadFunc)) {
-                    (*unloadFunc)();
+                if (auto& unloadFuncPtr = m_pythonInterpreter->functions["unload"]; unloadFuncPtr.operator bool() && py::isinstance<py::function>(*unloadFuncPtr)) {
+                    (*unloadFuncPtr)();
                 }
             }
             catch (const py::error_already_set& e) {
-                throw std::runtime_error(m_modulePath + " unload函数 执行失败: " + e.what());
+                throw std::runtime_error(std::format("{} unload函数执行失败: {}", m_modulePath, e.what()));
             }
         }).get();
 }
@@ -83,15 +83,10 @@ void PythonTextPlugin::run(Sentence* se) {
     m_pythonInterpreter->submitTask([&]()
         {
             try {
-                if (auto runFuncLocked = m_pythonRunFunc.lock()) {
-                    (*runFuncLocked)(se);
-                }
-                else {
-                    throw std::runtime_error(m_modulePath + " run函数 已被释放");
-                }
+                (*m_pythonRunFunc)(se);
             }
             catch (const py::error_already_set& e) {
-                throw std::runtime_error(m_modulePath + " run函数 执行失败: " + e.what());
+                throw std::runtime_error(std::format("{} run函数执行失败: {}", m_modulePath, e.what()));
             }
         }).get();
 }

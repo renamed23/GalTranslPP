@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
@@ -160,19 +160,14 @@ export {
                         replaceStrInplace(conditionPythonStr, "<PROJECT_DIR>", wide2Ascii(projectDir)), conditionFuncStr, needReboot);
                     if (pythonInterpreterOpt) {
                         std::shared_ptr<PythonInterpreterInstance> pythonInterpreter = *pythonInterpreterOpt;
-                        std::weak_ptr<py::object> conditionFunc = pythonInterpreter->functions[conditionFuncStr];
+                        std::reference_wrapper<py::object> conditionFunc = *(pythonInterpreter->functions[conditionFuncStr]);
                         CheckSeCondFunc checkFunc = [pythonInterpreter, conditionFunc, conditionFuncStr](const Sentence* se) -> bool
                             {
                                 bool result;
                                 pythonInterpreter->submitTask([&]()
                                     {
                                         try {
-                                            if (auto conditionFuncLocked = conditionFunc.lock()) {
-                                                result = (*conditionFuncLocked)(se).cast<bool>();
-                                            }
-                                            else {
-                                                throw std::runtime_error("Python条件函数已被释放");
-                                            }
+                                            result = conditionFunc.get()(se).cast<bool>();
                                         }
                                         catch (const py::error_already_set& e) {
                                             throw std::runtime_error(std::format("执行Python条件函数 {} 时发生错误: {}", conditionFuncStr, e.what()));

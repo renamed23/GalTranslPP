@@ -93,29 +93,7 @@ export {
             }
         }
 
-        void daemonThreadFunc() {
-            py::gil_scoped_acquire acquire;
-            try {
-                py::module_::import("gpp_plugin_api");
-            }
-            catch (const py::error_already_set& e) {
-                throw std::runtime_error("import gpp_plugin_api 时出现异常: " + std::string(e.what()));
-            }
-            while (true) {
-                auto taskOpt = m_taskQueue.pop();
-                if (!taskOpt) {
-                    break;
-                }
-                auto task = std::move(*taskOpt);
-                try {
-                    task->taskFunc();
-                    task->promise.set_value();
-                }
-                catch (...) {
-                    task->promise.set_exception(std::current_exception());
-                }
-            }
-        }
+        void daemonThreadFunc();
 
         std::mutex m_mutex;
         std::map<std::string, std::map<std::string, std::weak_ptr<py::object>>> m_nlpModuleFunctions;
@@ -134,8 +112,7 @@ export {
 
     struct PythonInterpreterInstance {
         std::unique_ptr<py::subinterpreter> subInterpreter;
-        // 这里的 functions 只允许用 weak_ptr 继承
-        std::map<std::string, std::shared_ptr<py::object>> functions;
+        std::map<std::string, std::unique_ptr<py::object>> functions;
         std::thread daemonThread;
         SafeQueue<std::unique_ptr<PythonTask>> m_taskQueue;
 

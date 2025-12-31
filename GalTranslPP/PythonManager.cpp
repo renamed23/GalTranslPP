@@ -213,6 +213,30 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
 
 }
 
+void PythonMainInterpreterManager::daemonThreadFunc() {
+    py::gil_scoped_acquire acquire;
+    try {
+        py::module_::import("gpp_plugin_api");
+    }
+    catch (const py::error_already_set& e) {
+        throw std::runtime_error(std::format("import gpp_plugin_api 时出现异常: {}", e.what()));
+    }
+    while (true) {
+        auto taskOpt = m_taskQueue.pop();
+        if (!taskOpt) {
+            break;
+        }
+        auto task = std::move(*taskOpt);
+        try {
+            task->taskFunc();
+            task->promise.set_value();
+        }
+        catch (...) {
+            task->promise.set_exception(std::current_exception());
+        }
+    }
+}
+
 void PythonInterpreterInstance::daemonThreadFunc() {
     py::subinterpreter_scoped_activate activate(*subInterpreter);
     try {
@@ -220,7 +244,7 @@ void PythonInterpreterInstance::daemonThreadFunc() {
         py::module_::import("gpp_plugin_api");
     }
     catch (const py::error_already_set& e) {
-        throw std::runtime_error("import gpp_plugin_api 时出现异常: " + std::string(e.what()));
+        throw std::runtime_error(std::format("import gpp_plugin_api 时出现异常: {}", e.what()));
     }
     while (true) {
         auto taskOpt = m_taskQueue.pop();
@@ -251,7 +275,7 @@ PythonInterpreterInstance::PythonInterpreterInstance() {
                 subInterpreter = std::unique_ptr<py::subinterpreter>(new py::subinterpreter{ py::subinterpreter::create(cfg) });
             }
             catch (const std::exception& e) {
-                throw std::runtime_error("PythonInterpreterInstance 构造时出现异常: " + std::string(e.what()));
+                throw std::runtime_error(std::format("PythonInterpreterInstance 构造时出现异常: {}", e.what()));
             }
         };
     PythonMainInterpreterManager::getInstance().submitTask(std::move(createSubInterpreterTaskFunc)).get();
@@ -265,7 +289,7 @@ PythonInterpreterInstance::~PythonInterpreterInstance() {
                 this->functions.clear();
             }
             catch (const std::exception& e) {
-                throw std::runtime_error("PythonInterpreterInstance::functionClearTaskFunc 出现异常: " + std::string(e.what()));
+                throw std::runtime_error(std::format("PythonInterpreterInstance::functionClearTaskFunc 出现异常: {}", e.what()));
             }
         };
     submitTask(std::move(functionClearTaskFunc)).get();
@@ -279,7 +303,7 @@ PythonInterpreterInstance::~PythonInterpreterInstance() {
                 subInterpreter.reset();
             }
             catch (const std::exception& e) {
-                throw std::runtime_error("PythonInterpreterInstance 析构时出现异常: " + std::string(e.what()));
+                throw std::runtime_error(std::format("PythonInterpreterInstance 析构时出现异常: {}", e.what()));
             }
         };
     PythonMainInterpreterManager::getInstance().submitTask(std::move(destroySubInterpreterTaskFunc)).get();
@@ -297,7 +321,7 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, std::
                 }
                 catch (const py::error_already_set& e) {
                     if (!e.matches(py::module_::import("importlib.metadata").attr("PackageNotFoundError"))) {
-                        throw std::runtime_error("检查依赖 " + dependency + " 时出现异常: " + e.what());
+                        throw std::runtime_error(std::format("检查依赖 {} 时出现异常: {}", dependency, e.what()));
                     }
                     logger->error("依赖 {} 未安装，正在尝试安装", dependency);
                     std::string installCommand = "-m pip install " + dependency;
@@ -305,14 +329,14 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, std::
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     logger->info("正在执行安装命令: {}", installCommand);
                     if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand))) {
-                        throw std::runtime_error("安装依赖 " + dependency + " 的命令失败");
+                        throw std::runtime_error(std::format("安装依赖 {} 的命令失败", dependency));
                     }
                     try {
                         py::module_::import("importlib.metadata").attr("version")(dependency);
                         logger->info("依赖 {} 安装成功", dependency);
                     }
                     catch (const py::error_already_set& eReCheck) {
-                        throw std::runtime_error("依赖 " + dependency + " 安装验证失败: " + eReCheck.what());
+                        throw std::runtime_error(std::format("依赖 {} 安装验证失败: {}", dependency, eReCheck.what()));
                     }
                 }
             };
@@ -350,7 +374,7 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     logger->info("正在执行安装命令: {}", installCommand);
                     if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand))) {
-                        throw std::runtime_error("安装模型 " + modelName + " 的命令失败");
+                        throw std::runtime_error(std::format("安装模型 {} 的命令失败", modelName));
                     }
                     modelInstalled = nlpModule.attr("check_model")(modelName).cast<bool>();
                     if (modelInstalled) {
@@ -362,7 +386,7 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
                         return;
                     }
                     else {
-                        throw std::runtime_error("模块 " + moduleName + " 的模型 " + modelName + " 安装失败");
+                        throw std::runtime_error(std::format("模块 {} 的模型 {} 安装失败", moduleName, modelName));
                     }
                 }
                 pythonNLPModuleFunc = std::shared_ptr<py::object>(new py::object{ nlpModule.attr("NLPProcessor")(modelName).attr("process_text") },
@@ -370,7 +394,7 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
                 m_nlpModuleFunctions[moduleName].insert_or_assign(modelName, std::weak_ptr<py::object>{pythonNLPModuleFunc});
             }
             catch (const py::error_already_set& e) {
-                throw std::runtime_error("加载模块 " + moduleName + " 的模型 " + modelName + " 时出现异常: " + e.what());
+                throw std::runtime_error(std::format("加载模块 {} 的模型 {} 时出现异常: {}", moduleName, modelName, e.what()));
             }
         };
     PythonMainInterpreterManager::getInstance().submitTask(std::move(loadModelTaskFunc)).get();
@@ -403,7 +427,7 @@ std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registe
                     registerCustomTypes(moduleName, needReboot);
                 }
                 catch (const py::error_already_set& e) {
-                    throw std::runtime_error("加载模块 " + moduleName + " 时出现异常: " + e.what());
+                    throw std::runtime_error(std::format("加载模块 {} 时出现异常: {}", moduleName, e.what()));
                 }
             }).get();
         auto retPair = m_interpreters.insert({ stdModulePath, pythonInterpreter });
@@ -411,7 +435,7 @@ std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registe
             it = retPair.first;
         }
         else {
-            throw std::runtime_error("模块 " + moduleName + " 加载失败");
+            throw std::runtime_error(std::format("模块 {} 加载失败", moduleName));
         }
     }
 
@@ -427,17 +451,17 @@ std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registe
                         success = false;
                         return;
                     }
-                    py::object func = pythonModule.attr(functionName.c_str());
+                    std::unique_ptr<py::object> pyFunc = std::unique_ptr<py::object>(new py::object{ pythonModule.attr(functionName.c_str()) });
+                    py::object& func = *pyFunc;
                     if (!func || !py::isinstance<py::function>(func)) {
                         m_logger->debug("Failed to load function {} from script {}", functionName, modulePath);
                         success = false;
                         return;
                     }
-                    std::shared_ptr<py::object> pyFunc = std::shared_ptr<py::object>(new py::object{ std::move(func) });
                     pythonInterpreter->functions.insert({ functionName, std::move(pyFunc) });
                 }
                 catch (const py::error_already_set& e) {
-                    throw std::runtime_error("加载模块 " + moduleName + " 的函数 " + functionName + " 时出现异常: " + e.what());
+                    throw std::runtime_error(std::format("加载模块 {} 的函数 {} 时出现异常: {}", moduleName, functionName, e.what()));
                 }
             }).get();
         if (!success) {
@@ -480,7 +504,7 @@ void PythonManager::registerCustomTypes
                     m_logger->info("{} pkuseg 环境检查完毕。", moduleName);
                 }
                 else {
-                    throw std::invalid_argument(moduleName + " 无效的 tokenizerBackend: " + tokenizerBackend);
+                    throw std::invalid_argument(std::format("{} 中注册了无效的 tokenizerBackend: {}", moduleName, tokenizerBackend));
                 }
             }
         };

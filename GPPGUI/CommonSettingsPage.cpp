@@ -40,7 +40,7 @@ void CommonSettingsPage::_setupUI()
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
 
 	// 单次请求翻译句子数量
-	int requestNum = toml::find_or(_projectConfig, "common", "numPerRequestTranslate", 8);
+	int requestNum = toml::find_or(_projectConfig, "common", "numPerRequestTranslate", 10);
 	ElaScrollPageArea* requestNumArea = new ElaScrollPageArea(mainWidget);
 	QHBoxLayout* requestNumLayout = new QHBoxLayout(requestNumArea);
 	ElaDoubleText* requestNumTextWidget = new ElaDoubleText(requestNumArea,

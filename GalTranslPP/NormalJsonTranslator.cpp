@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
@@ -97,7 +97,7 @@ void NormalJsonTranslator::init()
         const auto pluginConfigData = toml::parse(filePluginConfigPath / L"NormalJson.toml");
         m_outputWithSrc = parseToml<bool>(configData, pluginConfigData, "plugins.NormalJson.output_with_src");
 
-        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 14);
+        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 10);
         m_threadsNum = toml::find_or(configData, "common", "threadsNum", 1);
         m_sortMethod = toml::find_or(configData, "common", "sortMethod", "name");
         m_targetLang = toml::find_or(configData, "common", "targetLang", "zh-cn");
@@ -306,7 +306,7 @@ void NormalJsonTranslator::init()
                     m_logger->info("Stanza 环境检查完毕。");
                 }
                 else {
-                    throw std::invalid_argument("无效的 tokenizerBackend: " + tokenizerBackend);
+                    throw std::invalid_argument(std::format("无效的 tokenizerBackend: {}", tokenizerBackend));
                 }
 
                 const auto textPrePlugins = toml::find<
@@ -592,10 +592,6 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
 
 bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath, std::vector<Sentence*>& batch, std::string& backgroundText, int threadId) {
 
-    if (batch.empty()) {
-        m_logger->error("内部错误: batch 为空");
-        return true;
-    }
     for (Sentence* pSentence : batch) {
         if (pSentence->pre_processed_text.empty()) {
             pSentence->complete = true;

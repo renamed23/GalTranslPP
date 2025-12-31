@@ -750,7 +750,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 					m_logger->info("{} pkuseg 环境检查完毕。", scriptPath);
 				}
 				else {
-					throw std::invalid_argument(scriptPath + " 无效的 tokenizerBackend: " + tokenizerBackend);
+					throw std::invalid_argument(std::format("{} 中注册了无效的 tokenizerBackend: {}", scriptPath, tokenizerBackend));
 				}
 			}
 		};

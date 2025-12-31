@@ -125,7 +125,7 @@ void PDFTranslator::beforeRun()
             m_logger->info("成功提取元数据: {}", message);
         }
         else {
-            throw std::runtime_error("提取元数据失败: " + message);
+            throw std::runtime_error(std::format("提取元数据失败: {}", message));
         }
     }
 
@@ -148,7 +148,7 @@ void PDFTranslator::beforeRun()
                 m_logger->info("成功翻译文件: {}", message);
             }
             else {
-                throw std::runtime_error("翻译文件失败: " + message);
+                throw std::runtime_error(std::format("翻译文件失败: {}", message));
             }
         };
 

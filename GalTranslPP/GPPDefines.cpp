@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 module GPPDefines;
 
@@ -26,4 +26,4 @@ const std::wstring transCacheDirName = L"transl_cache";
 const std::wstring otherCacheDirName = L"other_cache";
 
 const std::string defaultRegCompileModifier = "mnjS"; // m: 多行, n: unicode 支持, j: \xhh \uhhhh 语法支持, S: jit编译
-const std::string defaultRegReplaceModifier = "gxE"; // g: gloabl, x: ${n:-replace}/${n:+trueText:falseText} 语法支持
+const std::string defaultRegReplaceModifier = "gxE"; // g: gloabl, x: ${n:-replace}/${n:+trueText:falseText} 语法支持, E: 未匹配的引用返回空字符串代替

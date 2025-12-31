@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
@@ -34,7 +34,7 @@ export {
 				m_luaRunFunc();
 			}
 			catch (const sol::error& e) {
-				throw std::runtime_error(std::string("LuaTranslator 运行时异常: ") + e.what());
+				throw std::runtime_error(std::format("LuaTranslator 运行时异常: {}", e.what()));
 			}
 		}
 
@@ -73,7 +73,7 @@ export {
 				initFunc();
 			}
 			catch (const sol::error& e) {
-				throw std::runtime_error(std::string("初始化 LuaTranslator 失败：") + e.what());
+				throw std::runtime_error(std::format("初始化 LuaTranslator 失败：{}", e.what()));
 			}
 
 			if (m_needReboot) {

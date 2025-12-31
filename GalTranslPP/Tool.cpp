@@ -541,10 +541,7 @@ std::string extractCJK(const std::string& sourceString) {
 std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger>& logger)
 {
     // 是否需要线程安全？(似乎是不需要)
-    static std::function<std::string(const std::string&)> result;
-    if (result) {
-        return result;
-    }
+    std::function<std::string(const std::string&)> result;
     try {
         std::shared_ptr<opencc::SimpleConverter> converter = std::make_shared<opencc::SimpleConverter>("BaseConfig/opencc/t2s.json");
         result = [=](const std::string& sourceString)

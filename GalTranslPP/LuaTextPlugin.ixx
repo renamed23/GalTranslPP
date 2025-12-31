@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
@@ -38,11 +38,11 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 	m_logger->info("正在初始化 Lua 插件 {}", m_scriptPath);
 	std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager.registerFunction(m_scriptPath, "init", m_needReboot);
 	if (!luaStateOpt.has_value()) {
-		throw std::runtime_error(m_scriptPath + " init函数 初始化失败");
+		throw std::runtime_error(std::format("{} init函数初始化失败", m_scriptPath));
 	}
 	luaStateOpt = luaManager.registerFunction(m_scriptPath, "run", m_needReboot);
 	if (!luaStateOpt.has_value()) {
-		throw std::runtime_error(m_scriptPath + " run函数 初始化失败");
+		throw std::runtime_error(std::format("{} run函数初始化失败", m_scriptPath));
 	}
 	m_luaState = luaStateOpt.value();
 	m_luaRunFunc = m_luaState->functions["run"];
@@ -52,7 +52,7 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 		m_luaState->functions["init"](projectDir);
 	}
 	catch (const sol::error& e) {
-		m_logger->error("{} init函数 执行失败", m_scriptPath);
+		m_logger->error("{} init函数执行失败", m_scriptPath);
 		throw std::runtime_error(e.what());
 	}
 
@@ -68,7 +68,7 @@ LuaTextPlugin::~LuaTextPlugin()
 			unloadFunc();
 		}
 		catch (const sol::error& e) {
-			m_logger->error("Error while unloading script: {}", e.what());
+			m_logger->error("{} unload函数执行失败", m_scriptPath);
 		}
 	}
 }
@@ -79,7 +79,7 @@ void LuaTextPlugin::run(Sentence* se) {
 		m_luaRunFunc(se);
 	}
 	catch (const sol::error& e) {
-		m_logger->error("{} run函数 执行失败", m_scriptPath);
+		m_logger->error("{} run函数执行失败", m_scriptPath);
 		throw std::runtime_error(e.what());
 	}
 }

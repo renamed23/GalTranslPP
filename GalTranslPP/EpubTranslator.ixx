@@ -25,15 +25,31 @@ export {
 
     struct CallbackPattern {
         jpc::Regex org;
-        jpc::RegexReplace rep;
+        jpc::RegexReplace rep{&org};
+
+        CallbackPattern() = default;
+        CallbackPattern(CallbackPattern&) = delete;
+        CallbackPattern(CallbackPattern&& other) {
+            org = std::move(other.org);
+            rep = std::move(other.rep);
+            rep.setRegexObject(&org);
+        }
     };
 
     struct RegexPattern {
         jpc::Regex org;
-        jpc::RegexReplace rep;
+        jpc::RegexReplace rep{&org};
 
         std::multimap<int, CallbackPattern> callbackPatterns;
         bool isCallback;
+
+        RegexPattern() = default;
+        RegexPattern(RegexPattern&) = delete;
+        RegexPattern(RegexPattern&& other) {
+            org = std::move(other.org);
+            rep = std::move(other.rep);
+            rep.setRegexObject(&org);
+        }
     };
 
     struct JsonInfo {
@@ -244,7 +260,7 @@ void EpubTranslator::beforeRun()
     auto regexReplace = [this](std::vector<RegexPattern>& regexPatterns, std::string& content)
         {
             for (RegexPattern& reg : regexPatterns) {
-                reg.rep.setRegexObject(&reg.org).setSubject(&content);
+                reg.rep.setSubject(&content);
                 if (reg.isCallback) {
                     content = reg.rep.nreplace(jpc::MatchEvaluator([&](const jpc::NumSub& m1, void*, void*)
                         {
@@ -253,7 +269,7 @@ void EpubTranslator::beforeRun()
                                 std::string groupStr = m1[i];
                                 auto equalRange = reg.callbackPatterns.equal_range((int)i);
                                 for (auto it = equalRange.first; it != equalRange.second; ++it) {
-                                    groupStr = it->second.rep.setRegexObject(&it->second.org).setSubject(&groupStr).replace();
+                                    groupStr = it->second.rep.setSubject(&groupStr).replace();
                                 }
                                 result.append(groupStr);
                             }

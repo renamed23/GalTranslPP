@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
@@ -79,7 +79,6 @@ NameTranslator::NameTranslator(
 }
 
 void NameTranslator::translateBatch(std::vector<std::string>& batchNames, std::unordered_map<std::string, std::string>& resultMap) {
-    if (batchNames.empty()) return;
 
     // 1. 准备 Glossary
     // 为了利用 GptDictionary，我们需要构造假的 Sentence 对象
