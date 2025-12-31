@@ -190,21 +190,21 @@
 <p><strong>条件对象</strong> 是指条件正则要作用于的文本，可以是 <code>name</code>, <code>orig_text</code>, <code>preproc_text</code>, <code>pretrans_text</code> 中的任意一个。</p>
 <p>当 <strong>启用正则</strong> 为 <code>true</code> 时，原文和译文将被视为正则表达式进行替换，优先级越高的字典越先执行。</p>
 <h2>⚙️ 处理与翻译顺序</h2>
-<p>1、  执行预处理插件的 preRun 阶段。<br>
+<p>1、  执行 preRun 阶段模式的预处理插件。<br>
 2、  可选: 对 <code>name</code> 执行译前字典替换 (人名表收集的也是这一步后的 <code>name</code>)。<br>
 3、  将 <code>message</code> 中的换行统一替换为 <code>&lt;br&gt;</code>。<br>
 4、  将 <code>message</code> 中的制表符统一替换为 <code>&lt;tab&gt;</code>。<br>
 5、  可选: 对 <code>message</code> 执行译前字典替换。<br>
-6、  执行预处理插件的 run 阶段。<br>
+6、  执行 run 阶段模式的预处理插件。<br>
 7、  <strong>AI翻译</strong>。<br>
-8、  执行后处理插件的 run 阶段。<br>
+8、  执行 run 阶段模式的后预处理插件。<br>
 9、  可选: 对 <code>message</code> 执行译后字典替换。<br>
 10、  将 <code>message</code> 中的 <code>&lt;tab&gt;</code> 统一替换回制表符。<br>
 11、 将 <code>message</code> 中的换行从 <code>&lt;br&gt;</code> 换回原符号。<br>
 12、 可选: 对 <code>name</code> 执行GPT字典替换 (此时GPT字典将被临时视为替换型字典)。<br>
 13、 对 <code>name</code> 执行人名表替换 (人名表译名为空则忽略)。<br>
 14、 可选: 对 <code>name</code> 执行译后字典替换。<br>
-15、 执行后处理插件的 postRun 阶段。<br>
+15、 执行 postRun 阶段模式的预处理插件。<br>
 16、 问题分析。</p>
 <blockquote>
 <p><strong>正则引擎说明</strong></p>

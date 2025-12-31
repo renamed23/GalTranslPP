@@ -33,7 +33,7 @@ baseClassName = "NormalJson"
 # PS: 如果项目文件夹下有 Prompt.toml，会优先使用项目文件夹下的提示词，否则再去 BaseConfig 下寻找
 transEngine = "ForGalTsv"
 
-# "SkipTrans"，既有 run 阶段又有 preRun 阶段，区别仅在于执行时机不同，默认开启为 run 阶段
+# "SkipTrans"，既有 run 阶段模式又有 preRun 阶段模式，区别仅在于执行时机不同，默认开启为 run 阶段模式
 # 文本译前处理插件列表，可以设置多个，按顺序执行
 # 译前/译后 Plugins 均可使用 lua/py 脚本作为自定义扩展插件
 # 插件加载格式为 "path/to/script.lua" / "path/to/script.py"
@@ -43,8 +43,8 @@ textPrePlugins = [
   #"SkipTrans"  # 等效于 "run:SkipTrans"
 ]
 
-# "TextLinebreakFix"，只有 run 阶段，默认开启为 run 阶段
-# "TextPostFull2Half"，既有 run 阶段又有 postRun 阶段，区别在于 run 阶段会跳过 <br> 和 <tab> 标签，默认开启为 postRun 阶段
+# "TextLinebreakFix"，只有 run 阶段模式，默认开启为 run 阶段模式
+# "TextPostFull2Half"，既有 run 阶段模式又有 postRun 阶段模式，区别在于 run 阶段模式会跳过 <br> 和 <tab> 标签，默认开启为 postRun 阶段模式
 # 文本译后处理插件列表，可以设置多个，按顺序执行
 textPostPlugins = [
   #"TextPostFull2Half" # 等效于 "postRun:TextPostFull2Half"
