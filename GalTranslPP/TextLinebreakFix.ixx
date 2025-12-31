@@ -35,12 +35,14 @@ export {
 		int m_errorThreshold;
 		bool m_forceFix;
 		bool m_useTokenizer;
-		bool m_needReboot = false;
 
+		bool m_hasRun;
+		bool m_hasPostRun;
+		bool m_needReboot = false;
 
 	public:
 
-		TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger);
+		TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun);
 
 		bool needReboot() const { return m_needReboot; }
 
@@ -58,10 +60,13 @@ export {
 
 module :private;
 
-TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
-	: m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_tlf.json"), m_logger(logger)
+TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun)
+	: m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_tlf.json"), m_logger(logger), m_hasRun(hasRun), m_hasPostRun(hasPostRun)
 {
 	try {
+		if (m_hasPostRun) {
+			m_logger->error("TextLinebreakFix 不支持 post-run 阶段运行");
+		}
 		const auto pluginConfig = toml::parse(postPluginConfigPath / L"TextLinebreakFix.toml");
 
 		std::string linebreakMode = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.换行模式");
@@ -117,7 +122,7 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 				m_logger->info("TextLinebreakFix pkuseg 环境检查完毕。");
 			}
 			else {
-				throw std::invalid_argument("TextLinebreakFix 无效的 tokenizerBackend: " + tokenizerBackend);
+				throw std::invalid_argument(std::format("TextLinebreakFix 无效的 tokenizerBackend: {}", tokenizerBackend));
 			}
 		}
 
@@ -159,6 +164,9 @@ std::vector<std::string> TextLinebreakFix::splitIntoTokens(const std::string& te
 
 void TextLinebreakFix::run(Sentence* se)
 {
+	if (!m_hasRun) {
+		return;
+	}
 	int origLinebreakCount = countSubstring(se->pre_processed_text, "<br>");
 	int transLinebreakCount = countSubstring(se->translated_preview, "<br>");
 

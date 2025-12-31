@@ -18,6 +18,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     QStringList updateList = {
         "1. 更换正则引擎 icu -> pcre2",
         "2. 优化字典未使用问题的判断",
+        "3. 添加了两处插件执行时机，可以更灵活地控制处理",
 
     };
 

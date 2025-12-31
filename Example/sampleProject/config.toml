@@ -16,7 +16,10 @@ apiTimeout = 120 # 请求超时时间，单位秒
 
 [plugins]
 filePlugin = "NormalJson" # 用于支持更多格式: NormalJson, Epub, PDF, MtoolJson(尚未实现)...
-baseClassName = "NormalJson" # 参数同上，用于在使用自定义 filePlugin 时指定脚本要继承的基类
+
+# 用于在使用自定义 filePlugin 时指定脚本要继承的基类
+# 自定义文件插件的具体示例详见 git 仓库中的 Example 文件夹中的 MySampleFilePlugin
+baseClassName = "NormalJson"
 
 # ForGalJson: 向AI输入json格式的对话并要求AI以json格式回复，使用 FORGALJSON_SYSTEM 和 FORGALJSON_TRANS_PROMPT_EN 作为提示词
 # ForGalTsv: 向AI输入TSV格式的对话并要求AI以TSV格式回复，使用 FORGALTSV_SYSTEM 和 FORGALTSV_TRANS_PROMPT_EN 作为提示词
@@ -30,19 +33,24 @@ baseClassName = "NormalJson" # 参数同上，用于在使用自定义 filePlugi
 # PS: 如果项目文件夹下有 Prompt.toml，会优先使用项目文件夹下的提示词，否则再去 BaseConfig 下寻找
 transEngine = "ForGalTsv"
 
-#"SkipTrans"
+# "SkipTrans"，既有 run 阶段又有 preRun 阶段，区别仅在于执行时机不同，默认开启为 run 阶段
 # 文本译前处理插件列表，可以设置多个，按顺序执行
 # 译前/译后 Plugins 均可使用 lua/py 脚本作为自定义扩展插件
 # 插件加载格式为 "path/to/script.lua" / "path/to/script.py"
-# 如"Lua/MySampleTextPlugin.lua"
-# 插件中必须定义 init 和 run 函数，具体示例详见 README
+# 如 "Lua/MySampleTextPlugin.lua"
+# 插件中必须定义 init 函数，具体示例详见 git 仓库中的 Example 文件夹中的 MySampleTextPlugin
 textPrePlugins = [
+  #"SkipTrans"  # 等效于 "run:SkipTrans"
 ]
 
-#"TextLinebreakFix"
-#"TextPostFull2Half"
+# "TextLinebreakFix"，只有 run 阶段，默认开启为 run 阶段
+# "TextPostFull2Half"，既有 run 阶段又有 postRun 阶段，区别在于 run 阶段会跳过 <br> 和 <tab> 标签，默认开启为 postRun 阶段
 # 文本译后处理插件列表，可以设置多个，按顺序执行
 textPostPlugins = [
+  #"TextPostFull2Half" # 等效于 "postRun:TextPostFull2Half"
+  #"TextLinebreakFix"  # 等效于 "run:TextLinebreakFix"
+  # 这里虽然 TextPostFull2Half 在 TextLinebreakFix之前
+  # 但由于 run 阶段早于 postRun 阶段，所以还是 TextLinebreakFix 先执行，译后格式化完毕后再执行 TextPostFull2Half
 ] 
 
 [plugins.NormalJson]
@@ -57,12 +65,12 @@ rep = '[$2/$1]'
 
 [[plugins.Epub.preprocRegex]]
 # 基本等效于: 
-# org = '(<p[^>/]*>)(.*?)(</p>)'
-# callback = [
-#   { org = '<[^>]*>', rep = '', group = 2 },
-# ]
-org = '((?i)(?:<p\b[^>]*>|\G(?!\A))[^<]*\K<(?!/p>)[^>]*>)'
-rep = ''
+# org = '((?i)(?:<p\b[^>]*>|\G(?!\A))[^<]*\K<(?!/p>)[^>]*>)'
+# rep = ''
+org = '(<p[^>/]*>)(.*?)(</p>)'
+callback = [
+  { org = '<[^>]*>', rep = '', group = 2 },
+]
 
 [[plugins.Epub.postprocRegex]]
 

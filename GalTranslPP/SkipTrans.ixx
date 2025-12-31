@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
@@ -24,15 +24,20 @@ export {
         std::vector<std::string> m_hKeys;
         std::vector<CheckSeCondFunc> m_skipKeys;
         std::shared_ptr<spdlog::logger> m_logger;
-        bool m_needReboot = false;
         bool m_skipH;
 
         void processSkipSentence(Sentence* se, const std::string& info);
+        void skipImpl(Sentence* se);
+
+        bool m_needReboot = false;
+        bool m_hasPreRun;
+        bool m_hasRun;
 
     public:
         SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
-            std::shared_ptr<spdlog::logger> logger);
+            std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPreRun);
         void run(Sentence* se);
+        void preRun(Sentence* se);
         bool needReboot() const { return m_needReboot; }
         ~SkipTrans() = default;
     };
@@ -41,8 +46,8 @@ export {
 module :private;
 
 SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
-    std::shared_ptr<spdlog::logger> logger)
-    : m_logger(logger)
+    std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPreRun)
+    : m_logger(logger), m_hasRun(hasRun), m_hasPreRun(hasPreRun)
 {
     try {
         const auto pluginConfig = toml::parse(prePluginConfigPath / L"SkipTrans.toml");
@@ -94,8 +99,7 @@ void SkipTrans::processSkipSentence(Sentence* se, const std::string& info) {
     se->notAnalyzeProblem = true;
 }
 
-void SkipTrans::run(Sentence* se) {
-
+void SkipTrans::skipImpl(Sentence* se) {
     if (
         m_skipH &&
         std::ranges::any_of(m_hKeys, [&](const auto& key)
@@ -116,5 +120,18 @@ void SkipTrans::run(Sentence* se) {
             return;
         }
     }
+}
 
+void SkipTrans::run(Sentence* se) {
+    if (!m_hasRun) {
+        return;
+    }
+    skipImpl(se);
+}
+
+void SkipTrans::preRun(Sentence* se) {
+    if (!m_hasPreRun) {
+        return;
+    }
+    skipImpl(se);
 }

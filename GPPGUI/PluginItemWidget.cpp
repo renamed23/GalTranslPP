@@ -15,9 +15,9 @@ PluginItemWidget::PluginItemWidget(const QString& pluginName, QWidget* parent)
 {
     static const QMap<QString, QString> toolTipMap =
     {
-        { "SkipTrans", tr("滤过插件") },
-        { "TextPostFull2Half", tr("全角半角转换插件") },
-        { "TextLinebreakFix", tr("换行修复插件") },
+        { "SkipTrans", tr("滤过插件，默认开启为 run 阶段") },
+        { "TextPostFull2Half", tr("全角半角转换插件，默认开启为 postRun 阶段") },
+        { "TextLinebreakFix", tr("换行修复插件，默认开启为 run 阶段") },
     };
     // 主水平布局
     QHBoxLayout* mainLayout = new QHBoxLayout(this);

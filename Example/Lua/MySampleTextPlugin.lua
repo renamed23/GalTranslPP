@@ -106,18 +106,22 @@ function init(projectDir)
     utils.logger:info(string.format("MySampleTextPluginFromLua 初始化成功，projectDir: '%s'", projectDir.value))
 end
 
-function unload()
-    -- ctrl + /
-    -- return
-    -- utils.logger:info("MySampleTextPluginFromLua unloads")
-    -- local cmd = [[D:\GALGAME\linshi\天冥のコンキスタ\WORK\#toSjis.bat]]
-    -- local cmd_acp = utils.ascii2Ascii(cmd, 65001, 0)
-    -- local handle = io.popen(cmd_acp, 'r')
-    -- if handle then
-    --     local output = handle:read("*a")
-    --     handle:close()
-    --     utils.logger:info("--- BAT 脚本的输出内容 开始 ---\n" .. output .. "\n--- BAT 脚本的输出内容 结束 ---")
-    -- else
-    --     utils.logger:error("无法执行 BAT")
-    -- end
-end
+-- function unload()
+--     -- ctrl + /
+--     -- return
+--     -- utils.logger:info("MySampleTextPluginFromLua unloads")
+--     -- local cmd = [[D:\GALGAME\linshi\天冥のコンキスタ\WORK\#toSjis.bat]]
+--     -- local cmd_acp = utils.ascii2Ascii(cmd, 65001, 0)
+--     -- local handle = io.popen(cmd_acp, 'r')
+--     -- if handle then
+--     --     local output = handle:read("*a")
+--     --     handle:close()
+--     --     utils.logger:info("--- BAT 脚本的输出内容 开始 ---\n" .. output .. "\n--- BAT 脚本的输出内容 结束 ---")
+--     -- else
+--     --     utils.logger:error("无法执行 BAT")
+--     -- end
+-- end
+
+-- preRun, run, postRun, unload 均可选择性定义
+-- 对于译前插件，如果定义 preRun/run 函数，则分别在对应阶段调用
+-- 对于译后插件，如果定义 postRun/run 函数，则分别在对应阶段调用

@@ -923,7 +923,7 @@
     <message>
         <location filename="CommonSettingsPage.cpp" line="166"/>
         <source>数值越大可能占用更多内存</source>
-        <translation type="unfinished"></translation>
+        <translation>Larger number may cause more memory usage</translation>
     </message>
     <message>
         <location filename="CommonSettingsPage.cpp" line="229"/>
@@ -2459,18 +2459,21 @@
     <name>PluginItemWidget</name>
     <message>
         <location filename="PluginItemWidget.cpp" line="18"/>
-        <source>滤过插件</source>
-        <translation>Filter plugin</translation>
+        <source>滤过插件，默认开启为 run 阶段</source>
+        <oldsource>滤过插件</oldsource>
+        <translation>Filter plugin, process in run stage by default</translation>
     </message>
     <message>
         <location filename="PluginItemWidget.cpp" line="19"/>
-        <source>全角半角转换插件</source>
-        <translation>Full-width and half-width converting plugin</translation>
+        <source>全角半角转换插件，默认开启为 postRun 阶段</source>
+        <oldsource>全角半角转换插件</oldsource>
+        <translation>Full-width and half-width converting plugin, process in postRun stage by default</translation>
     </message>
     <message>
         <location filename="PluginItemWidget.cpp" line="20"/>
-        <source>换行修复插件</source>
-        <translation>Text linebreak fixing plugin</translation>
+        <source>换行修复插件，默认开启为 run 阶段</source>
+        <oldsource>换行修复插件</oldsource>
+        <translation>Text linebreak fixing plugin, process in run stage by default</translation>
     </message>
     <message>
         <source>字符集检查插件</source>
@@ -2486,26 +2489,27 @@
     </message>
     <message>
         <location filename="PluginSettingsPage.cpp" line="47"/>
-        <source>预处理插件设置(由上至下执行)</source>
-        <translation>Text preproc plugins(run from above)</translation>
+        <source>预处理插件设置</source>
+        <oldsource>预处理插件设置(由上至下执行)</oldsource>
+        <translation type="unfinished">Text preproc plugins(run from above)</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="183"/>
+        <location filename="PluginSettingsPage.cpp" line="177"/>
         <source>解析错误</source>
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="183"/>
+        <location filename="PluginSettingsPage.cpp" line="177"/>
         <source> 不符合 toml 规范</source>
         <translation> is nonconforming</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="190"/>
+        <location filename="PluginSettingsPage.cpp" line="184"/>
         <source>自定义预处理插件</source>
         <translation>Custom preproc plugins</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="191"/>
+        <location filename="PluginSettingsPage.cpp" line="185"/>
         <source>自定义后处理插件</source>
         <translation>Custom postproc plugins</translation>
     </message>
@@ -2515,8 +2519,9 @@
     </message>
     <message>
         <location filename="PluginSettingsPage.cpp" line="96"/>
-        <source>后处理插件设置(由上至下执行)</source>
-        <translation>Text postproc plugins(run from above)</translation>
+        <source>后处理插件设置</source>
+        <oldsource>后处理插件设置(由上至下执行)</oldsource>
+        <translation type="unfinished">Text postproc plugins(run from above)</translation>
     </message>
 </context>
 <context>

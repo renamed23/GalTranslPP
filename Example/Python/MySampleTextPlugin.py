@@ -32,9 +32,6 @@ def checkConditionForSkipProblemsFunc(se: gpp.Sentence) -> bool:
     if se.index == 278:
         # retranslKey 中检查的 se 是一个副本，只负责检查，怎么设置都不会影响到要翻译和输出的部分
         # 但 skipProblems 的检查提供的是要输出的 se 的引用
-        # 通过某个自定义的译后插件插入自定义的 flag problem
-        # 再把 skipProblems 中最初的元素定义为此 problem 的全匹配检查
-        # 甚至可达成在译后字典执行完毕后再执行一次插件的效果(区别是不会调用 init 和 unload)
         current_problem = ""
         for i, s in enumerate(se.problems):
             # 正则检查通过后，执行 Condition 验证时，当前正在检查的 problem 会拥有前缀 'Current problem:'
@@ -61,7 +58,7 @@ def init(project_dir: Path):
     logger.info(f"MySampleTextPluginFromLua 初始化成功，projectDir: {project_dir}")
 
 
-def run(se: gpp.Sentence):
+def postRun(se: gpp.Sentence):
     """
     处理每个句子的主函数。
     se 是一个 C++ Sentence 对象的代理。
@@ -75,5 +72,9 @@ def run(se: gpp.Sentence):
         # 所有容器均为 copy，直接对其进行 insert，append 等是无效的
         se.other_info |= { "tokens_python": result }
 
-def unload():
-    pass
+# def unload():
+#     pass
+
+# preRun, run, postRun, unload 均可选择性定义
+# 对于译前插件，如果定义 preRun/run 函数，则分别在对应阶段调用
+# 对于译后插件，如果定义 postRun/run 函数，则分别在对应阶段调用

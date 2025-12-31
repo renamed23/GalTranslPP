@@ -44,7 +44,7 @@ void PluginSettingsPage::_setupUI()
 
     // 前处理插件列表
     ElaText* preTitle = new ElaText(mainWidget);
-    preTitle->setText(tr("预处理插件设置(由上至下执行)"));
+    preTitle->setText(tr("预处理插件设置"));
     preTitle->setTextPixelSize(18);
     mainLayout->addWidget(preTitle);
 
@@ -53,8 +53,8 @@ void PluginSettingsPage::_setupUI()
 
     // 插件名称列表
     QStringList prePluginNames = { "SkipTrans" };
-    toml::array customPrePlugins;
-    const auto& prePluginsArr = toml::find_or_default<toml::array>(_projectConfig, "plugins", "textPrePlugins");
+    toml::ordered_array customPrePlugins;
+    const auto& prePluginsArr = toml::find_or_default<toml::ordered_array>(_projectConfig, "plugins", "textPrePlugins");
     for (const auto& pluginNameStr : prePluginsArr) {
         if (!pluginNameStr.is_string()) {
             continue;
@@ -93,7 +93,7 @@ void PluginSettingsPage::_setupUI()
 
     // 后处理插件列表
     ElaText* postTitle = new ElaText(mainWidget);
-    postTitle->setText(tr("后处理插件设置(由上至下执行)"));
+    postTitle->setText(tr("后处理插件设置"));
     postTitle->setTextPixelSize(18);
     mainLayout->addWidget(postTitle);
 
@@ -103,9 +103,9 @@ void PluginSettingsPage::_setupUI()
 
     // 插件名称列表
     QStringList postPluginNames = { "TextPostFull2Half", "TextLinebreakFix" };
-    toml::array customPostPlugins;
+    toml::ordered_array customPostPlugins;
     // 先处理项目已经启用的插件
-    const auto& postPluginsArr = toml::find_or_default<toml::array>(_projectConfig, "plugins", "textPostPlugins");
+    const auto& postPluginsArr = toml::find_or_default<toml::ordered_array>(_projectConfig, "plugins", "textPostPlugins");
     for (const auto& pluginNameStr : postPluginsArr) {
         if (!pluginNameStr.is_string()) {
             continue;
@@ -145,37 +145,31 @@ void PluginSettingsPage::_setupUI()
     _updatePostMoveButtonStates();
 
     auto createCustomPluginsPlainTextEditFunc = 
-        [=](const QString& title, const std::string& configKey, const toml::array& customPlugins) -> std::function<void(toml::array&)>
+        [=](const QString& title, const std::string& configKey, const toml::ordered_array& customPlugins) -> std::function<void(toml::ordered_array&)>
         {
-            ElaText* customPrePluginsTitle = new ElaText(title, 18, mainWidget);
-            customPrePluginsTitle->setWordWrap(false);
-            ElaToolTip* customPrePluginsTip = new ElaToolTip(customPrePluginsTitle);
-            customPrePluginsTip->setToolTip("用来加载自定义的 Lua/Python 插件");
-            mainLayout->addWidget(customPrePluginsTitle);
-            ElaPlainTextEdit* customPrePluginsEdit = new ElaPlainTextEdit(mainWidget);
-            customPrePluginsEdit->setMaximumHeight(100);
-            QFont font = customPrePluginsEdit->font();
+            ElaText* customPluginsTitle = new ElaText(title, 18, mainWidget);
+            customPluginsTitle->setWordWrap(false);
+            ElaToolTip* customPluginsTip = new ElaToolTip(customPluginsTitle);
+            customPluginsTip->setToolTip("用来加载自定义的 Lua/Python 插件");
+            mainLayout->addWidget(customPluginsTitle);
+            ElaPlainTextEdit* customPluginsEdit = new ElaPlainTextEdit(mainWidget);
+            customPluginsEdit->setMaximumHeight(100);
+            QFont font = customPluginsEdit->font();
             font.setPixelSize(14);
-            customPrePluginsEdit->setFont(font);
-            customPrePluginsEdit->setPlainText(QString::fromStdString(toml::format(toml::ordered_value{ toml::ordered_table{{ configKey, customPlugins }} })));
-            customPrePluginsEdit->moveCursor(QTextCursor::Start);
-            mainLayout->addWidget(customPrePluginsEdit);
+            customPluginsEdit->setFont(font);
+            customPluginsEdit->setPlainText(QString::fromStdString(toml::format(toml::ordered_value{ toml::ordered_table{{ configKey, customPlugins }} })));
+            customPluginsEdit->moveCursor(QTextCursor::Start);
+            mainLayout->addWidget(customPluginsEdit);
 
-            std::function<void(toml::array&)> saveFunc = [=](toml::array& arr)
+            std::function<void(toml::ordered_array&)> saveFunc = [=](toml::ordered_array& arr)
                 {
                     try {
-                        toml::ordered_value newCustomPluginsTbl = toml::parse_str<toml::ordered_type_config>(customPrePluginsEdit->toPlainText().toStdString());
+                        toml::ordered_value newCustomPluginsTbl = toml::parse_str<toml::ordered_type_config>(customPluginsEdit->toPlainText().toStdString());
                         auto& newCustomPluginsArr = newCustomPluginsTbl[configKey];
                         if (newCustomPluginsArr.is_array()) {
-                            for (const auto& newCusPlugin : newCustomPluginsArr.as_array() 
+                            for (const auto& newCustomPlugin : newCustomPluginsArr.as_array() 
                                 | std::views::filter([](const auto& plugin) { return plugin.is_string(); })) {
-                                for (auto it = arr.begin(); it != arr.end(); ++it) {
-                                    if (it->as_string() == newCusPlugin.as_string()) {
-                                        arr.erase(it);
-                                        break;
-                                    }
-                                }
-                                arr.push_back(newCusPlugin);
+                                arr.push_back(newCustomPlugin);
                             }
                         }
                     }
@@ -210,14 +204,14 @@ void PluginSettingsPage::_setupUI()
             _tlfCfgPage->apply2Config();
             _pf2hCfgPage->apply2Config();
 
-            toml::array prePlugins;
+            toml::ordered_array prePlugins;
             for (PluginItemWidget* item : _prePluginItems) {
                 if (!item->isToggled()) {
                     continue;
                 }
                 prePlugins.push_back(item->getPluginName().toStdString());
             }
-            toml::array postPlugins;
+            toml::ordered_array postPlugins;
             for (PluginItemWidget* item : _postPluginItems) {
                 if (!item->isToggled()) {
                     continue;

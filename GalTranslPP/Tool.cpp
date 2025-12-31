@@ -541,10 +541,9 @@ std::string extractCJK(const std::string& sourceString) {
 std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger>& logger)
 {
     // 是否需要线程安全？(似乎是不需要)
-    std::function<std::string(const std::string&)> result;
     try {
         std::shared_ptr<opencc::SimpleConverter> converter = std::make_shared<opencc::SimpleConverter>("BaseConfig/opencc/t2s.json");
-        result = [=](const std::string& sourceString)
+        std::function<std::string(const std::string&)> result = [=](const std::string& sourceString)
             {
                 static const std::set<std::string> excludeList =
                 {
@@ -575,7 +574,7 @@ std::function<std::string(const std::string&)> getTraditionalChineseExtractor(st
             throw std::runtime_error("ICU-based simplified Chinese conversion is not available");
         }
 
-        result = [=](const std::string& sourceString)
+        std::function<std::string(const std::string&)>result = [=](const std::string& sourceString)
             {
                 // 白名单/排除列表：用于解决简繁转换中的歧义问题。
                 // "著" (U+8457) 是一个典型例子，它在简体中文里也是合法字符，但T->S的转换规则可能导致误判。
@@ -631,7 +630,7 @@ std::function<std::string(const std::string&)> getTraditionalChineseExtractor(st
         logger->info("ICU-based traditional Chinese conversion is available");
         return result;
     }
-    return result;
+    return {};
 }
 
 std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadTokenizeCache

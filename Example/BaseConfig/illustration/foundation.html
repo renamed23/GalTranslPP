@@ -190,20 +190,22 @@
 <p><strong>条件对象</strong> 是指条件正则要作用于的文本，可以是 <code>name</code>, <code>orig_text</code>, <code>preproc_text</code>, <code>pretrans_text</code> 中的任意一个。</p>
 <p>当 <strong>启用正则</strong> 为 <code>true</code> 时，原文和译文将被视为正则表达式进行替换，优先级越高的字典越先执行。</p>
 <h2>⚙️ 处理与翻译顺序</h2>
-<p>1、  可选: 对 <code>name</code> 执行译前字典替换 (人名表收集的也是这一步后的 <code>name</code>)。<br>
-2、  将 <code>message</code> 中的换行统一替换为 <code>&lt;br&gt;</code>。<br>
-3、  将 <code>message</code> 中的制表符统一替换为 <code>&lt;tab&gt;</code>。<br>
-4、  可选: 对 <code>message</code> 执行译前字典替换。<br>
-5、  执行前处理插件。<br>
-6、  <strong>AI翻译</strong>。<br>
-7、  执行后处理插件。<br>
-8、  可选: 对 <code>message</code> 执行译后字典替换。<br>
-9、  将 <code>message</code> 中的 <code>&lt;tab&gt;</code> 统一替换回制表符。<br>
-10、 将 <code>message</code> 中的换行从 <code>&lt;br&gt;</code> 换回原符号。<br>
-11、 可选: 对 <code>name</code> 执行GPT字典替换 (此时GPT字典将被临时视为替换型字典)。<br>
-12、 对 <code>name</code> 执行人名表替换 (人名表译名为空则忽略)。<br>
-13、 可选: 对 <code>name</code> 执行译后字典替换。<br>
-14、 问题分析。</p>
+<p>1、  执行预处理插件的 preRun 阶段。<br>
+2、  可选: 对 <code>name</code> 执行译前字典替换 (人名表收集的也是这一步后的 <code>name</code>)。<br>
+3、  将 <code>message</code> 中的换行统一替换为 <code>&lt;br&gt;</code>。<br>
+4、  将 <code>message</code> 中的制表符统一替换为 <code>&lt;tab&gt;</code>。<br>
+5、  可选: 对 <code>message</code> 执行译前字典替换。<br>
+6、  执行预处理插件的 run 阶段。<br>
+7、  <strong>AI翻译</strong>。<br>
+8、  执行后处理插件的 run 阶段。<br>
+9、  可选: 对 <code>message</code> 执行译后字典替换。<br>
+10、  将 <code>message</code> 中的 <code>&lt;tab&gt;</code> 统一替换回制表符。<br>
+11、 将 <code>message</code> 中的换行从 <code>&lt;br&gt;</code> 换回原符号。<br>
+12、 可选: 对 <code>name</code> 执行GPT字典替换 (此时GPT字典将被临时视为替换型字典)。<br>
+13、 对 <code>name</code> 执行人名表替换 (人名表译名为空则忽略)。<br>
+14、 可选: 对 <code>name</code> 执行译后字典替换。<br>
+15、 执行后处理插件的 postRun 阶段。<br>
+16、 问题分析。</p>
 <blockquote>
 <p><strong>正则引擎说明</strong></p>
 <p>虽然GalTransl++的核心为C++编写，但由于正则引擎采用pcre2且默认使用unicode参数编译正则，所以可自定义编辑的所有正则依然默认是以字符为单位的。比如即使emoji表情’😪’ 在UTF-8中占用4个字节，在正则中依然是以一个<code>.</code>来匹配的。</p>
@@ -336,7 +338,7 @@ rep = '&lt;ruby&gt;&lt;rb&gt;$2&lt;/rb&gt;&lt;rt&gt;$1&lt;/rt&gt;&lt;/ruby&gt;'
         </svg>
       </i>
     </button><!--beforeend--></div><!--afterend--></div><p>假如我不想一个一个文件的看标签写正则，而是想要直接『删除所有<code>&lt;p&gt;&lt;/p&gt;</code>标签内的其余标签并保留非标签部分』来快速过滤的话，面对不擅长处理嵌套的简单正则，显然我们很难写出这样的正则/正则组来处理这个问题，那么此时就需要使用回调正则。</p>
-    <p>注: 2.2.4版本之后，想达到这个目的可以简化为</p>
+    <p>注: 2.2.4版本之后，想达到这个目的可以简化为一条正则</p>
     <pre><code>[[plugins.Epub.postprocRegex]]
 org = '((?i)(?:&lt;p\b[^&gt;]*&gt;|\G(?!\A))[^&lt;]*\K&lt;(?!/p&gt;)[^&gt;]*&gt;)'
 rep = ''</code></pre>
@@ -469,14 +471,14 @@ start /b 要运行文件的文件名
 <p>需要注册的工厂函数为 <code>createTranslator</code>。</p>
 <h3>添加插件处理器 (Plugin)</h3>
 <p>文本处理插件理论上分为预处理插件和后处理插件，GalTransl++不接受希望同时在译前和译后都生效的插件，那样会破坏对于插件处理顺序的自定义性。如果有需要请将您的插件分为 Pre版 和 Post版。</p>
-<p>所有插件只需满足 <code>PPlugin</code> 约束即可。</p>
+<p>所有插件只需满足 <code>PPrePlugin/PPostPlugin</code> 约束即可。</p>
 <ul>
 <li><strong>对于译前插件</strong>：如果是非过滤型插件，原则上只允许修改 <code>pre_processed_text</code>。如果是过滤型插件，可以将 <code>complete</code> 置为 <code>true</code>，并负责填充 <code>pre_translated_text</code>。如有需要，也可以将 <code>notAnalyzeProblem</code> 置为 <code>true</code> 来阻止对此句的问题分析。</li>
 <li><strong>对于译后插件</strong>：原则上只允许修改 <code>translated_preview</code>。</li>
 </ul>
 <p>任意插件均可在 <code>other_info</code> 中插入键以在缓存中附带信息。</p>
 <p>具体示例可见 <code>TextLinebreakFix</code> 和 <code>TextPostFull2Half</code>。</p>
-<p>需要注册的工厂函数为 <code>registerPlugins</code>。</p>
+<p>需要注册的工厂函数为 <code>registerPrePlugins/registerPostPlugins</code>。</p>
 <h3>其它注意事项</h3>
 <p>由于我的开发环境基本绑定 windows系统，我自己也没有linux设备，所以即使在项目中使用的winapi数量很少也很好替换，</p>
 <p>但是跨平台的事我自己是不会主动考虑的。</p>

@@ -313,7 +313,7 @@ void NormalJsonTranslator::init()
                     std::optional<std::vector<std::string>>
                 >(configData, "plugins", "textPrePlugins");
                 if (textPrePlugins) {
-                    m_prePlugins = registerPlugins(*textPrePlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
+                    m_prePlugins = registerPrePlugins(*textPrePlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
                 }
             }
             else {
@@ -336,7 +336,7 @@ void NormalJsonTranslator::init()
                     std::optional<std::vector<std::string>>
                 >(configData, "plugins", "textPostPlugins");
                 if (textPostPlugins) {
-                    m_postPlugins = registerPlugins(*textPostPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
+                    m_postPlugins = registerPostPlugins(*textPostPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
                 }
 
                 m_problemAnalyzer = std::make_unique<ProblemAnalyzer>(m_gptDictionary, m_targetLang, m_logger);
@@ -444,6 +444,10 @@ void NormalJsonTranslator::preProcess(Sentence* se) {
     // se->name 实际上相当于 se->name_preproc
     se->pre_processed_text = se->original_text;
 
+    for (auto& plugin : m_prePlugins) {
+        plugin->preRun(se);
+    }
+
     if (se->nameType != NameType::None && m_usePreDictInName) {
         if (se->nameType == NameType::Single) {
             se->name = m_preDictionary->doReplace(se, CachePart::Name);
@@ -504,9 +508,6 @@ void NormalJsonTranslator::preProcess(Sentence* se) {
 
     for (auto& plugin : m_prePlugins) {
         plugin->run(se);
-        if (se->complete) {
-            break;
-        }
     }
 
 }
@@ -563,6 +564,9 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
         m_problemAnalyzer->analyze(se);
     }
 
+    for (auto& plugin : m_postPlugins) {
+        plugin->postRun(se);
+    }
 
     std::erase_if(se->problems, [&](std::string& problem)
         {

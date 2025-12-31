@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #include <spdlog/spdlog.h>
 #include <unicode/unistr.h>
@@ -21,20 +21,24 @@ export {
         bool m_replacePunctuation;
         bool m_reverseConversion;
 
+        bool m_hasRun;
+        bool m_hasPostRun;
+
         void createConversionMap();
-        std::string convertText(const std::string& text);
+        std::string convertText(const std::string& text, bool jumpTag);
 
     public:
-        TextPostFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger);
+        TextPostFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun);
         void run(Sentence* se);
+        void postRun(Sentence* se);
         ~TextPostFull2Half() = default;
     };
 }
 
 module :private;
 
-TextPostFull2Half::TextPostFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger)
-    : m_logger(logger)
+TextPostFull2Half::TextPostFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun)
+    : m_logger(logger), m_hasRun(hasRun), m_hasPostRun(hasPostRun)
 {
     try {
         const auto pluginConfig = toml::parse(postPluginConfigPath / L"TextPostFull2Half.toml");
@@ -146,12 +150,13 @@ void TextPostFull2Half::createConversionMap() {
     }
 }
 
-std::string TextPostFull2Half::convertText(const std::string& text) {
+std::string TextPostFull2Half::convertText(const std::string& text, bool jumpTag) {
     std::string result;
     icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(text);
     
     for (int32_t i = 0; i < ustr.length();) {
-        {
+
+        if (jumpTag) {
             icu::UnicodeString tempSubString = ustr.tempSubString(i);
             if (tempSubString.startsWith(u"<tab>")) {
                 result.append("<tab>");
@@ -180,5 +185,15 @@ std::string TextPostFull2Half::convertText(const std::string& text) {
 }
 
 void TextPostFull2Half::run(Sentence* se) {
-    se->translated_preview = convertText(se->translated_preview);
+    if (!m_hasRun) {
+        return;
+    }
+    se->translated_preview = convertText(se->translated_preview, true);
+}
+
+void TextPostFull2Half::postRun(Sentence* se) {
+    if (!m_hasPostRun) {
+        return;
+    }
+    se->translated_preview = convertText(se->translated_preview, false);
 }
