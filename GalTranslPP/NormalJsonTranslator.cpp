@@ -1397,7 +1397,8 @@ void NormalJsonTranslator::afterRun() {
                             return std::make_pair(prob.as_string(), tbl.at("filename").as_string());
                         });
                     return problemsWithFileNameView;
-                }) | std::views::join)
+                }) 
+            | std::views::join)
         {
             problemMap[problem].insert(filename);
         }
