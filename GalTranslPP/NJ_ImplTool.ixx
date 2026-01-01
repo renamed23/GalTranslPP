@@ -277,7 +277,6 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             }
             if (!showBackgroundText) {
                 jpc::RegexReplace rr(&backgroundRegex);
-                rr.setSubject(&content);
                 content = rr.setSubject(&content).setReplaceWith(nullptr).replace();
             }
         }
@@ -293,7 +292,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
 
         const auto lines = splitString(content.substr(start), '\n');
         for (const auto& line : lines) {
-            if (parsedCount < batchToTransThisRound.size()) {
+            if (parsedCount == batchToTransThisRound.size()) {
                 break;
             }
             if (line.empty() || line.contains("```")) {
@@ -331,7 +330,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
 
         const auto lines = splitString(content.substr(start), '\n');
         for (const auto& line : lines) {
-            if (parsedCount < batchToTransThisRound.size()) {
+            if (parsedCount == batchToTransThisRound.size()) {
                 break;
             }
             if (line.empty() || line.contains("```")) {
@@ -370,7 +369,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
 
         const auto lines = splitString(content.substr(start), '\n');
         for (const auto& line : lines) {
-            if (parsedCount < batchToTransThisRound.size()) {
+            if (parsedCount == batchToTransThisRound.size()) {
                 break;
             }
             if (line.empty() || !line.starts_with('{')) {
@@ -378,12 +377,13 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             }
             try {
                 json item = json::parse(line);
-                int id = item.at("id");
+                int id = item["id"];
                 if (id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
-                    if (item.at("dst").empty()) {
+                    const std::string dst = item["dst"].get<std::string>();
+                    if (dst.empty()) {
                         continue;
                     }
-                    id2SentenceMap[id]->pre_translated_text = item.at("dst");
+                    id2SentenceMap[id]->pre_translated_text = dst;
                     id2SentenceMap[id]->translated_by = modelName;
                     id2SentenceMap[id]->complete = true;
                     completedSentences++;

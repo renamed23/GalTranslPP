@@ -112,7 +112,7 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
     cpr::Proxies proxies;
     if (std::string systemProxy = getSystemProxyUrl(); !systemProxy.empty()) {
         // 同时设置 http 和 https 代理
-        logger->debug("使用系统代理: [{}]", systemProxy);
+        logger->trace("正在使用系统代理: [{}]", systemProxy);
         proxies = cpr::Proxies{ {"http", systemProxy}, {"https", systemProxy} };
     }
 

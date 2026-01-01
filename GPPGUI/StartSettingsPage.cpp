@@ -1,4 +1,4 @@
-#include "StartSettingsPage.h"
+﻿#include "StartSettingsPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -255,6 +255,7 @@ void StartSettingsPage::_setupUI()
 			// 2. 追加日志 (使用一个临时的“影子”光标在后台进行操作)
 			QTextCursor tempCursor(logOutput->document());
 			tempCursor.movePosition(QTextCursor::End);
+			tempCursor.setCharFormat(QTextCharFormat());
 
 
 			// --- 高亮代码逻辑开始 ---
@@ -280,11 +281,14 @@ void StartSettingsPage::_setupUI()
 							// 警告：深橙色
 							fmt.setForeground(QColor(255, 140, 0));
 						}
-						else if (line.contains(" info]")) {
-							fmt.setForeground(QColor(Qt::black)); // 显式设为黑色或保持默认
-						}
-						else if (line.contains(" debug]", Qt::CaseInsensitive)) {
+						else if (line.contains(" debug]")) {
 							fmt.setForeground(QColor(Qt::darkBlue));
+						}
+						else if (line.contains(" trace]")) {
+							fmt.setForeground(QColor(Qt::darkGreen));
+						}
+						else {
+							fmt.setForeground(QColor(Qt::black)); // 显式设为黑色或保持默认
 						}
 						// 应用格式并插入文本
 						tempCursor.setCharFormat(fmt);
