@@ -22,8 +22,7 @@ export {
     extern const fs::path defaultPostDictPath;
     extern const fs::path pluginConfigsPath;
     extern const fs::path filePluginConfigPath;
-    extern const fs::path prePluginConfigPath;
-    extern const fs::path postPluginConfigPath;
+    extern const fs::path textPluginConfigPath;
     extern const std::wstring transCacheDirName;
     extern const std::wstring otherCacheDirName;
 
@@ -87,6 +86,19 @@ export {
         None, Gpp, Lua, Python
     };
 
+    enum class PluginRunTime
+    {
+        None, DPre, Pre, Post, DPost
+    };
+
+    std::map<PluginRunTime, std::string> pluginRunTimeNames =
+    {
+        { PluginRunTime::None, "none" },
+        { PluginRunTime::DPre, "dprerun" },
+        { PluginRunTime::Pre, "prerun" },
+        { PluginRunTime::Post, "postrun" },
+        { PluginRunTime::DPost, "dpostrun" }
+    };
 
     using WordPosVec = std::vector<std::vector<std::string>>;
     using EntityVec = std::vector<std::vector<std::string>>;

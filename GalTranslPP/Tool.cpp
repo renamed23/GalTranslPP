@@ -765,6 +765,21 @@ bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& i
     return false;
 }
 
+PluginRunTime choosePluginRunTime(const std::string& pluginNameLower, PluginRunTime defaultTime) {
+    if (pluginNameLower.contains("dprerun:")) {
+        return PluginRunTime::DPre;
+    }
+    else if (pluginNameLower.contains("dpostrun:")) {
+        return PluginRunTime::DPost;
+    }
+    else if (pluginNameLower.contains("prerun:")) {
+        return PluginRunTime::Pre;
+    }
+    else if (pluginNameLower.contains("postrun:")) {
+        return PluginRunTime::Post;
+    }
+    return defaultTime;
+}
 
 template toml::ordered_value& insertToml(toml::ordered_value& table, const std::string& path, const std::string& value);
 template toml::ordered_value& insertToml(toml::ordered_value& table, const std::string& path, const int& value);

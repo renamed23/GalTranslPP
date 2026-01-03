@@ -146,8 +146,8 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         if (!sentence->originalLinebreak.empty()) {
             const std::string& origText = chooseStringRef(sentence, m_problems.linebreakLost.base);
             const std::string& transView = chooseStringRef(sentence, m_problems.linebreakLost.check);
-            int origLinebreaks = countSubstring(origText, sentence->originalLinebreak);
-            int transLinebreaks = countSubstring(transView, sentence->originalLinebreak);
+            int origLinebreaks = countSubstring(origText, m_problems.linebreakLost.base == CachePart::OrigText ? sentence->originalLinebreak : "<br>");
+            int transLinebreaks = countSubstring(transView, m_problems.linebreakLost.check == CachePart::TransPreview ? sentence->originalLinebreak : "<br>");
             if (origLinebreaks > transLinebreaks) {
                 sentence->problems.push_back(std::format("丢失换行({}/{})", origLinebreaks, transLinebreaks));
             }
@@ -157,8 +157,8 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         if (!sentence->originalLinebreak.empty()) {
             const std::string& origText = chooseStringRef(sentence, m_problems.linebreakAdded.base);
             const std::string& transView = chooseStringRef(sentence, m_problems.linebreakAdded.check);
-            int origLinebreaks = countSubstring(origText, sentence->originalLinebreak);
-            int transLinebreaks = countSubstring(transView, sentence->originalLinebreak);
+            int origLinebreaks = countSubstring(origText, m_problems.linebreakLost.base == CachePart::OrigText ? sentence->originalLinebreak : "<br>");
+            int transLinebreaks = countSubstring(transView, m_problems.linebreakLost.check == CachePart::TransPreview ? sentence->originalLinebreak : "<br>");
             if (origLinebreaks < transLinebreaks) {
                 sentence->problems.push_back(std::format("多加换行({}/{})", origLinebreaks, transLinebreaks));
             }
@@ -316,7 +316,7 @@ void ProblemAnalyzer::loadProblems(const std::vector<std::string>& problemList, 
             m_codePage = codePage;
         }
 		else {
-			throw std::invalid_argument("未知问题: " + problem);
+			throw std::invalid_argument(std::format("未知问题: {}", problem));
 		}
 	}
 }
@@ -375,6 +375,6 @@ void ProblemAnalyzer::overwriteCompareObj(const std::string& problemKey, const s
         saveCachePart(m_problems.invalidChar, base, check);
     }
     else {
-        throw std::invalid_argument("不支持的问题比较对象覆写: " + problemKey);
+        throw std::invalid_argument(std::format("不支持的问题比较对象覆写: {}", problemKey));
     }
 }

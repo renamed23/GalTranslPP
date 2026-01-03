@@ -2458,22 +2458,22 @@
 <context>
     <name>PluginItemWidget</name>
     <message>
-        <location filename="PluginItemWidget.cpp" line="18"/>
-        <source>滤过插件，默认开启为 run 阶段</source>
-        <oldsource>滤过插件</oldsource>
-        <translation>Filter plugin, process in run stage by default</translation>
-    </message>
-    <message>
         <location filename="PluginItemWidget.cpp" line="19"/>
-        <source>全角半角转换插件，默认开启为 postRun 阶段</source>
-        <oldsource>全角半角转换插件</oldsource>
-        <translation>Full-width and half-width converting plugin, process in postRun stage by default</translation>
+        <source>滤过插件</source>
+        <oldsource>滤过插件，默认开启为 run 阶段</oldsource>
+        <translation>Filter plugin</translation>
     </message>
     <message>
         <location filename="PluginItemWidget.cpp" line="20"/>
-        <source>换行修复插件，默认开启为 run 阶段</source>
-        <oldsource>换行修复插件</oldsource>
-        <translation>Text linebreak fixing plugin, process in run stage by default</translation>
+        <source>全角半角转换插件</source>
+        <oldsource>全角半角转换插件，默认开启为 postRun 阶段</oldsource>
+        <translation>Full-width and half-width converting plugin</translation>
+    </message>
+    <message>
+        <location filename="PluginItemWidget.cpp" line="21"/>
+        <source>换行修复插件</source>
+        <oldsource>换行修复插件，默认开启为 run 阶段</oldsource>
+        <translation>Text linebreak fixing plugin</translation>
     </message>
     <message>
         <source>字符集检查插件</source>
@@ -2489,63 +2489,60 @@
     </message>
     <message>
         <location filename="PluginSettingsPage.cpp" line="47"/>
-        <source>预处理插件设置</source>
-        <oldsource>预处理插件设置(由上至下执行)</oldsource>
-        <translation type="unfinished">Text preproc plugins(run from above)</translation>
+        <source>文本插件设置</source>
+        <oldsource>预处理插件设置</oldsource>
+        <translation>Text plugin settings</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="177"/>
+        <location filename="PluginSettingsPage.cpp" line="141"/>
         <source>解析错误</source>
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="177"/>
+        <location filename="PluginSettingsPage.cpp" line="141"/>
         <source> 不符合 toml 规范</source>
         <translation> is nonconforming</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="184"/>
-        <source>自定义预处理插件</source>
-        <translation>Custom preproc plugins</translation>
+        <location filename="PluginSettingsPage.cpp" line="148"/>
+        <source>自定义文本处理插件</source>
+        <translation>Custom text plugins</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="185"/>
+        <source>自定义预处理插件</source>
+        <translation type="vanished">Custom preproc plugins</translation>
+    </message>
+    <message>
         <source>自定义后处理插件</source>
-        <translation>Custom postproc plugins</translation>
+        <translation type="vanished">Custom postproc plugins</translation>
     </message>
     <message>
         <source>前处理插件设置(由上至下执行)</source>
         <translation type="vanished">Text preproc plugins(run from above)</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="96"/>
         <source>后处理插件设置</source>
         <oldsource>后处理插件设置(由上至下执行)</oldsource>
-        <translation type="unfinished">Text postproc plugins(run from above)</translation>
+        <translation type="obsolete">Text postproc plugins(run from above)</translation>
     </message>
 </context>
 <context>
     <name>PostFull2HalfCfgPage</name>
     <message>
-        <location filename="PostFull2HalfCfgPage.cpp" line="17"/>
-        <location filename="PostFull2HalfCfgPage.cpp" line="58"/>
         <source>全角半角转换设置</source>
-        <translation>Convert settings</translation>
+        <translation type="vanished">Convert settings</translation>
     </message>
     <message>
-        <location filename="PostFull2HalfCfgPage.cpp" line="28"/>
         <source>转换标点符号</source>
-        <translation>Convert punctuations</translation>
+        <translation type="vanished">Convert punctuations</translation>
     </message>
     <message>
-        <location filename="PostFull2HalfCfgPage.cpp" line="43"/>
         <source>反向替换</source>
-        <translation>Reverse converting</translation>
+        <translation type="vanished">Reverse converting</translation>
     </message>
     <message>
-        <location filename="PostFull2HalfCfgPage.cpp" line="43"/>
         <source>关闭为全转半，开启为半转全</source>
-        <translation>Full to half when not enabled, half to full when enabled</translation>
+        <translation type="vanished">Full to half when not enabled, half to full when enabled</translation>
     </message>
 </context>
 <context>
@@ -2556,115 +2553,115 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="44"/>
-        <location filename="ProjectSettingsPage.cpp" line="272"/>
+        <location filename="ProjectSettingsPage.cpp" line="45"/>
+        <location filename="ProjectSettingsPage.cpp" line="273"/>
         <source>解析失败</source>
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="44"/>
+        <location filename="ProjectSettingsPage.cpp" line="45"/>
         <source> 的配置文件不符合 toml 规范</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="44"/>
-        <location filename="ProjectSettingsPage.cpp" line="272"/>
+        <location filename="ProjectSettingsPage.cpp" line="45"/>
+        <location filename="ProjectSettingsPage.cpp" line="273"/>
         <source>项目 </source>
         <translation>Project </translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="108"/>
-        <location filename="ProjectSettingsPage.cpp" line="117"/>
-        <location filename="ProjectSettingsPage.cpp" line="167"/>
+        <location filename="ProjectSettingsPage.cpp" line="109"/>
+        <location filename="ProjectSettingsPage.cpp" line="118"/>
+        <location filename="ProjectSettingsPage.cpp" line="168"/>
         <source>API设置</source>
         <translation>API</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="118"/>
-        <location filename="ProjectSettingsPage.cpp" line="172"/>
+        <location filename="ProjectSettingsPage.cpp" line="119"/>
+        <location filename="ProjectSettingsPage.cpp" line="173"/>
         <source>一般设置</source>
         <translation>Common</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="119"/>
-        <location filename="ProjectSettingsPage.cpp" line="177"/>
+        <location filename="ProjectSettingsPage.cpp" line="120"/>
+        <location filename="ProjectSettingsPage.cpp" line="178"/>
         <source>问题分析</source>
         <translation>Problems</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="124"/>
+        <location filename="ProjectSettingsPage.cpp" line="125"/>
         <source>基本设置</source>
         <translation>Foundation</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="128"/>
-        <location filename="ProjectSettingsPage.cpp" line="182"/>
+        <location filename="ProjectSettingsPage.cpp" line="129"/>
+        <location filename="ProjectSettingsPage.cpp" line="183"/>
         <source>人名表</source>
         <translation>NameTable</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="129"/>
-        <location filename="ProjectSettingsPage.cpp" line="187"/>
+        <location filename="ProjectSettingsPage.cpp" line="130"/>
+        <location filename="ProjectSettingsPage.cpp" line="188"/>
         <source>项目字典</source>
         <translation>ProjectDicts</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="130"/>
-        <location filename="ProjectSettingsPage.cpp" line="192"/>
+        <location filename="ProjectSettingsPage.cpp" line="131"/>
+        <location filename="ProjectSettingsPage.cpp" line="193"/>
         <source>字典设置</source>
         <translation>DictSettings</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="131"/>
-        <location filename="ProjectSettingsPage.cpp" line="197"/>
+        <location filename="ProjectSettingsPage.cpp" line="132"/>
+        <location filename="ProjectSettingsPage.cpp" line="198"/>
         <source>提示词</source>
         <translation>Prompt</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="136"/>
+        <location filename="ProjectSettingsPage.cpp" line="137"/>
         <source>翻译设置</source>
         <translation>Transltion</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="141"/>
-        <location filename="ProjectSettingsPage.cpp" line="205"/>
+        <location filename="ProjectSettingsPage.cpp" line="142"/>
+        <location filename="ProjectSettingsPage.cpp" line="206"/>
         <source>插件管理</source>
         <translation>Plugins</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="142"/>
-        <location filename="ProjectSettingsPage.cpp" line="213"/>
+        <location filename="ProjectSettingsPage.cpp" line="143"/>
+        <location filename="ProjectSettingsPage.cpp" line="214"/>
         <source>开始翻译</source>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="143"/>
-        <location filename="ProjectSettingsPage.cpp" line="218"/>
+        <location filename="ProjectSettingsPage.cpp" line="144"/>
+        <location filename="ProjectSettingsPage.cpp" line="219"/>
         <source>其他设置</source>
         <translation>Others</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="265"/>
+        <location filename="ProjectSettingsPage.cpp" line="266"/>
         <source>项目仍在运行中，无法刷新配置</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="265"/>
+        <location filename="ProjectSettingsPage.cpp" line="266"/>
         <source>正在运行</source>
         <translation>Is running</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="272"/>
+        <location filename="ProjectSettingsPage.cpp" line="273"/>
         <source> 的配置文件不符合规范</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="283"/>
+        <location filename="ProjectSettingsPage.cpp" line="284"/>
         <source>刷新成功</source>
         <translation>Refreshed successfully</translation>
     </message>
     <message>
-        <location filename="ProjectSettingsPage.cpp" line="283"/>
+        <location filename="ProjectSettingsPage.cpp" line="284"/>
         <source>项目配置刷新成功</source>
         <translation>Refreshed successfully</translation>
     </message>
@@ -3084,6 +3081,30 @@
         <location filename="StartSettingsPage.cpp" line="535"/>
         <source> 的翻译任务已终止</source>
         <translation> &apos;s task has been stoped</translation>
+    </message>
+</context>
+<context>
+    <name>TF2HCfgPage</name>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="17"/>
+        <location filename="TF2HCfgPage.cpp" line="58"/>
+        <source>全角半角转换设置</source>
+        <translation>Convert settings</translation>
+    </message>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="28"/>
+        <source>转换标点符号</source>
+        <translation>Convert punctuations</translation>
+    </message>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="43"/>
+        <source>反向替换</source>
+        <translation>Reverse converting</translation>
+    </message>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="43"/>
+        <source>关闭为全转半，开启为半转全</source>
+        <translation>Full to half when not enabled, half to full when enabled</translation>
     </message>
 </context>
 <context>

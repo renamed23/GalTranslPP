@@ -30,13 +30,13 @@ export {
         void skipImpl(Sentence* se);
 
         bool m_needReboot = false;
-        bool m_hasPreRun;
-        bool m_hasRun;
+
+        PluginRunTime m_runTime;
 
     public:
         SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
-            std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPreRun);
-        void run(Sentence* se);
+            std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime);
+        void dPreRun(Sentence* se);
         void preRun(Sentence* se);
         bool needReboot() const { return m_needReboot; }
         ~SkipTrans() = default;
@@ -46,17 +46,26 @@ export {
 module :private;
 
 SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
-    std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPreRun)
-    : m_logger(logger), m_hasRun(hasRun), m_hasPreRun(hasPreRun)
+    std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime)
+    : m_logger(logger), m_runTime(runTime)
 {
     try {
-        const auto pluginConfig = toml::parse(prePluginConfigPath / L"SkipTrans.toml");
+        if (m_runTime != PluginRunTime::DPre && m_runTime != PluginRunTime::Pre) {
+            m_logger->error("SkipTrans 不支持 {} 阶段运行", pluginRunTimeNames[m_runTime]);
+            return;
+        }
+
+        fs::path pluginConfigPath = textPluginConfigPath / std::format(L"SkipTrans-{}.toml", ascii2Wide(pluginRunTimeNames[m_runTime]));
+        if (!fs::exists(pluginConfigPath)) {
+            pluginConfigPath = textPluginConfigPath / L"SkipTrans.toml";
+        }
+        const auto pluginConfig = toml::parse(pluginConfigPath);
 
         m_skipH = parseToml<bool>(projectConfig, pluginConfig, "plugins.SkipTrans.skipH");
         if (m_skipH) {
             const auto& hKeysBase64 = parseToml<std::string>(projectConfig, pluginConfig, "plugins.SkipTrans.hKeys");
             std::string hKeysStr = base64_decode(hKeysBase64);
-            m_hKeys = splitString(std::move(hKeysStr), '\n');
+            m_hKeys = splitString(hKeysStr, '\n');
         }
 
         const auto& skipKeys = parseToml<toml::array>(projectConfig, pluginConfig, "plugins.SkipTrans.skipKeys");
@@ -83,11 +92,11 @@ SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfi
                 throw std::invalid_argument("skipKeys 元素必须是字符串、表或表数组");
             }
         }
-        m_logger->info("译前插件 SkipTrans 已加载, skipH: {}",
-            m_skipH);
+        m_logger->info("插件 SkipTrans-{} 已加载, skipH: {}",
+            pluginRunTimeNames[m_runTime], m_skipH);
     }
     catch (const toml::exception& e) {
-        m_logger->critical("SkipTrans 配置文件解析错误");
+        m_logger->critical("SkipTrans-{} 配置文件解析错误", pluginRunTimeNames[m_runTime]);
         throw std::runtime_error(e.what());
     }
 }
@@ -122,15 +131,15 @@ void SkipTrans::skipImpl(Sentence* se) {
     }
 }
 
-void SkipTrans::run(Sentence* se) {
-    if (!m_hasRun) {
+void SkipTrans::dPreRun(Sentence* se) {
+    if (m_runTime != PluginRunTime::DPre) {
         return;
     }
     skipImpl(se);
 }
 
 void SkipTrans::preRun(Sentence* se) {
-    if (!m_hasPreRun) {
+    if (m_runTime != PluginRunTime::Pre) {
         return;
     }
     skipImpl(se);

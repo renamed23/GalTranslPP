@@ -10,9 +10,6 @@
     <ClCompile Include="TextLinebreakFix.ixx">
       <Filter>textPlugins</Filter>
     </ClCompile>
-    <ClCompile Include="TextPostFull2Half.ixx">
-      <Filter>textPlugins</Filter>
-    </ClCompile>
     <ClCompile Include="NormalJsonTranslator.ixx">
       <Filter>filePlugins</Filter>
     </ClCompile>
@@ -108,6 +105,9 @@
     </ClCompile>
     <ClCompile Include="GPPDefines.cpp">
       <Filter>Tools\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="TextFull2Half.ixx">
+      <Filter>textPlugins</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

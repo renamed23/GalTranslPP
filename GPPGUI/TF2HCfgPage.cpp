@@ -1,4 +1,4 @@
-﻿#include "PostFull2HalfCfgPage.h"
+﻿#include "TF2HCfgPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -11,7 +11,7 @@
 
 import Tool;
 
-PostFull2HalfCfgPage::PostFull2HalfCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
+TF2HCfgPage::TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
     : BasePage(parent), _projectConfig(projectConfig)
 {
     setWindowTitle(tr("全角半角转换设置"));
@@ -22,7 +22,7 @@ PostFull2HalfCfgPage::PostFull2HalfCfgPage(toml::ordered_value& projectConfig, Q
     QVBoxLayout* mainLayout = new QVBoxLayout(centerWidget);
 
     // 标点符号转换配置
-    bool convertPunctuation = toml::find_or(_projectConfig, "plugins", "TextPostFull2Half", "是否替换标点", true);
+    bool convertPunctuation = toml::find_or(_projectConfig, "plugins", "TextFull2Half", "是否替换标点", true);
     ElaScrollPageArea* punctuationArea = new ElaScrollPageArea(centerWidget);
     QHBoxLayout* punctuationLayout = new QHBoxLayout(punctuationArea);
     ElaText* punctuationText = new ElaText(tr("转换标点符号"), punctuationArea);
@@ -36,7 +36,7 @@ PostFull2HalfCfgPage::PostFull2HalfCfgPage(toml::ordered_value& projectConfig, Q
     mainLayout->addWidget(punctuationArea);
 
     // 反向替换配置
-    bool reverseConvert = toml::find_or(_projectConfig, "plugins", "TextPostFull2Half", "是否反向替换", false);
+    bool reverseConvert = toml::find_or(_projectConfig, "plugins", "TextFull2Half", "是否反向替换", false);
     ElaScrollPageArea* reverseArea = new ElaScrollPageArea(centerWidget);
     QHBoxLayout* reverseLayout = new QHBoxLayout(reverseArea);
     ElaDoubleText* reverseText = new ElaDoubleText(reverseArea,
@@ -49,8 +49,8 @@ PostFull2HalfCfgPage::PostFull2HalfCfgPage(toml::ordered_value& projectConfig, Q
 
     _applyFunc = [=]
         {
-            insertToml(_projectConfig, "plugins.TextPostFull2Half.是否替换标点", punctuationSwitch->getIsToggled());
-            insertToml(_projectConfig, "plugins.TextPostFull2Half.是否反向替换", reverseSwitch->getIsToggled());
+            insertToml(_projectConfig, "plugins.TextFull2Half.是否替换标点", punctuationSwitch->getIsToggled());
+            insertToml(_projectConfig, "plugins.TextFull2Half.是否反向替换", reverseSwitch->getIsToggled());
         };
 
     mainLayout->addWidget(reverseArea);
@@ -59,7 +59,7 @@ PostFull2HalfCfgPage::PostFull2HalfCfgPage(toml::ordered_value& projectConfig, Q
     addCentralWidget(centerWidget);
 }
 
-PostFull2HalfCfgPage::~PostFull2HalfCfgPage()
+TF2HCfgPage::~TF2HCfgPage()
 {
 
 }

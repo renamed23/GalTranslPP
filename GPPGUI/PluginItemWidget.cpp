@@ -9,15 +9,22 @@
 #include "ElaToolTip.h"
 #include "ElaIconButton.h"
 #include "ElaDoubleText.h"
+#include "ElaComboBox.h"
 
-PluginItemWidget::PluginItemWidget(const QString& pluginName, QWidget* parent)
+PluginItemWidget::PluginItemWidget(const QString& pluginName, const QString& runTimeStr, QWidget* parent)
     : ElaScrollPageArea(parent)
 {
-    static const QMap<QString, QString> toolTipMap =
+    const QMap<QString, QString> toolTipMap =
     {
-        { "SkipTrans", tr("滤过插件，默认开启为 run 阶段") },
-        { "TextPostFull2Half", tr("全角半角转换插件，默认开启为 postRun 阶段") },
-        { "TextLinebreakFix", tr("换行修复插件，默认开启为 run 阶段") },
+        { "SkipTrans", tr("滤过插件") },
+        { "TextFull2Half", tr("全角半角转换插件") },
+        { "TextLinebreakFix", tr("换行修复插件") },
+    };
+    const QMap<QString, QStringList> boxItemMap =
+    {
+        { "SkipTrans", { "dprerun", "prerun" } },
+        { "TextFull2Half", { "dprerun", "prerun", "postrun", "dpostrun" } },
+        { "TextLinebreakFix", { "dpostrun" } },
     };
     // 主水平布局
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
@@ -26,10 +33,16 @@ PluginItemWidget::PluginItemWidget(const QString& pluginName, QWidget* parent)
     _pluginNameLabel = new ElaDoubleText(this,
         pluginName, 16, toolTipMap[pluginName], 10, "");
 
+    _pluginRunTimeBox = new ElaComboBox(this);
+    _pluginRunTimeBox->setFixedWidth(150);
+    _pluginRunTimeBox->addItems(boxItemMap[pluginName]);
+    _pluginRunTimeBox->setCurrentText(runTimeStr);
+
     // 新增设置按钮
     _settingsButton = new ElaIconButton(ElaIconType::Gear, this);
-    connect(_settingsButton, &ElaIconButton::clicked, this, [=]() {
-        Q_EMIT settingsRequested(this);
+    connect(_settingsButton, &ElaIconButton::clicked, this, [=]() 
+        {
+            Q_EMIT settingsRequested(this);
         });
 
     // 启用/禁用开关
@@ -38,20 +51,23 @@ PluginItemWidget::PluginItemWidget(const QString& pluginName, QWidget* parent)
 
     // 上移按钮
     _moveUpButton = new ElaIconButton(ElaIconType::AngleUp, this);
-    connect(_moveUpButton, &ElaIconButton::clicked, this, [=]() {
-        Q_EMIT moveUpRequested(this);
+    connect(_moveUpButton, &ElaIconButton::clicked, this, [=]() 
+        {
+            Q_EMIT moveUpRequested(this);
         });
 
     // 下移按钮
     _moveDownButton = new ElaIconButton(ElaIconType::AngleDown, this);
-    connect(_moveDownButton, &ElaIconButton::clicked, this, [=]() {
-        Q_EMIT moveDownRequested(this);
+    connect(_moveDownButton, &ElaIconButton::clicked, this, [=]() 
+        {
+            Q_EMIT moveDownRequested(this);
         });
 
     // 组合布局
     mainLayout->addWidget(_pluginNameLabel);
     mainLayout->addStretch();
     mainLayout->addWidget(_enableSwitch);
+    mainLayout->addWidget(_pluginRunTimeBox);
     mainLayout->addSpacing(10);
     mainLayout->addWidget(_settingsButton);
     mainLayout->addWidget(_moveUpButton);
@@ -64,10 +80,10 @@ PluginItemWidget::~PluginItemWidget()
 
 QString PluginItemWidget::getPluginName() const
 {
-    return _pluginNameLabel->getFirstLineText();
+    return _pluginRunTimeBox->currentText() + ":" + _pluginNameLabel->getFirstLineText();
 }
 
-bool PluginItemWidget::isToggled() const
+bool PluginItemWidget::getIsToggled() const
 {
     return _enableSwitch->getIsToggled();
 }

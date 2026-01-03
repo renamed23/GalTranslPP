@@ -72,7 +72,7 @@ function checkConditionForSkipProblemsFunc(sentence)
     return false
 end
 
-function run(sentence)
+function dPostRun(sentence)
     -- 为了能使用 pairs 遍历，map 返回类型都是副本，如果想修改，必须 mapVar = copy
     -- 但非递归的 vector 类型可使用 sol2 提供的 container 通用函数进行引用修改，具体函数及其作用详见
     -- https://github.com/ThePhD/sol2/blob/main/documentation/source/containers.rst 的 container operations 部分
@@ -122,6 +122,4 @@ end
 --     -- end
 -- end
 
--- preRun, run, postRun, unload 均可选择性定义
--- 对于译前插件，如果定义 preRun/run 函数，则分别在对应阶段调用
--- 对于译后插件，如果定义 postRun/run 函数，则分别在对应阶段调用
+-- dPreRun, preRun, postRun, dPostRun, unload 均可选择性定义，如果定义则分别在对应阶段调用

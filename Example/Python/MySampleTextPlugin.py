@@ -58,9 +58,8 @@ def init(project_dir: Path):
     logger.info(f"MySampleTextPluginFromLua 初始化成功，projectDir: {project_dir}")
 
 
-def postRun(se: gpp.Sentence):
+def dPostRun(se: gpp.Sentence):
     """
-    处理每个句子的主函数。
     se 是一个 C++ Sentence 对象的代理。
     """
     if se.translated_preview == "久远紧锁眉头，脸上写着「骗人的吧，喂」。":
@@ -75,6 +74,4 @@ def postRun(se: gpp.Sentence):
 # def unload():
 #     pass
 
-# preRun, run, postRun, unload 均可选择性定义
-# 对于译前插件，如果定义 preRun/run 函数，则分别在对应阶段调用
-# 对于译后插件，如果定义 postRun/run 函数，则分别在对应阶段调用
+# dPreRun, preRun, postRun, dPostRun, unload 均可选择性定义，如果定义则分别在对应阶段调用

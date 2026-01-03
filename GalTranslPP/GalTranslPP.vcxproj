@@ -195,7 +195,7 @@
     <ClCompile Include="PythonTextPlugin.ixx" />
     <ClCompile Include="PythonTranslator.ixx" />
     <ClCompile Include="SkipTrans.ixx" />
-    <ClCompile Include="TextPostFull2Half.ixx" />
+    <ClCompile Include="TextFull2Half.ixx" />
     <ClCompile Include="TextLinebreakFix.ixx" />
     <ClCompile Include="Tool.cpp" />
     <ClCompile Include="Tool.ixx" />

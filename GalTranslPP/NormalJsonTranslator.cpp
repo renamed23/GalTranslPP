@@ -300,7 +300,7 @@ void NormalJsonTranslator::init()
                     m_logger->info("spaCy 环境检查完毕。");
                 }
                 else if (tokenizerBackend == "Stanza") {
-                    const std::string stanzaLang = toml::find_or(configData, "common", "stanzaLang", "zh");
+                    const std::string stanzaLang = toml::find_or(configData, "common", "stanzaLang", "ja");
                     m_logger->info("正在检查 Stanza 环境...");
                     m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
                     m_logger->info("Stanza 环境检查完毕。");
@@ -309,11 +309,11 @@ void NormalJsonTranslator::init()
                     throw std::invalid_argument(std::format("无效的 tokenizerBackend: {}", tokenizerBackend));
                 }
 
-                const auto textPrePlugins = toml::find<
+                const auto textPlugins = toml::find<
                     std::optional<std::vector<std::string>>
-                >(configData, "plugins", "textPrePlugins");
-                if (textPrePlugins) {
-                    m_prePlugins = registerPrePlugins(*textPrePlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
+                >(configData, "plugins", "textPlugins");
+                if (textPlugins) {
+                    registerPlugins(m_textPlugins, *textPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData, true);
                 }
             }
             else {
@@ -332,11 +332,11 @@ void NormalJsonTranslator::init()
                 m_postDictionary = std::make_unique<NormalDictionary>(m_projectDir, m_luaManager, m_pythonManager, m_logger);
                 loadDictsFunc("post", m_postDictionary);
 
-                const auto textPostPlugins = toml::find<
+                const auto textPlugins = toml::find<
                     std::optional<std::vector<std::string>>
-                >(configData, "plugins", "textPostPlugins");
-                if (textPostPlugins) {
-                    m_postPlugins = registerPostPlugins(*textPostPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData);
+                >(configData, "plugins", "textPlugins");
+                if (textPlugins) {
+                    registerPlugins(m_textPlugins, *textPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData, false);
                 }
 
                 m_problemAnalyzer = std::make_unique<ProblemAnalyzer>(m_gptDictionary, m_targetLang, m_logger);
@@ -423,9 +423,7 @@ void NormalJsonTranslator::init()
             }
         }
 
-        needReboot = needReboot
-            || std::ranges::any_of(m_prePlugins, [](const auto& plugin) { return plugin->needReboot(); })
-            || std::ranges::any_of(m_postPlugins, [](const auto& plugin) { return plugin->needReboot(); });
+        needReboot = needReboot || std::ranges::any_of(m_textPlugins, [](const auto& plugin) { return plugin->needReboot(); });
         if (needReboot) {
             throw std::runtime_error("需要重启程序以应用新安装的 NLP 模型");
         }
@@ -444,8 +442,8 @@ void NormalJsonTranslator::preProcess(Sentence* se) {
     // se->name 实际上相当于 se->name_preproc
     se->pre_processed_text = se->original_text;
 
-    for (auto& plugin : m_prePlugins) {
-        plugin->preRun(se);
+    for (auto& plugin : m_textPlugins) {
+        plugin->dPreRun(se);
     }
 
     if (se->nameType != NameType::None && m_usePreDictInName) {
@@ -506,8 +504,8 @@ void NormalJsonTranslator::preProcess(Sentence* se) {
         se->pre_processed_text = m_preDictionary->doReplace(se, CachePart::PreprocText);
     }
 
-    for (auto& plugin : m_prePlugins) {
-        plugin->run(se);
+    for (auto& plugin : m_textPlugins) {
+        plugin->preRun(se);
     }
 
 }
@@ -519,8 +517,8 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
     se->translated_preview = se->pre_translated_text;
     se->problems.clear();
 
-    for (auto& plugin : m_postPlugins) {
-        plugin->run(se);
+    for (auto& plugin : m_textPlugins) {
+        plugin->postRun(se);
     }
 
     if (m_usePostDictInMsg) {
@@ -564,8 +562,8 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
         m_problemAnalyzer->analyze(se);
     }
 
-    for (auto& plugin : m_postPlugins) {
-        plugin->postRun(se);
+    for (auto& plugin : m_textPlugins) {
+        plugin->dPostRun(se);
     }
 
     std::erase_if(se->problems, [&](std::string& problem)

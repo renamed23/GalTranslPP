@@ -8,18 +8,19 @@
 class ElaDoubleText;
 class ElaToggleSwitch;
 class ElaIconButton;
+class ElaComboBox;
 
 class PluginItemWidget : public ElaScrollPageArea
 {
     Q_OBJECT
 
 public:
-    explicit PluginItemWidget(const QString& pluginName, QWidget* parent = nullptr);
+    explicit PluginItemWidget(const QString& pluginName, const QString& runTimeStr, QWidget* parent = nullptr);
     ~PluginItemWidget();
 
     // 公共方法，用于获取当前项的状态
     QString getPluginName() const;
-    bool isToggled() const;
+    bool getIsToggled() const;
     void setIsToggled(bool enabled);
 
     // 控制上下移动按钮的可用性
@@ -34,6 +35,7 @@ Q_SIGNALS:
 
 private:
     // 内部控件
+    ElaComboBox* _pluginRunTimeBox;
     ElaDoubleText* _pluginNameLabel;
     ElaToggleSwitch* _enableSwitch;
     ElaIconButton* _moveUpButton;

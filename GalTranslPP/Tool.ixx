@@ -112,7 +112,7 @@ export {
 
     bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& isCompatible);
 
-
+    PluginRunTime choosePluginRunTime(const std::string& pluginNameLower, PluginRunTime defaultTime);
 
     template<typename T>
     T calculateAbs(T a, T b) {

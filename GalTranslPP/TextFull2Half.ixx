@@ -5,7 +5,7 @@
 #include <unicode/uchar.h>
 #include <toml.hpp>
 
-export module TextPostFull2Half;
+export module TextFull2Half;
 
 import Tool;
 export import IPlugin;
@@ -13,7 +13,7 @@ export import IPlugin;
 namespace fs = std::filesystem;
 
 export {
-    class TextPostFull2Half {
+    class TextFull2Half {
     private:
         std::unordered_map<std::string, std::string> m_customMap;
         std::unordered_map<char32_t, char32_t> m_conversionMap;
@@ -21,41 +21,47 @@ export {
         bool m_replacePunctuation;
         bool m_reverseConversion;
 
-        bool m_hasRun;
-        bool m_hasPostRun;
+        PluginRunTime m_runTime;
 
         void createConversionMap();
         std::string convertText(const std::string& text, bool jumpTag);
 
     public:
-        TextPostFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun);
-        void run(Sentence* se);
+        TextFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime);
+        void dPreRun(Sentence* se);
+        void preRun(Sentence* se);
         void postRun(Sentence* se);
-        ~TextPostFull2Half() = default;
+        void dPostRun(Sentence* se);
+        ~TextFull2Half() = default;
     };
 }
 
 module :private;
 
-TextPostFull2Half::TextPostFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun)
-    : m_logger(logger), m_hasRun(hasRun), m_hasPostRun(hasPostRun)
+TextFull2Half::TextFull2Half(const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime)
+    : m_logger(logger), m_runTime(runTime)
 {
     try {
-        const auto pluginConfig = toml::parse(postPluginConfigPath / L"TextPostFull2Half.toml");
+        fs::path pluginConfigPath = textPluginConfigPath / std::format(L"TextFull2Half-{}.toml", ascii2Wide(pluginRunTimeNames[m_runTime]));
+        if (!fs::exists(pluginConfigPath)) {
+            pluginConfigPath = textPluginConfigPath / L"TextFull2Half.toml";
+        }
+        const auto pluginConfig = toml::parse(pluginConfigPath);
 
-        m_replacePunctuation = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextPostFull2Half.是否替换标点");
-        m_reverseConversion = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextPostFull2Half.是否反向替换");
+        m_replacePunctuation = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextFull2Half.是否替换标点");
+        m_reverseConversion = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextFull2Half.是否反向替换");
 
         createConversionMap();
-        m_logger->info("译后全角半角转换插件已加载 - 替换标点: {}, 反向替换: {}",
-                      m_replacePunctuation, m_reverseConversion);
-    } catch (const toml::exception& e) {
-        m_logger->critical("全角半角转换 配置文件解析错误");
+        m_logger->info("TextFull2Half-{} 已加载 - 替换标点: {}, 反向替换: {}",
+            pluginRunTimeNames[m_runTime], m_replacePunctuation, m_reverseConversion);
+    }
+    catch (const toml::exception& e) {
+        m_logger->critical("TextFull2Half-{} 配置文件解析错误", pluginRunTimeNames[m_runTime]);
         throw std::runtime_error(e.what());
     }
 }
 
-void TextPostFull2Half::createConversionMap() {
+void TextFull2Half::createConversionMap() {
     // 数字转换
     for (char32_t i = 0; i < 10; ++i) {
         m_conversionMap[U'０' + i] = U'0' + i;
@@ -94,9 +100,9 @@ void TextPostFull2Half::createConversionMap() {
         m_conversionMap[U'〕'] = U']';
         m_conversionMap[U'｛'] = U'{';
         m_conversionMap[U'｝'] = U'}';
-        m_conversionMap[U'［'] = U'['; 
+        m_conversionMap[U'［'] = U'[';
         m_conversionMap[U'］'] = U']';
-        m_conversionMap[U'％'] = U'%'; 
+        m_conversionMap[U'％'] = U'%';
         m_conversionMap[U'＋'] = U'+';
         m_conversionMap[U'－'] = U'-';
         m_conversionMap[U'＊'] = U'*';
@@ -131,18 +137,18 @@ void TextPostFull2Half::createConversionMap() {
     if (m_reverseConversion) {
         auto originalMap = m_conversionMap; // 保存原有映射
         m_conversionMap.clear(); // 清空map
-        
+
         // 构建反向映射(值→键)
         for (const auto& [full, half] : originalMap) {
             // 处理一个全角对应多个半角的情况(如省略号)
             if (full == U'…') continue; // 特殊处理
-            
+
             m_conversionMap[half] = full;
         }
-        
+
         // 特殊处理横线符号
         m_conversionMap[U'-'] = U'－'; // 半角横线优先转全角连字符
-        
+
         // 特殊处理省略号
         if (originalMap.contains(U'…')) {
             m_conversionMap[U'.'] = U'…'; // 半角点→全角省略号
@@ -150,10 +156,10 @@ void TextPostFull2Half::createConversionMap() {
     }
 }
 
-std::string TextPostFull2Half::convertText(const std::string& text, bool jumpTag) {
+std::string TextFull2Half::convertText(const std::string& text, bool jumpTag) {
     std::string result;
     icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(text);
-    
+
     for (int32_t i = 0; i < ustr.length();) {
 
         if (jumpTag) {
@@ -169,14 +175,15 @@ std::string TextPostFull2Half::convertText(const std::string& text, bool jumpTag
                 continue;
             }
         }
-        
+
         UChar32 c = ustr.char32At(i);
         i += U16_LENGTH(c);
-        
+
         if (auto it = m_conversionMap.find(c); it != m_conversionMap.end()) {
             UChar32 converted = static_cast<UChar32>(it->second);
             icu::UnicodeString::fromUTF32(&converted, 1).toUTF8String(result);
-        } else {
+        }
+        else {
             UChar32 uc = static_cast<UChar32>(c);
             icu::UnicodeString::fromUTF32(&uc, 1).toUTF8String(result);
         }
@@ -184,15 +191,29 @@ std::string TextPostFull2Half::convertText(const std::string& text, bool jumpTag
     return result;
 }
 
-void TextPostFull2Half::run(Sentence* se) {
-    if (!m_hasRun) {
+void TextFull2Half::dPreRun(Sentence* se) {
+    if (m_runTime != PluginRunTime::DPre) {
+        return;
+    }
+    se->pre_processed_text = convertText(se->pre_processed_text, false);
+}
+
+void TextFull2Half::preRun(Sentence* se) {
+    if (m_runTime != PluginRunTime::Pre) {
+        return;
+    }
+    se->pre_processed_text = convertText(se->pre_processed_text, true);
+}
+
+void TextFull2Half::postRun(Sentence* se) {
+    if (m_runTime != PluginRunTime::Post) {
         return;
     }
     se->translated_preview = convertText(se->translated_preview, true);
 }
 
-void TextPostFull2Half::postRun(Sentence* se) {
-    if (!m_hasPostRun) {
+void TextFull2Half::dPostRun(Sentence* se) {
+    if (m_runTime != PluginRunTime::DPost) {
         return;
     }
     se->translated_preview = convertText(se->translated_preview, false);

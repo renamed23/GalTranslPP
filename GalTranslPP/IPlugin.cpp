@@ -9,72 +9,63 @@
 module IPlugin;
 
 import Tool;
-import TextPostFull2Half;
-import TextLinebreakFix;
 import SkipTrans;
+import TextFull2Half;
+import TextLinebreakFix;
 import LuaTextPlugin;
 import PythonTextPlugin;
 
 namespace fs = std::filesystem;
 
-std::vector<pro::proxy<PPrePlugin>> registerPrePlugins(const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,
-    PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger,
-    const toml::value& projectConfig) {
-    std::vector<pro::proxy<PPrePlugin>> plugins;
+void registerPlugins(std::vector<pro::proxy<PPlugin>>& plugins, const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,
+    PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger>& logger,
+    const toml::value& projectConfig, bool preProcOnly) {
+
+    auto runTimeCheckFunc = [&](PluginRunTime runTime) -> bool
+        {
+            if (runTime == PluginRunTime::DPre || runTime == PluginRunTime::Pre) {
+                if (preProcOnly) {
+                    return true;
+                }
+            }
+            if (runTime == PluginRunTime::Post || runTime == PluginRunTime::DPost) {
+                if (!preProcOnly) {
+                    return true;
+                }
+            }
+            return false;
+        };
 
     for (const auto& pluginName : pluginNames) {
+        if (pluginName.starts_with('>')) {
+            continue;
+        }
         std::string pluginNameLower = str2Lower(pluginName);
-        bool hasRun = pluginName.contains("run:");
-        bool hasPreRun = pluginName.contains("preRun:");
         if (pluginNameLower.ends_with(".lua")) {
-            plugins.push_back(pro::make_proxy<PPrePlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
+            plugins.push_back(pro::make_proxy<PPlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 luaManager, logger));
         }
         else if (pluginNameLower.ends_with(".py")) {
-            plugins.push_back(pro::make_proxy<PPrePlugin, PythonTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
+            plugins.push_back(pro::make_proxy<PPlugin, PythonTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 pythonManager, logger));
         }
         else if (pluginName.contains("SkipTrans")) {
-            if (!hasRun && !hasPreRun) {
-                hasRun = true;
+            PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::Pre);
+            if (runTimeCheckFunc(runTime)) {
+                plugins.push_back(pro::make_proxy<PPlugin, SkipTrans>(projectDir, projectConfig, pythonManager, luaManager, logger, runTime));
             }
-            plugins.push_back(pro::make_proxy<PPrePlugin, SkipTrans>(projectDir, projectConfig, pythonManager, luaManager, logger, hasRun, hasPreRun));
         }
-    }
-
-    return plugins;
-}
-
-std::vector<pro::proxy<PPostPlugin>> registerPostPlugins(const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,
-    PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger,
-    const toml::value& projectConfig) {
-    std::vector<pro::proxy<PPostPlugin>> plugins;
-
-    for (const auto& pluginName : pluginNames) {
-        std::string pluginNameLower = str2Lower(pluginName);
-        bool hasRun = pluginName.contains("run:");
-        bool hasPostRun = pluginName.contains("postRun:");
-        if (pluginNameLower.ends_with(".lua")) {
-            plugins.push_back(pro::make_proxy<PPostPlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
-                luaManager, logger));
-        }
-        else if (pluginNameLower.ends_with(".py")) {
-            plugins.push_back(pro::make_proxy<PPostPlugin, PythonTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
-                pythonManager, logger));
-        }
-        else if (pluginName.contains("TextPostFull2Half")) {
-            if (!hasRun && !hasPostRun) {
-                hasPostRun = true;
+        else if (pluginName.contains("TextFull2Half")) {
+            PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::DPost);
+            if (runTimeCheckFunc(runTime)) {
+                plugins.push_back(pro::make_proxy<PPlugin, TextFull2Half>(projectConfig, logger, runTime));
             }
-            plugins.push_back(pro::make_proxy<PPostPlugin, TextPostFull2Half>(projectConfig, logger, hasRun, hasPostRun));
         }
         else if (pluginName.contains("TextLinebreakFix")) {
-            if (!hasRun && !hasPostRun) {
-                hasRun = true;
+            PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::DPost);
+            if (runTimeCheckFunc(runTime)) {
+                plugins.push_back(pro::make_proxy<PPlugin, TextLinebreakFix>(otherCacheDir, projectConfig, logger, runTime));
             }
-            plugins.push_back(pro::make_proxy<PPostPlugin, TextLinebreakFix>(otherCacheDir, projectConfig, logger, hasRun, hasPostRun));
         }
     }
-
-    return plugins;
 }

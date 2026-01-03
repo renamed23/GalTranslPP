@@ -19,9 +19,10 @@ export {
     class PythonTextPlugin {
     private:
         std::shared_ptr<PythonInterpreterInstance> m_pythonInterpreter;
-        py::object* m_pythonRunFunc = nullptr;
+        py::object* m_pythonDPreRunFunc = nullptr;
         py::object* m_pythonPreRunFunc = nullptr;
         py::object* m_pythonPostRunFunc = nullptr;
+        py::object* m_pythonDPostRunFunc = nullptr;
         py::object* m_pythonUnloadFunc = nullptr;
         std::string m_modulePath;
         std::shared_ptr<spdlog::logger> m_logger;
@@ -30,9 +31,10 @@ export {
     public:
         PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger);
         bool needReboot() const { return m_needReboot; }
-        void run(Sentence* se);
+        void dPreRun(Sentence* se);
         void preRun(Sentence* se);
         void postRun(Sentence* se);
+        void dPostRun(Sentence* se);
         ~PythonTextPlugin();
     };
 }
@@ -58,9 +60,10 @@ PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string
                 m_logger->info("{} {}函数注册成功", m_modulePath, funcName);
             }
         };
-    registerFunctionFunc("run", m_pythonRunFunc);
+    registerFunctionFunc("dPreRun", m_pythonDPreRunFunc);
     registerFunctionFunc("preRun", m_pythonPreRunFunc);
     registerFunctionFunc("postRun", m_pythonPostRunFunc);
+    registerFunctionFunc("dPostRun", m_pythonDPostRunFunc);
     registerFunctionFunc("unload", m_pythonUnloadFunc);
 
     m_pythonInterpreter->submitTask([&]()
@@ -92,17 +95,17 @@ PythonTextPlugin::~PythonTextPlugin()
         }).get();
 }
 
-void PythonTextPlugin::run(Sentence* se) {
-    if (!m_pythonRunFunc) {
+void PythonTextPlugin::dPreRun(Sentence* se) {
+    if (!m_pythonDPreRunFunc) {
         return;
     }
     m_pythonInterpreter->submitTask([&]()
         {
             try {
-                (*m_pythonRunFunc)(se);
+                (*m_pythonDPreRunFunc)(se);
             }
             catch (const py::error_already_set& e) {
-                m_logger->error("{} unload函数执行失败", m_modulePath);
+                m_logger->error("{} dPreRun函数执行失败", m_modulePath);
                 throw std::runtime_error(e.what());
             }
         }).get();
@@ -132,6 +135,22 @@ void PythonTextPlugin::postRun(Sentence* se) {
         {
             try {
                 (*m_pythonPostRunFunc)(se);
+            }
+            catch (const py::error_already_set& e) {
+                m_logger->error("{} postRun函数执行失败", m_modulePath);
+                throw std::runtime_error(e.what());
+            }
+        }).get();
+}
+
+void PythonTextPlugin::dPostRun(Sentence* se) {
+    if (!m_pythonDPostRunFunc) {
+        return;
+    }
+    m_pythonInterpreter->submitTask([&]()
+        {
+            try {
+                (*m_pythonDPostRunFunc)(se);
             }
             catch (const py::error_already_set& e) {
                 m_logger->error("{} postRun函数执行失败", m_modulePath);

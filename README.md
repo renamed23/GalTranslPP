@@ -140,21 +140,21 @@ GalTransl++的缓存中可能包含如下键:
 
 ## ⚙️ 处理与翻译顺序
 
-1、  执行 preRun 阶段模式的预处理插件。  
+1、  执行 dprerun 阶段的预处理插件。  
 2、  可选: 对 `name` 执行译前字典替换 (人名表收集的也是这一步后的 `name`)。  
 3、  将 `message` 中的换行统一替换为 `<br>`。  
 4、  将 `message` 中的制表符统一替换为 `<tab>`。  
 5、  可选: 对 `message` 执行译前字典替换。  
-6、  执行 run 阶段模式的预处理插件。  
+6、  执行 prerun 阶段的预处理插件。  
 7、  **AI翻译**。  
-8、  执行 run 阶段模式的后预处理插件。  
+8、  执行 postrun 阶段的后处理插件。  
 9、  可选: 对 `message` 执行译后字典替换。  
 10、  将 `message` 中的 `<tab>` 统一替换回制表符。  
 11、 将 `message` 中的换行从 `<br>` 换回原符号。  
 12、 可选: 对 `name` 执行GPT字典替换 (此时GPT字典将被临时视为替换型字典)。  
 13、 对 `name` 执行人名表替换 (人名表译名为空则忽略)。  
 14、 可选: 对 `name` 执行译后字典替换。  
-15、 执行 postRun 阶段模式的预处理插件。  
+15、 执行 dpostrun 阶段的后处理插件。  
 16、 问题分析。  
 
 > **正则引擎说明**
@@ -444,18 +444,16 @@ GalTransl++在文件支持和插件支持上仍处于起步阶段，也不排除
 
 ### 添加插件处理器 (Plugin)
 
-文本处理插件理论上分为预处理插件和后处理插件，GalTransl++不接受希望同时在译前和译后都生效的插件，那样会破坏对于插件处理顺序的自定义性。如果有需要请将您的插件分为 Pre版 和 Post版。
+插件只需满足 `PPlugin` 约束即可。
 
-插件只需满足 `PPrePlugin/PPostPlugin` 约束即可。
-
-* **对于译前插件**：如果是非过滤型插件，原则上只允许修改 `pre_processed_text`。如果是过滤型插件，可以将 `complete` 置为 `true`，并负责填充 `pre_translated_text`。如有需要，也可以将 `notAnalyzeProblem` 置为 `true` 来阻止对此句的问题分析。
-* **对于译后插件**：原则上只允许修改 `translated_preview`。
+* **对于 dprerun/prerun 阶段**：如果是非过滤型插件，原则上只允许修改 `pre_processed_text`。如果是过滤型插件，可以将 `complete` 置为 `true`，并负责填充 `pre_translated_text`。如有需要，也可以将 `notAnalyzeProblem` 置为 `true` 来阻止对此句的问题分析。
+* **对于 postrun/dpostrun 阶段**：原则上只允许修改 `translated_preview`。
 
 任意插件均可在 `other_info` 中插入键以在缓存中附带信息。
 
-具体示例可见 `TextLinebreakFix` 和 `TextPostFull2Half`。
+具体示例可见 `TextLinebreakFix` 和 `TextFull2Half`。
 
-需要注册的工厂函数为 `registerPrePlugins/registerPostPlugins`。
+需要注册的工厂函数为 `registerPlugins`。
 
 
 ### 其它注意事项

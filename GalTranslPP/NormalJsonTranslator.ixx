@@ -101,8 +101,7 @@ export {
         std::unique_ptr<NormalDictionary> m_postDictionary;
         std::unique_ptr<ProblemAnalyzer> m_problemAnalyzer;
         std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
-        std::vector<pro::proxy<PPrePlugin>> m_prePlugins;
-        std::vector<pro::proxy<PPostPlugin>> m_postPlugins;
+        std::vector<pro::proxy<PPlugin>> m_textPlugins;
 
 
         void preProcess(Sentence* se);

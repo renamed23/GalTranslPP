@@ -41,6 +41,7 @@ ProjectSettingsPage::ProjectSettingsPage(toml::ordered_value& globalConfig, cons
         _projectConfig = toml::parse<toml::ordered_type_config>(_projectDir / L"config.toml");
     }
     catch (...) {
+        _projectConfig = toml::ordered_table{};
         ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的配置文件不符合 toml 规范"), 3000);
     }
     insertToml(_projectConfig, "GUIConfig.isRunning", false);

@@ -136,7 +136,7 @@
     <ClCompile Include="CommonNormalDictPage.cpp">
       <Filter>Source Files\PageImpl</Filter>
     </ClCompile>
-    <ClCompile Include="PostFull2HalfCfgPage.cpp">
+    <ClCompile Include="TF2HCfgPage.cpp">
       <Filter>Source Files\ToolWidgetsImpl</Filter>
     </ClCompile>
     <ClCompile Include="CommonGptDictPage.cpp">
@@ -249,7 +249,7 @@
     <QtMoc Include="CommonNormalDictPage.h">
       <Filter>Header Files\PageHeaders</Filter>
     </QtMoc>
-    <QtMoc Include="PostFull2HalfCfgPage.h">
+    <QtMoc Include="TF2HCfgPage.h">
       <Filter>Header Files\ToolWidgetsH</Filter>
     </QtMoc>
     <QtMoc Include="CommonGptDictPage.h">

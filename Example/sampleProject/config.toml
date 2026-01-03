@@ -33,25 +33,22 @@ baseClassName = "NormalJson"
 # PS: 如果项目文件夹下有 Prompt.toml，会优先使用项目文件夹下的提示词，否则再去 BaseConfig 下寻找
 transEngine = "ForGalTsv"
 
-# "SkipTrans"，既有 run 阶段模式又有 preRun 阶段模式，区别仅在于执行时机不同，默认开启为 run 阶段模式
-# 文本译前处理插件列表，可以设置多个，按顺序执行
-# 译前/译后 Plugins 均可使用 lua/py 脚本作为自定义扩展插件
-# 插件加载格式为 "path/to/script.lua" / "path/to/script.py"
+# "SkipTrans"，有 dprerun 和 prerun 阶段，区别仅在于执行时机不同，默认开启为 prerun 阶段
+# "TextFull2Half"，有 dprerun、prerun、postrun、dpostrun 阶段，区别在于 prerun 和 postrun 会跳过 <br> 和 <tab> 标签，默认开启为 dpostrun 阶段
+# "TextLinebreakFix"，只有 dpostrun 阶段模式，默认开启为 dpostrun 阶段模式
+# 使用 lua/py 脚本作为自定义扩展插件的加载格式为 "path/to/script.lua" / "path/to/script.py"
 # 如 "Lua/MySampleTextPlugin.lua"
 # 插件中必须定义 init 函数，具体示例详见 git 仓库中的 Example 文件夹中的 MySampleTextPlugin
-textPrePlugins = [
-  #"SkipTrans"  # 等效于 "run:SkipTrans"
+textPlugins = [
+  # 以 '>' 开头表示此插件不生效
+  ">SkipTrans",                # 等效于 ">prerun:SkipTrans"
+  #">TextLinebreakFix",        # 等效于 "dpostrun:TextLinebreakFix"
+  #">postrun:TextFull2Half",   # 改到执行译后字典替换之前的时机转换
+  # 这里虽然 TextLinebreakFix 在 TextFull2Half 之前
+  # 但由于 postrun 阶段早于 dpostrun 阶段，所以还是 TextFull2Half 先执行，译后格式化完毕后再执行 TextLinebreakFix
+  #">dpostrun:TextFull2Half"   # 如果有特殊原因也可以把插件在不同时机再执行一遍
+  # 那么此时 dpostrun 阶段的两个插件会按顺序执行，即先执行 TextLinebreakFix，再执行 TextFull2Half
 ]
-
-# "TextLinebreakFix"，只有 run 阶段模式，默认开启为 run 阶段模式
-# "TextPostFull2Half"，既有 run 阶段模式又有 postRun 阶段模式，区别在于 run 阶段模式会跳过 <br> 和 <tab> 标签，默认开启为 postRun 阶段模式
-# 文本译后处理插件列表，可以设置多个，按顺序执行
-textPostPlugins = [
-  #"TextPostFull2Half" # 等效于 "postRun:TextPostFull2Half"
-  #"TextLinebreakFix"  # 等效于 "run:TextLinebreakFix"
-  # 这里虽然 TextPostFull2Half 在 TextLinebreakFix之前
-  # 但由于 run 阶段早于 postRun 阶段，所以还是 TextLinebreakFix 先执行，译后格式化完毕后再执行 TextPostFull2Half
-] 
 
 [plugins.NormalJson]
 output_with_src = true
@@ -84,10 +81,10 @@ skipKeys = [
 ]
 
 [plugins.TextLinebreakFix]
-"换行模式" = "优先标点" # 判断换行数目是否相同的基准是 preproc_text(中的<br>) 而不是 orig_text，请注意
+"换行模式" = "优先标点"
 "优先阈值" = 0.245
 
-[plugins.TextPostFull2Half]
+[plugins.TextFull2Half]
 "是否反向替换" = false  # false=全角->半角，true=半角->全角
 
 [common]
@@ -166,7 +163,7 @@ codePage = "gbk"   # 非法字符要检查的字符集
 langProbability = 0.94 # 语言不通检测的语言置信度，设置越高则检测越精准，但可能遗漏，反之亦然
 
 # 问题的比较对象和被比较对象(不写则默认为 orig_text 和 trans_preview )
-# 如 { base = 'orig_text', check = 'trans_preview', problemKey = '比原文长严格' }
+# 如 { problemKey = '比原文长严格', base = 'orig_text', check = 'trans_preview' }
 # 意思是当 trans_preview 比 orig_text 严格长时，在 problem 中留下对应的问题。
 overwriteCompareObj = [
   { problemKey = "词频过高", base = "orig_text", check = "trans_preview" },

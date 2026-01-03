@@ -174,7 +174,7 @@ del "$(TargetDir)$(TargetName).lib"</Command>
     <ClCompile Include="UpdateWidget.cpp" />
     <ClCompile Include="ValueSliderWidget.cpp" />
     <QtMoc Include="PluginSettingsPage.h" />
-    <ClCompile Include="PostFull2HalfCfgPage.cpp" />
+    <ClCompile Include="TF2HCfgPage.cpp" />
     <ClCompile Include="TLFCfgPage.cpp" />
     <ClCompile Include="ProjectSettingsPage.cpp" />
     <QtRcc Include="GPPGUI.qrc" />
@@ -193,7 +193,7 @@ del "$(TargetDir)$(TargetName).lib"</Command>
     <QtMoc Include="PluginItemWidget.h" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="PostFull2HalfCfgPage.h" />
+    <QtMoc Include="TF2HCfgPage.h" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="TLFCfgPage.h" />

@@ -23,30 +23,30 @@ export {
 	private:
 
 		std::function<NLPResult(const std::string&)> m_tokenizeTargetLangFunc;
-		std::vector<std::string> splitIntoTokens(const std::string& text);
-
 		fs::path m_tokenizeCachePath;
 		std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
 		std::shared_mutex m_tokenizeCacheMapMutex;
-		double m_priorityThreshold;
 		std::shared_ptr<spdlog::logger> m_logger;
+
 		LinebreakFixMode m_mode;
+		PluginRunTime m_runTime;
+		double m_priorityThreshold;
 		int m_segmentThreshold;
 		int m_errorThreshold;
 		bool m_forceFix;
 		bool m_useTokenizer;
 
-		bool m_hasRun;
-		bool m_hasPostRun;
 		bool m_needReboot = false;
+
+		std::vector<std::string> splitIntoTokens(const std::string& text);
 
 	public:
 
-		TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun);
+		TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime);
 
 		bool needReboot() const { return m_needReboot; }
 
-		void run(Sentence* se);
+		void dPostRun(Sentence* se);
 
 		~TextLinebreakFix()
 		{
@@ -60,14 +60,20 @@ export {
 
 module :private;
 
-TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, bool hasRun, bool hasPostRun)
-	: m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_tlf.json"), m_logger(logger), m_hasRun(hasRun), m_hasPostRun(hasPostRun)
+TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime)
+	: m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_tlf.json"), m_logger(logger), m_runTime(runTime)
 {
 	try {
-		if (m_hasPostRun) {
-			m_logger->error("TextLinebreakFix 不支持 post-run 阶段运行");
+		if (m_runTime != PluginRunTime::DPost) {
+			m_logger->error("TextLinebreakFix 不支持 {} 阶段运行", pluginRunTimeNames[m_runTime]);
+			return;
 		}
-		const auto pluginConfig = toml::parse(postPluginConfigPath / L"TextLinebreakFix.toml");
+
+		fs::path pluginConfigPath = textPluginConfigPath / std::format(L"TextLinebreakFix-{}.toml", ascii2Wide(pluginRunTimeNames[m_runTime]));
+		if (!fs::exists(pluginConfigPath)) {
+			pluginConfigPath = textPluginConfigPath / L"TextLinebreakFix.toml";
+		}
+		const auto pluginConfig = toml::parse(pluginConfigPath);
 
 		std::string linebreakMode = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.换行模式");
 		if (linebreakMode == "平均") {
@@ -86,7 +92,7 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 			m_mode = LinebreakFixMode::NotFix;
 		}
 		else {
-			throw std::invalid_argument("TextLinebreakFix 无效的换行模式: " + linebreakMode);
+			throw std::invalid_argument(std::format("TextLinebreakFix-{} 无效的换行模式: {}", pluginRunTimeNames[m_runTime], linebreakMode));
 		}
 		m_priorityThreshold = parseToml<double>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.优先阈值");
 		m_segmentThreshold = parseToml<int>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.分段字数阈值");
@@ -100,47 +106,47 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 			const std::string tokenizerBackend = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.tokenizerBackend");
 			if (tokenizerBackend == "MeCab") {
 				const std::string mecabDictDir = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.mecabDictDir");
-				m_logger->info("TextLinebreakFix 正在检查 MeCab 环境...");
+				m_logger->info("TextLinebreakFix-{} 正在检查 MeCab 环境...", pluginRunTimeNames[m_runTime]);
 				m_tokenizeTargetLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-				m_logger->info("TextLinebreakFix MeCab 环境检查完毕。");
+				m_logger->info("TextLinebreakFix-{} MeCab 环境检查完毕。", pluginRunTimeNames[m_runTime]);
 			}
 			else if (tokenizerBackend == "spaCy") {
 				const std::string spaCyModelName = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.spaCyModelName");
-				m_logger->info("TextLinebreakFix 正在检查 spaCy 环境...");
+				m_logger->info("TextLinebreakFix-{} 正在检查 spaCy 环境...", pluginRunTimeNames[m_runTime]);
 				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, m_needReboot);
-				m_logger->info("TextLinebreakFix spaCy 环境检查完毕。");
+				m_logger->info("TextLinebreakFix-{} spaCy 环境检查完毕。", pluginRunTimeNames[m_runTime]);
 			}
 			else if (tokenizerBackend == "Stanza") {
 				const std::string stanzaLang = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.stanzaLang");
-				m_logger->info("TextLinebreakFix 正在检查 Stanza 环境...");
+				m_logger->info("TextLinebreakFix-{} 正在检查 Stanza 环境...", pluginRunTimeNames[m_runTime]);
 				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, m_needReboot);
-				m_logger->info("TextLinebreakFix Stanza 环境检查完毕。");
+				m_logger->info("TextLinebreakFix-{} Stanza 环境检查完毕。", pluginRunTimeNames[m_runTime]);
 			}
 			else if (tokenizerBackend == "pkuseg") {
-				m_logger->info("TextLinebreakFix 正在检查 pkuseg 环境...");
+				m_logger->info("TextLinebreakFix-{} 正在检查 pkuseg 环境...", pluginRunTimeNames[m_runTime]);
 				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg"}, "tokenizer_pkuseg", "default", m_logger, m_needReboot);
-				m_logger->info("TextLinebreakFix pkuseg 环境检查完毕。");
+				m_logger->info("TextLinebreakFix-{} pkuseg 环境检查完毕。", pluginRunTimeNames[m_runTime]);
 			}
 			else {
-				throw std::invalid_argument(std::format("TextLinebreakFix 无效的 tokenizerBackend: {}", tokenizerBackend));
+				throw std::invalid_argument(std::format("TextLinebreakFix-{} 无效的 tokenizerBackend: {}", pluginRunTimeNames[m_runTime], tokenizerBackend));
 			}
 		}
 
 		if (m_segmentThreshold <= 0) {
-			throw std::runtime_error("TextLinebreakFix 分段字数阈值必须大于0");
+			throw std::runtime_error(std::format("TextLinebreakFix-{} 分段字数阈值必须大于0", pluginRunTimeNames[m_runTime]));
 		}
 		if (m_errorThreshold <= 0) {
-			throw std::runtime_error("TextLinebreakFix 报错阈值必须大于0");
+			throw std::runtime_error(std::format("TextLinebreakFix-{} 报错阈值必须大于0", pluginRunTimeNames[m_runTime]));
 		}
 
-		m_logger->info("已加载插件 TextLinebreakFix, 换行模式: {}, 优先阈值 {:.2f}, 分段字数阈值: {}, 强制修复: {}, 报错阈值: {}",
-			linebreakMode, m_priorityThreshold, m_segmentThreshold, m_forceFix, m_errorThreshold);
+		m_logger->info("已加载插件 TextLinebreakFix-{}, 换行模式: {}, 优先阈值 {:.2f}, 分段字数阈值: {}, 强制修复: {}, 报错阈值: {}", 
+			pluginRunTimeNames[m_runTime], linebreakMode, m_priorityThreshold, m_segmentThreshold, m_forceFix, m_errorThreshold);
 		if (m_useTokenizer) {
-			m_logger->info("插件 TextLinebreakFix 分词器已启用");
+			m_logger->info("插件 TextLinebreakFix-{} 分词器已启用", pluginRunTimeNames[m_runTime]);
 		}
 	}
 	catch (const toml::exception& e) {
-		m_logger->critical("TextLinebreakFix 插件配置文件解析错误");
+		m_logger->critical("TextLinebreakFix-{} 插件配置文件解析错误", pluginRunTimeNames[m_runTime]);
 		throw std::runtime_error(e.what());
 	}
 }
@@ -162,18 +168,19 @@ std::vector<std::string> TextLinebreakFix::splitIntoTokens(const std::string& te
 	return ::splitIntoTokens(wordPosVec, text);
 }
 
-void TextLinebreakFix::run(Sentence* se)
+void TextLinebreakFix::dPostRun(Sentence* se)
 {
-	if (!m_hasRun) {
+	if (m_runTime != PluginRunTime::DPost || se->originalLinebreak.empty()) {
 		return;
 	}
-	int origLinebreakCount = countSubstring(se->pre_processed_text, "<br>");
-	int transLinebreakCount = countSubstring(se->translated_preview, "<br>");
+
+	int origLinebreakCount = countSubstring(se->original_text, se->originalLinebreak);
+	int transLinebreakCount = countSubstring(se->translated_preview, se->originalLinebreak);
 
 	auto checkLineCharCountFunc = [&](const std::string& transViewToModify)
 		{
 			if (transViewToModify.length() > m_errorThreshold) {
-				for (const auto& [index, newLineView] : transViewToModify | std::views::split(std::string_view{ "<br>" })
+				for (const auto& [index, newLineView] : transViewToModify | std::views::split(se->originalLinebreak)
 					| std::views::transform([](const auto& subStrView)
 						{
 							return std::string_view(subStrView.begin(), subStrView.end());
@@ -181,7 +188,6 @@ void TextLinebreakFix::run(Sentence* se)
 					| std::views::enumerate)
 				{
 					if (size_t charCount = countGraphemes(newLineView); charCount > m_errorThreshold) {
-						m_logger->trace("句子[{}](原有{}行)其中的 译文行[{}]超出报错阈值[{}/{}]", se->pre_processed_text, origLinebreakCount + 1, newLineView, charCount, m_errorThreshold);
 						se->problems.push_back(std::format("第 {} 行字数超出报错阈值[{}/{}]", index + 1, charCount, m_errorThreshold));
 					}
 				}
@@ -196,19 +202,17 @@ void TextLinebreakFix::run(Sentence* se)
 		return;
 	}
 
-	m_logger->debug("需要修复换行的句子[{}]: 原文 {} 行, 译文 {} 行", se->pre_processed_text, origLinebreakCount + 1, transLinebreakCount + 1);
+	m_logger->debug("需要修复换行的句子[{}]: 原文 {} 行, 译文 {} 行", se->translated_preview, origLinebreakCount + 1, transLinebreakCount + 1);
 
 	std::string origTransPreview = se->translated_preview;
 	std::string transViewToModify = se->translated_preview;
-	replaceStrInplace(transViewToModify, "<br>", "");
 	if (transViewToModify.empty()) {
 		for (int i = 0; i < origLinebreakCount; i++) {
-			transViewToModify += "<br>";
+			transViewToModify += se->originalLinebreak;
 		}
-		se->translated_preview = transViewToModify;
-
-		se->other_info["换行修复"] = std::format("原文 {} 行, 译文 {} 行, 修正后 {} 行", origLinebreakCount + 1, transLinebreakCount + 1, transLinebreakCount + 1);
-		m_logger->debug("译文[{}]({}行): 修正后译文[{}]({}行)", origTransPreview, origLinebreakCount + 1, se->translated_preview, transLinebreakCount + 1);
+		se->translated_preview = std::move(transViewToModify);
+		se->other_info.insert({ "换行修复", std::format("原文 {} 行, 译文 {} 行, 修正后 {} 行", origLinebreakCount + 1, transLinebreakCount + 1, transLinebreakCount + 1) });
+		m_logger->debug("译文[{}]({}行) -> 修正后译文[{}]({}行)", origTransPreview, origLinebreakCount + 1, se->translated_preview, transLinebreakCount + 1);
 		return;
 	}
 
@@ -230,7 +234,7 @@ void TextLinebreakFix::run(Sentence* se)
 	case LinebreakFixMode::Average:
 	{
 		std::vector<std::string> tokens = m_useTokenizer ? splitIntoTokens(transViewToModify) : splitIntoGraphemes(transViewToModify);
-		size_t totalCharCount = countGraphemes(transViewToModify);
+		const size_t totalCharCount = tokens.size();
 		int linebreakAdded = 0;
 
 		size_t charCountLine = totalCharCount / (origLinebreakCount + 1);
@@ -239,10 +243,10 @@ void TextLinebreakFix::run(Sentence* se)
 		}
 
 		transViewToModify.clear();
-		for (size_t i = 0; i < tokens.size(); i++) {
-			transViewToModify += tokens[i];
-			if ((i + 1) % charCountLine == 0 && linebreakAdded < origLinebreakCount) {
-				transViewToModify += "<br>";
+		for (const auto& [index, token] : tokens | std::views::enumerate) {
+			transViewToModify += token;
+			if ((index + 1) % charCountLine == 0 && linebreakAdded < origLinebreakCount && index != totalCharCount - 1) {
+				transViewToModify += se->originalLinebreak;
 				linebreakAdded++;
 			}
 		}
@@ -253,10 +257,10 @@ void TextLinebreakFix::run(Sentence* se)
 	{
 		std::vector<std::string> graphemes = splitIntoGraphemes(transViewToModify);
 		transViewToModify.clear();
-		for (size_t i = 0; i < graphemes.size(); i++) {
-			transViewToModify += graphemes[i];
-			if ((i + 1) % m_segmentThreshold == 0 && i != graphemes.size() - 1) {
-				transViewToModify += "<br>";
+		for (const auto& [index, grapheme] : graphemes | std::views::enumerate) {
+			transViewToModify += grapheme;
+			if ((index + 1) % m_segmentThreshold == 0 && index != graphemes.size() - 1) {
+				transViewToModify += se->originalLinebreak;
 			}
 		}
 	}
@@ -265,7 +269,7 @@ void TextLinebreakFix::run(Sentence* se)
 	case LinebreakFixMode::KeepPositions:
 	{
 		std::vector<std::string> tokens = m_useTokenizer ? splitIntoTokens(transViewToModify) : splitIntoGraphemes(transViewToModify);
-		std::vector<double> relLinebreakPositions = getSubstringPositions(se->pre_processed_text, "<br>");
+		std::vector<double> relLinebreakPositions = getSubstringPositions(se->original_text, se->originalLinebreak);
 		std::vector<size_t> positionsToAddLinebreak; // 最终要在 transViewToModify 中插入换行符的位置
 
 		size_t currentPos = 0;
@@ -280,7 +284,7 @@ void TextLinebreakFix::run(Sentence* se)
 
 		removeRepeat(positionsToAddLinebreak);
 		for (const auto& posToAddLinebreak : positionsToAddLinebreak | std::views::reverse) {
-			transViewToModify.insert(posToAddLinebreak, "<br>");
+			transViewToModify.insert(posToAddLinebreak, se->originalLinebreak);
 		}
 	}
 	break;
@@ -293,7 +297,7 @@ void TextLinebreakFix::run(Sentence* se)
 		{ "『", "「", "“", "‘", "'", "《", "〈", "（", "【", "〔", "〖" };
 
 		// 预处理标点信息，获取所有可以添加换行的标点位置
-		std::vector<double> relLinebreakPositions = getSubstringPositions(se->pre_processed_text, "<br>");
+		std::vector<double> relLinebreakPositions = getSubstringPositions(se->original_text, se->originalLinebreak);
 
 		struct PunctInfo
 		{
@@ -338,8 +342,6 @@ void TextLinebreakFix::run(Sentence* se)
 
 
 		if (origLinebreakCount <= (int)punctPositions.size()) {
-			currentPos = 0;
-			size_t currentTokenIndex = 0;
 			// 换行挑标点
 			std::vector<PunctInfo> filteredPunctPositions; // 被挑出来的标点位置
 			for (const auto& relLinebreakPos : relLinebreakPositions) {
@@ -355,8 +357,10 @@ void TextLinebreakFix::run(Sentence* se)
 				{
 					return a.prePos < b.prePos;
 				});
-			for (const auto& [index, punctPos] : filteredPunctPositions | std::views::enumerate) {
-				if (double relLinebreakPos = relLinebreakPositions[index];  calculateAbs(punctPos.relPos, relLinebreakPos) > m_priorityThreshold) {
+			currentPos = 0;
+			size_t currentTokenIndex = 0;
+			for (const auto& [relLinebreakPos, punctPos] : std::views::zip(relLinebreakPositions, filteredPunctPositions)) {
+				if (calculateAbs(relLinebreakPos, punctPos.relPos) > m_priorityThreshold) {
 					while (currentTokenIndex < tokens.size()) {
 						double relCur = currentPos / (double)transViewToModify.length();
 						currentPos += tokens[currentTokenIndex].length();
@@ -377,8 +381,6 @@ void TextLinebreakFix::run(Sentence* se)
 			}
 		}
 		else {
-			currentPos = 0;
-			size_t currentTokenIndex = 0;
 			// 标点挑换行
 			std::vector<double> filteredRelLinebreakPositions; // 被挑出来的换行位置
 			for (const auto& punctPos : punctPositions) {
@@ -391,10 +393,12 @@ void TextLinebreakFix::run(Sentence* se)
 				relLinebreakPositions.erase(it);
 			}
 			std::ranges::sort(filteredRelLinebreakPositions);
-			for (const auto& [index, relLinebreakPos] : filteredRelLinebreakPositions | std::views::enumerate) {
-				if (double punctPos = punctPositions[index].relPos;  calculateAbs(relLinebreakPos, punctPos) > m_priorityThreshold) {
+			currentPos = 0;
+			size_t currentTokenIndex = 0;
+			for (const auto& [punctPosition, relLinebreakPos] : std::views::zip(punctPositions, filteredRelLinebreakPositions)) {
+				if (double punctPos = punctPosition.relPos;  calculateAbs(relLinebreakPos, punctPos) > m_priorityThreshold) {
 					while (currentTokenIndex < tokens.size()) {
-						double relCur = currentPos / (double)transViewToModify.length();	
+						double relCur = currentPos / (double)transViewToModify.length();
 						currentPos += tokens[currentTokenIndex].length();
 						currentTokenIndex++;
 						if (double newRelCur = currentPos / (double)transViewToModify.length(); newRelCur >= relLinebreakPos) {
@@ -408,7 +412,7 @@ void TextLinebreakFix::run(Sentence* se)
 					positionsToAddLinebreak.push_back(currentPos);
 				}
 				else {
-					positionsToAddLinebreak.push_back(punctPositions[index].postPos);
+					positionsToAddLinebreak.push_back(punctPosition.postPos);
 				}
 			}
 			currentPos = 0;
@@ -434,15 +438,15 @@ void TextLinebreakFix::run(Sentence* se)
 		std::ranges::sort(positionsToAddLinebreak);
 
 		for (const auto& posToAddLinebreak : positionsToAddLinebreak | std::views::reverse) {
-			transViewToModify.insert(posToAddLinebreak, "<br>");
+			transViewToModify.insert(posToAddLinebreak, se->originalLinebreak);
 		}
 
-		if (m_logger->should_log(spdlog::level::debug)) {
+		if (m_useTokenizer && m_logger->should_log(spdlog::level::debug)) {
 			std::string tokensStr;
 			for (const auto& token : tokens) {
 				tokensStr += "[" + token + "] ";
 			}
-			se->other_info["译文分词结果"] = tokensStr;
+			se->other_info.insert({"译文分词结果", std::move(tokensStr)});
 		}
 	}
 	break;
@@ -452,8 +456,8 @@ void TextLinebreakFix::run(Sentence* se)
 	se->translated_preview = std::move(transViewToModify);
 	checkLineCharCountFunc(se->translated_preview);
 
-	int newLinebreakCount = countSubstring(se->translated_preview, "<br>");
-	se->other_info["换行修复"] = std::format("原文 {} 行, 译文 {} 行, 修正后 {} 行", origLinebreakCount + 1, transLinebreakCount + 1, newLinebreakCount + 1);
-	m_logger->debug("句子[{}]({}行): 修正后译文[{}]({}行)", origTransPreview, transLinebreakCount + 1, se->translated_preview, newLinebreakCount + 1);
+	int newLinebreakCount = countSubstring(se->translated_preview, se->originalLinebreak);
+	se->other_info.insert({ "换行修复", std::format("原文 {} 行, 译文 {} 行, 修正后 {} 行", origLinebreakCount + 1, transLinebreakCount + 1, newLinebreakCount + 1) });
+	m_logger->debug("句子[{}]({}行) -> 修正后译文[{}]({}行)", origTransPreview, transLinebreakCount + 1, se->translated_preview, newLinebreakCount + 1);
 }
 
