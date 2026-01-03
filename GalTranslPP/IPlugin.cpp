@@ -41,11 +41,11 @@ void registerPlugins(std::vector<pro::proxy<PPlugin>>& plugins, const std::vecto
             continue;
         }
         std::string pluginNameLower = str2Lower(pluginName);
-        if (pluginNameLower.ends_with(".lua")) {
+        if (pluginNameLower.ends_with(".lua") && preProcOnly) {
             plugins.push_back(pro::make_proxy<PPlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 luaManager, logger));
         }
-        else if (pluginNameLower.ends_with(".py")) {
+        else if (pluginNameLower.ends_with(".py") && preProcOnly) {
             plugins.push_back(pro::make_proxy<PPlugin, PythonTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 pythonManager, logger));
         }
