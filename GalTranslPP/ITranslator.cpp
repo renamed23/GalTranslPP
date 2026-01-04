@@ -69,7 +69,7 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::s
     if (!fs::exists(configFilePath)) {
         throw std::runtime_error("Config file not found");
     }
-    const auto configData = toml::parse(configFilePath);
+    const auto configData = toml::uparse(configFilePath);
 
     const std::string& filePlugin = toml::find_or(configData, "plugins", "filePlugin", "NormalJson");
     const std::string& transEngine = toml::find_or(configData, "plugins", "transEngine", "ForGalJson");

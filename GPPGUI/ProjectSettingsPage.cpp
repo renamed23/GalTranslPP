@@ -38,7 +38,7 @@ ProjectSettingsPage::ProjectSettingsPage(toml::ordered_value& globalConfig, cons
     setContentsMargins(5, 10, 10, 10);
 
     try {
-        _projectConfig = toml::parse<toml::ordered_type_config>(_projectDir / L"config.toml");
+        _projectConfig = toml::uoparse(_projectDir / L"config.toml");
     }
     catch (...) {
         _projectConfig = toml::ordered_table{};
@@ -267,7 +267,7 @@ void ProjectSettingsPage::_onRefreshProjectConfig()
         return;
     }
     try {
-        _projectConfig = toml::parse<toml::ordered_type_config>(_projectDir / L"config.toml");
+        _projectConfig = toml::uoparse(_projectDir / L"config.toml");
     }
     catch (...) {
         ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的配置文件不符合规范"), 3000);

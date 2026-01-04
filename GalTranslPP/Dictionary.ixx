@@ -204,7 +204,7 @@ void GptDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
     int count = 0;
 
     try {
-        const auto dictData = toml::parse(filePath);
+        const auto dictData = toml::uparse(filePath);
         if (!dictData.contains("gptDict")) {
             return;
         }
@@ -343,7 +343,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
 
     int count = 0;
     try {
-        const auto dictData = toml::parse(filePath);
+        const auto dictData = toml::uparse(filePath);
         if (!dictData.contains("normalDict")) {
             return;
         }

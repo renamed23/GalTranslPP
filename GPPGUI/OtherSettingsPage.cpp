@@ -105,6 +105,7 @@ void OtherSettingsPage::_setupUI()
 			_projectDir = newProjectPath;
 			pathEdit->setText(QString(_projectDir.wstring()));
 			ElaMessageBar::success(ElaMessageBarType::TopRight, tr("移动成功"), QString(_projectDir.filename().wstring()) + tr(" 项目已移动到新文件夹"), 3000);
+			Q_EMIT refreshProjectConfigSignal();
 		});
 	moveRenameLayout->addWidget(moveButton);
 	ElaPushButton* renameButton = new ElaPushButton(moveRenameArea);
@@ -145,6 +146,7 @@ void OtherSettingsPage::_setupUI()
 			pathEdit->setText(QString(_projectDir.wstring()));
 			Q_EMIT changeProjectNameSignal(newProjectName);
 			ElaMessageBar::success(ElaMessageBarType::TopRight, tr("更名成功"), tr("项目已更名为 ") + newProjectName, 3000);
+			Q_EMIT refreshProjectConfigSignal();
 		});
 	moveRenameLayout->addWidget(renameButton);
 	mainLayout->addWidget(moveRenameArea);
@@ -185,7 +187,7 @@ void OtherSettingsPage::_setupUI()
 						ifs.close();
 					}
 					else if (importOverviewPathStr.endsWith(".toml", Qt::CaseInsensitive)) {
-						const auto tomlData = toml::parse(fs::path(importOverviewPathStr.toStdWString()));
+						const auto tomlData = toml::uparse(fs::path(importOverviewPathStr.toStdWString()));
 						overviewData = toml2Json(tomlData.at("problemOverview"));
 					}
 					else {

@@ -57,7 +57,7 @@ void NormalJsonTranslator::init()
     const fs::path configPath = m_projectDir / L"config.toml";
     try {
         bool needReboot = false;
-        const auto configData = toml::parse(configPath);
+        const auto configData = toml::uparse(configPath);
 
         const std::string transEngineStr = toml::find_or(configData, "plugins", "transEngine", "");
         if (transEngineStr == "ForGalJson") {
@@ -94,7 +94,7 @@ void NormalJsonTranslator::init()
             throw std::runtime_error("Invalid trans engine: " + transEngineStr);
         }
 
-        const auto pluginConfigData = toml::parse(filePluginConfigPath / L"NormalJson.toml");
+        const auto pluginConfigData = toml::uparse(filePluginConfigPath / L"NormalJson.toml");
         m_outputWithSrc = parseToml<bool>(configData, pluginConfigData, "plugins.NormalJson.output_with_src");
 
         m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 10);
@@ -231,7 +231,7 @@ void NormalJsonTranslator::init()
                     }
                 }
 
-                const auto promptData = toml::parse(promptPath);
+                const auto promptData = toml::uparse(promptPath);
 
                 std::string systemKey;
                 std::string userKey;
@@ -1199,7 +1199,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
         toml::value orgNameTable = toml::table{};
         try {
             if (fs::exists(nameTablePath)) {
-                orgNameTable = toml::parse(nameTablePath);
+                orgNameTable = toml::uparse(nameTablePath);
             }
         }
         catch (...) {
@@ -1273,7 +1273,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
 
     // 解析人名替换表
     try {
-        const auto nameTable = toml::parse(m_projectDir / L"人名替换表.toml");
+        const auto nameTable = toml::uparse(m_projectDir / L"人名替换表.toml");
 
         for (const auto& [key, value] : nameTable.as_table()) {
             if (!value.is_array() || value.size() == 0) {

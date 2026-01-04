@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     std::unique_ptr<py::gil_scoped_release> release;
 
     try {
-        const auto globalConfig = toml::parse(globalConfigPath);
+        const auto globalConfig = toml::uparse(globalConfigPath);
         const std::string& pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
 
         const fs::path pyEnvPath = ascii2Wide(pyEnvPathStr);

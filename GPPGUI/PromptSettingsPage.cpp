@@ -26,7 +26,7 @@ PromptSettingsPage::PromptSettingsPage(fs::path& projectDir, toml::ordered_value
 
 	if (fs::exists(_projectDir / L"Prompt.toml")) {
 		try {
-			_promptConfig = toml::parse<toml::ordered_type_config>(_projectDir / L"Prompt.toml");
+			_promptConfig = toml::uoparse(_projectDir / L"Prompt.toml");
 		}
 		catch (...) {
 			ElaMessageBar::error(ElaMessageBarType::TopRight, tr("解析失败"), tr("项目 ") +
@@ -35,7 +35,7 @@ PromptSettingsPage::PromptSettingsPage(fs::path& projectDir, toml::ordered_value
 	}
 	else if (fs::exists(defaultPromptPath)) {
 		try {
-			_promptConfig = toml::parse<toml::ordered_type_config>(_projectDir / L"Prompt.toml");
+			_promptConfig = toml::uoparse(_projectDir / L"Prompt.toml");
 		}
 		catch (...) {
 			ElaMessageBar::error(ElaMessageBarType::TopRight, tr("解析失败"), tr("默认提示词文件不符合 toml 规范"), 3000);

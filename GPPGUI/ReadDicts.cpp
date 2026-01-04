@@ -26,7 +26,7 @@ QList<GptDictEntry> ReadDicts::readGptDicts(const fs::path& dictPath)
 
 	if (isSameExtension(dictPath, L".toml")) {
 		try {
-			const toml::ordered_value tbl = toml::parse<toml::ordered_type_config>(dictPath);
+			const toml::ordered_value tbl = toml::uoparse(dictPath);
 			if (!tbl.contains("gptDict") || !tbl.at("gptDict").is_array()) {
 				return result;
 			}
@@ -127,7 +127,7 @@ QString ReadDicts::readGptDictsStr(const std::vector<fs::path>& dictPaths)
 			continue;
 		}
 		try {
-			toml::ordered_value tbl = toml::parse<toml::ordered_type_config>(dictPath);
+			toml::ordered_value tbl = toml::uoparse(dictPath);
 			if (!tbl.contains("gptDict") || !tbl.at("gptDict").is_array()) {
 				continue;
 			}
@@ -156,7 +156,7 @@ QList<NormalDictEntry> ReadDicts::readNormalDicts(const fs::path& dictPath)
 
 	if (isSameExtension(dictPath, L".toml")) {
 		try {
-			toml::ordered_value tbl = toml::parse<toml::ordered_type_config>(dictPath);
+			toml::ordered_value tbl = toml::uoparse(dictPath);
 			if (!tbl["normalDict"].is_array()) {
 				return result;
 			}

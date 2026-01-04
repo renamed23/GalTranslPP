@@ -46,7 +46,7 @@ TextFull2Half::TextFull2Half(const toml::value& projectConfig, std::shared_ptr<s
         if (!fs::exists(pluginConfigPath)) {
             pluginConfigPath = textPluginConfigPath / L"TextFull2Half.toml";
         }
-        const auto pluginConfig = toml::parse(pluginConfigPath);
+        const auto pluginConfig = toml::uparse(pluginConfigPath);
 
         m_replacePunctuation = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextFull2Half.是否替换标点");
         m_reverseConversion = parseToml<bool>(projectConfig, pluginConfig, "plugins.TextFull2Half.是否反向替换");

@@ -157,8 +157,8 @@ void EpubTranslator::init()
     std::ifstream ifs;
 
     try {
-        const auto projectConfig = toml::parse(m_projectDir / L"config.toml");
-        const auto pluginConfig = toml::parse(filePluginConfigPath / L"Epub.toml");
+        const auto projectConfig = toml::uparse(m_projectDir / L"config.toml");
+        const auto pluginConfig = toml::uparse(filePluginConfigPath / L"Epub.toml");
 
         m_bilingualOutput = parseToml<bool>(projectConfig, pluginConfig, "plugins.Epub.双语显示");
         m_originalTextColor = parseToml<std::string>(projectConfig, pluginConfig, "plugins.Epub.原文颜色");

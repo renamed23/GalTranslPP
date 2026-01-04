@@ -73,7 +73,7 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 		if (!fs::exists(pluginConfigPath)) {
 			pluginConfigPath = textPluginConfigPath / L"TextLinebreakFix.toml";
 		}
-		const auto pluginConfig = toml::parse(pluginConfigPath);
+		const auto pluginConfig = toml::uparse(pluginConfigPath);
 
 		std::string linebreakMode = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.换行模式");
 		if (linebreakMode == "平均") {

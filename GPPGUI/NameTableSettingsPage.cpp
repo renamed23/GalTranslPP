@@ -47,7 +47,7 @@ QList<NameTableEntry> NameTableSettingsPage::readNameTable()
 	}
 
 	try {
-		const toml::ordered_value tbl = toml::parse<toml::ordered_type_config>(nameTablePath);
+		const toml::ordered_value tbl = toml::uoparse(nameTablePath);
 		for (const auto& [key, value] : tbl.as_table()) {
 			if (!value.is_array() || value.size() < 2 || !value[0].is_string() || !value[1].is_integer()) {
 				continue;

@@ -781,6 +781,18 @@ PluginRunTime choosePluginRunTime(const std::string& pluginNameLower, PluginRunT
     return defaultTime;
 }
 
+namespace toml {
+    toml::value uparse(const fs::path& path) {
+        std::ifstream ifs(path, std::ios::binary);
+        return toml::parse(ifs, wide2Ascii(path, 0, nullptr));
+    }
+
+    toml::ordered_value uoparse(const fs::path& path) {
+        std::ifstream ifs(path, std::ios::binary);
+        return toml::parse<toml::ordered_type_config>(ifs, wide2Ascii(path, 0, nullptr));
+    }
+}
+
 template toml::ordered_value& insertToml(toml::ordered_value& table, const std::string& path, const std::string& value);
 template toml::ordered_value& insertToml(toml::ordered_value& table, const std::string& path, const int& value);
 template toml::ordered_value& insertToml(toml::ordered_value& table, const std::string& path, const double& value);

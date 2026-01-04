@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     if (fs::exists(L"BaseConfig/globalConfig.toml")) {
         try {
-            _globalConfig = toml::parse<toml::ordered_type_config>(fs::path(L"BaseConfig/globalConfig.toml"));
+            _globalConfig = toml::uoparse(fs::path(L"BaseConfig/globalConfig.toml"));
         }
         catch (...) {
             QMessageBox::critical(this, tr("解析错误"), tr("基本配置文件不符合 toml 规范！"), QMessageBox::Ok);
@@ -398,7 +398,7 @@ void MainWindow::_onNewProjectTriggered()
     }
 
     try {
-        toml::ordered_value configData = toml::parse<toml::ordered_type_config>(newProjectDir / L"config.toml");
+        toml::ordered_value configData = toml::uoparse(newProjectDir / L"config.toml");
 
         auto addCommonDictsToProjectConfig = [&](const std::string& globalConfigKey, const std::string& projectConfigKey)
             {

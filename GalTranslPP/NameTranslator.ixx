@@ -173,7 +173,7 @@ void NameTranslator::run(const fs::path& nameTablePath) {
     // 1. 读取 TOML
     toml::ordered_value nameTableData;
     try {
-        nameTableData = toml::parse<toml::ordered_type_config>(nameTablePath);
+        nameTableData = toml::uoparse(nameTablePath);
     }
     catch (const toml::exception& e) {
         m_logger->error("NameTrans: 解析人名表失败: {}", e.what());

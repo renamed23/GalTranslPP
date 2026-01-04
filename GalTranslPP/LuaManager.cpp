@@ -359,7 +359,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 		{
 			sol::state_view lua = s;
 			try {
-				toml::value tomlValue = toml::parse(path);
+				toml::value tomlValue = toml::uparse(path);
 				return std::make_tuple(LuaToml::tomlValue2SolObject(tomlValue, lua), std::nullopt);
 			}
 			catch (const toml::exception& e) {

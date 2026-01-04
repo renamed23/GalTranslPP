@@ -68,8 +68,8 @@ void PDFTranslator::init()
     m_pdfOutputDir = m_projectDir / L"gt_output";
 
     try {
-        const auto projectConfig = toml::parse(m_projectDir / L"config.toml");
-        const auto pluginConfig = toml::parse(filePluginConfigPath / L"PDF.toml");
+        const auto projectConfig = toml::uparse(m_projectDir / L"config.toml");
+        const auto pluginConfig = toml::uparse(filePluginConfigPath / L"PDF.toml");
 
         m_bilingualOutput = parseToml<bool>(projectConfig, pluginConfig, "plugins.PDF.输出双语翻译文件");
 

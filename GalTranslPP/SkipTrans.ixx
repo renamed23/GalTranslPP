@@ -59,7 +59,7 @@ SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfi
         if (!fs::exists(pluginConfigPath)) {
             pluginConfigPath = textPluginConfigPath / L"SkipTrans.toml";
         }
-        const auto pluginConfig = toml::parse(pluginConfigPath);
+        const auto pluginConfig = toml::uparse(pluginConfigPath);
 
         m_skipH = parseToml<bool>(projectConfig, pluginConfig, "plugins.SkipTrans.skipH");
         if (m_skipH) {
