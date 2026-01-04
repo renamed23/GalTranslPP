@@ -48,6 +48,8 @@ export {
         RegexPattern(RegexPattern&& other) {
             org = std::move(other.org);
             rep = std::move(other.rep);
+            callbackPatterns = std::move(other.callbackPatterns);
+            isCallback = other.isCallback;
             rep.setRegexObject(&org);
         }
     };
