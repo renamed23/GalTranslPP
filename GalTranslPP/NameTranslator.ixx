@@ -200,20 +200,17 @@ void NameTranslator::run(const fs::path& nameTablePath) {
 
     m_logger->info("NameTrans: 共发现 {} 个待翻译的名字。", namesToTranslate.size());
     m_controller->makeBar((int)namesToTranslate.size(), 1);
-    m_controller->addThreadNum();
 
     // 3. 分批处理 (单线程)
     constexpr size_t BATCH_SIZE = 50; // 每批 50 个名字
     std::unordered_map<std::string, std::string> translationResults;
 
+    m_controller->addThreadNum();
     for (size_t i = 0; i < namesToTranslate.size(); i += BATCH_SIZE) {
         if (m_controller->shouldStop()) break;
-
         size_t end = std::min(i + BATCH_SIZE, namesToTranslate.size());
         std::vector<std::string> currentBatch(namesToTranslate.begin() + i, namesToTranslate.begin() + end);
-
         translateBatch(currentBatch, translationResults);
-
         m_controller->updateBar((int)currentBatch.size());
     }
     m_controller->reduceThreadNum();

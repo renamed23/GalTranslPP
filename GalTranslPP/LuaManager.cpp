@@ -443,21 +443,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 						classPtr->m_controller->reduceThreadNum();
 					}));
 			}
-			std::exception_ptr firstException = nullptr;
-			for (auto& result : results) {
-				try {
-					result.get();
-				}
-				catch (...) {
-					classPtr->m_threadPool.stop();
-					if (!firstException) {
-						firstException = std::current_exception();
-					}
-				}
-			}
-			if (firstException) {
-				std::rethrow_exception(firstException);
-			}
+			waitForThreads(self, results);
 		};
 	lua.new_usertype<IController>("IController",
 		"makeBar", &IController::makeBar,

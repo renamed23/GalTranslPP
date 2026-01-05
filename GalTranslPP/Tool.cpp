@@ -19,6 +19,7 @@
 #include <boost/crc.hpp>
 #include <toml.hpp>
 #include <cpp-base64/base64.cpp>
+#include <ctpl_stl.h>
 
 #include <opencc/opencc.h>
 #pragma comment(lib, "marisa.lib")
@@ -790,6 +791,24 @@ namespace toml {
     toml::ordered_value uoparse(const fs::path& path) {
         std::ifstream ifs(path, std::ios::binary);
         return toml::parse<toml::ordered_type_config>(ifs, wide2Ascii(path, 0, nullptr));
+    }
+}
+
+void waitForThreads(ctpl::thread_pool& pool, std::vector<std::future<void>>& results) {
+    std::exception_ptr firstException = nullptr;
+    for (auto& result : results) {
+        try {
+            result.get();
+        }
+        catch (...) {
+            if (!firstException) {
+                pool.stop();
+                firstException = std::current_exception();
+            }
+        }
+    }
+    if (firstException) {
+        std::rethrow_exception(firstException);
     }
 }
 

@@ -374,13 +374,10 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
                 m_controller->reduceThreadNum();
             }));
     }
-    for (auto& res : results) {
-        res.get();
-    }
+    waitForThreads(pool, results);
 
     if (m_controller->shouldStop()) {
-        m_logger->info("任务终止，将不会生成字典文件。");
-        return;
+        m_logger->info("任务终止，将保存已经生成的字典结果。");
     }
     m_logger->info("阶段四：整理并保存结果...");
     std::vector<std::tuple<std::string, std::string, std::string>> finalList;

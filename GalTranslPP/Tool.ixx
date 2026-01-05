@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 #include <unicode/uscript.h>
+#include <ctpl_stl.h>
 #include <toml.hpp>
 
 export module Tool;
@@ -113,6 +114,8 @@ export {
     bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& isCompatible);
 
     PluginRunTime choosePluginRunTime(const std::string& pluginNameLower, PluginRunTime defaultTime);
+
+    void waitForThreads(ctpl::thread_pool& pool, std::vector<std::future<void>>& results);
 
     template<typename T>
     T calculateAbs(T a, T b) {

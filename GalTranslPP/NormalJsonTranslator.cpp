@@ -1464,21 +1464,7 @@ void NormalJsonTranslator::process(std::vector<fs::path> relFilePaths) {
             }));
     }
     m_logger->info("已将 {} 个文件任务分配到线程池，等待处理完成...", results.size());
-    std::exception_ptr firstException = nullptr;
-    for (auto& result : results) {
-        try {
-            result.get();
-        }
-        catch (...) {
-            if (!firstException) {
-                m_threadPool.stop();
-                firstException = std::current_exception();
-            }
-        }
-    }
-    if (firstException) {
-        std::rethrow_exception(firstException);
-    }
+    waitForThreads(m_threadPool, results);
 }
 
 void NormalJsonTranslator::run() {

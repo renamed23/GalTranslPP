@@ -16,12 +16,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 修复了 Epub callback 正则处理失败的 bug",
-        "2. 修复了在读取含非本地字符集字符路径的 toml 时失败的 bug",
-        "3. 修复了在项目更名后一些设置生效错误的 bug",
-        "v2.3.0 更新",
-        "1. 完全取消了预处理和后处理插件的区别，改为指定执行时机。",
-        "2. 自定义插件的接口因此有所变动，与之前版本不再不兼容。",
+        "1. 优化 GenDict 在 停止翻译 后的保存逻辑。",
 
     };
 
