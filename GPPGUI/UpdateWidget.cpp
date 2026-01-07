@@ -17,7 +17,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
         "1. 优化 GenDict 在 停止翻译 后的保存逻辑。",
-
+        "2. 修复字典未使用检查的一处 bug",
     };
 
     mainLayout->addWidget(updateTitle);

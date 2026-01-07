@@ -191,7 +191,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
 
     // 6. 字典未使用
     if (m_problems.dictUnused.use) {
-        m_gptDictionary->checkDicUse(sentence, m_problems.dictUnused.base, m_problems.dictUnused.check);
+        m_gptDictionary->checkDictUse(sentence, m_problems.dictUnused.base, m_problems.dictUnused.check);
     }
 
     // 7. 语言不通

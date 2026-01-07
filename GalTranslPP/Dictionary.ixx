@@ -55,7 +55,7 @@ export {
 
         std::string doReplace(const Sentence* se, CachePart targetToModify);
 
-        void checkDicUse(Sentence* sentence, CachePart base, CachePart check);
+        void checkDictUse(Sentence* sentence, CachePart base, CachePart check);
     };
 
 
@@ -258,7 +258,7 @@ uint8_t checkTransIncludeReplace(const std::string& trans, const std::string& re
         }) ? 1 : 2;
 }
 
-void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart check) {
+void GptDictionary::checkDictUse(Sentence* sentence, CachePart base, CachePart check) {
     const std::string& origText = chooseStringRef(sentence, base);
     const std::string& transView = chooseStringRef(sentence, check);
 
@@ -281,8 +281,8 @@ void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart ch
                 {
                     return checkResults[otherEntryIndex] == 1;
                 });
-            GptDictEntry& otherEntryRef = m_entries[*it];
             if (it != entry.otherEntriesWhoseSearchStrContainsThatInThisEntry->end()) {
+                GptDictEntry& otherEntryRef = m_entries[*it];
                 sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用，但使用了 " +
                     otherEntryRef.searchStr + "->" + otherEntryRef.replaceStr + " 这一包含性字典");
                 continue;
@@ -306,15 +306,15 @@ void GptDictionary::checkDicUse(Sentence* sentence, CachePart base, CachePart ch
                 }
             };
 
-        std::optional<std::reference_wrapper<WordPosVec>> wordPosVecRef;
+        WordPosVec* pWordPosVec = nullptr;
         {
             std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
             if (auto it = m_tokenizeCacheMap.find(origText); it != m_tokenizeCacheMap.end()) {
-                wordPosVecRef = it->second;
+                pWordPosVec = &it->second;
             }
         }
-        if (wordPosVecRef.has_value()) {
-            checkTokenFunc(wordPosVecRef.value().get());
+        if (pWordPosVec) {
+            checkTokenFunc(*pWordPosVec);
         }
         else {
             NLPResult tokens = m_tokenizeSourceLangFunc(origText);
@@ -369,8 +369,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
                 if (!*entry.searchReg) {
                     throw std::runtime_error(std::format("Normal 字典文件格式错误(正则表达式错误): {}  ——  {}", wide2Ascii(filePath), str));
                 }
-                const std::string replaceModifier = toml::find_or(el, "replace_modifier", defaultRegReplaceModifier);
-                entry.replaceModifier = std::make_unique<std::string>(replaceModifier);
+                entry.replaceModifier = std::make_unique<std::string>(toml::find_or(el, "replace_modifier", defaultRegReplaceModifier));
             }
             else {
                 entry.searchStr = str;
