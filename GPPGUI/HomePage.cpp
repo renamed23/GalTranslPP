@@ -193,7 +193,7 @@ HomePage::HomePage(toml::ordered_value& globalConfig, QWidget* parent)
     else {
         connect(homeCard1, &ElaPopularCard::popularCardButtonClicked, this, [=]() 
             {
-                QDesktopServices::openUrl(QUrl("https://github.com/crskycode/GARbro"));
+                QDesktopServices::openUrl(QUrl("https://github.com/morkt/GARbro"));
             });
         homeCard1->setTitle("GARbro");
         homeCard1->setSubTitle("无敌了");
