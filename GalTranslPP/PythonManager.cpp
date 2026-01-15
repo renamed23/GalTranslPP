@@ -35,6 +35,7 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
         .value("DeepseekJson", TransEngine::DeepseekJson)
         .value("Sakura", TransEngine::Sakura)
         .value("DumpName", TransEngine::DumpName)
+        .value("NameTrans", TransEngine::NameTrans)
         .value("GenDict", TransEngine::GenDict)
         .value("Rebuild", TransEngine::Rebuild)
         .value("ShowNormal", TransEngine::ShowNormal)

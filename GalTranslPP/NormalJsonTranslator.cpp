@@ -405,7 +405,7 @@ void NormalJsonTranslator::init()
                 const auto overwriteCompareObj = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "overwriteCompareObj");
                 if (overwriteCompareObj) {
                     for (const auto& tbl : *overwriteCompareObj) {
-                        std::string problemKey = toml::find_or(tbl, "problemKey", "");
+                        const std::string problemKey = toml::find_or(tbl, "problemKey", "");
                         if (problemKey.empty()) {
                             continue;
                         }
@@ -804,7 +804,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 showNormalObj["other_info"] = se.other_info;
             }
             showNormalObj["pre_processed_text"] = se.pre_processed_text;
-            showNormalJson.push_back(showNormalObj);
+            showNormalJson.push_back(std::move(showNormalObj));
             m_completedSentences++;
             m_controller->updateBar(); // ShowNormal
         }

@@ -279,6 +279,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 		"DeepseekJson", TransEngine::DeepseekJson,
 		"Sakura", TransEngine::Sakura,
 		"DumpName", TransEngine::DumpName,
+		"NameTrans", TransEngine::NameTrans,
 		"GenDict", TransEngine::GenDict,
 		"Rebuild", TransEngine::Rebuild,
 		"ShowNormal", TransEngine::ShowNormal
