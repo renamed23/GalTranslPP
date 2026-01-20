@@ -351,6 +351,13 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
                 pyEnvPathLineEdit->setText(QString(newPyEnvPath.wstring()));
             }
         });
+    //ElaPushButton* pyEnvRestartButtom = new ElaPushButton(tr("重启环境"), pyEnvPathArea);
+    //pyEnvPathLayout->addWidget(pyEnvRestartButtom);
+    //connect(pyEnvRestartButtom, &ElaPushButton::clicked, this, [=]()
+    //    {
+    //        QString pyEnvPathQStr = pyEnvPathLineEdit->text();
+    //        Q_EMIT restartPythonEnvSignal(pyEnvPathQStr);
+    //    });
     
 
 

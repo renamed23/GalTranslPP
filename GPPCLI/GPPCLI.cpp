@@ -28,38 +28,10 @@ int main(int argc, char* argv[])
 
     try {
         const auto globalConfig = toml::uparse(globalConfigPath);
-        const std::string& pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
+        const std::string pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
 
         const fs::path pyEnvPath = ascii2Wide(pyEnvPathStr);
-        if (fs::exists(pyEnvPath) && fs::exists(pyEnvPath / L"python.exe")) {
-            fs::path envZipPath;
-            for (const auto& entry : fs::directory_iterator(pyEnvPath)) {
-                if (isSameExtension(entry.path(), L".zip") && entry.path().filename().wstring().starts_with(L"python")) {
-                    envZipPath = entry.path();
-                    break;
-                }
-            }
-            if (!envZipPath.empty()) {
-                PyConfig config;
-                PyConfig_InitPythonConfig(&config);
-                PyConfig_SetString(&config, &config.home, fs::canonical(pyEnvPath).c_str());
-                PyConfig_SetString(&config, &config.executable, fs::canonical(pyEnvPath / L"python.exe").c_str());
-                PyConfig_SetString(&config, &config.pythonpath_env, envZipPath.c_str());
-                py::initialize_interpreter(&config);
-                py::detail::get_num_interpreters_seen() = 1;
-                {
-                    py::module_::import("sys").attr("path").attr("append")(wide2Ascii(fs::absolute(L"BaseConfig/pyScripts")));
-                    py::list sysPaths = py::module_::import("sys").attr("path");
-                    std::ofstream ofs(L"BaseConfig/pythonSysPaths.txt");
-                    for (const auto& path : sysPaths) {
-                        ofs << path.cast<std::string>() << std::endl;
-                    }
-                    ofs.close();
-                }
-                release = std::make_unique<py::gil_scoped_release>();
-            }
-        }
-        else {
+        if (!startUpPythonEnv(pyEnvPath, release)) {
             spdlog::info("未设置 Python 环境，将无法使用需要 Python 环境的模块。");
         }
     }
@@ -155,17 +127,12 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (release) {
-        release.reset();
-        py::finalize_interpreter();
-    }
+    shutDownPythonEnv(release);
 
     try {
         fs::remove(L"cache");
     }
-    catch (...) {
-
-    }
+    catch (...) { }
 
     spdlog::info("程序退出。");
     return 0;

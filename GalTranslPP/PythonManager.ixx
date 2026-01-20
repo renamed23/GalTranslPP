@@ -151,4 +151,7 @@ export {
 
     void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger>& logger);
 
+    bool startUpPythonEnv(const fs::path& pyEnvPath, std::unique_ptr<py::gil_scoped_release>& release);
+    void shutDownPythonEnv(std::unique_ptr<py::gil_scoped_release>& release);
+
 }

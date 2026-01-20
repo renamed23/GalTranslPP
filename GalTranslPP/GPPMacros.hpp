@@ -1,3 +1,6 @@
+﻿#ifndef GPPMACROS
+#define GPPMACROS
+
 #define _CRT_SECURE_NO_WARNINGS
 #define _RANGES_
 #define SPDLOG_WCHAR_FILENAMES
@@ -22,3 +25,5 @@ typedef jpcre2::select<char> jpc;
 { \
 	return sol::nested<decltype(className::memberName)>(self.memberName); \
 }, [](className& self, decltype(className::memberName) table) { self.memberName = std::move(table); }) 
+
+#endif

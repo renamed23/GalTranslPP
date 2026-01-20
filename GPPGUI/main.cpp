@@ -47,18 +47,18 @@ int main(int argc, char* argv[])
 
     QApplication a(argc, argv);
     QDir::setCurrent(QApplication::applicationDirPath());
+    std::unique_ptr<py::gil_scoped_release> release;
 
     try {
-        std::unique_ptr<py::gil_scoped_release> release;
         bool checkUpdate = true;
         bool allowMultiInstance = false;
         QTranslator translator;
         QTranslator qtBaseTranslator; // 用于翻译 Qt 内置对话框，如 QMessageBox 的按钮
         try {
-            toml::value globalConfig = toml::uparse(globalConfigPath);
+            const toml::value globalConfig = toml::uparse(globalConfigPath);
             checkUpdate = toml::find_or(globalConfig, "autoCheckUpdate", true);
             allowMultiInstance = toml::find_or(globalConfig, "allowMultiInstance", false);
-            std::string language = toml::find_or(globalConfig, "language", "zh_CN");
+            const std::string language = toml::find_or(globalConfig, "language", "zh_CN");
             if (language == "en") {
                 if (qtBaseTranslator.load("qt_en.qm", "translations")) {
                     a.installTranslator(&qtBaseTranslator);
@@ -68,41 +68,11 @@ int main(int argc, char* argv[])
                 }
             }
 
-            const std::string& pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
+            const std::string pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
             const fs::path pyEnvPath = ascii2Wide(pyEnvPathStr);
-            if (fs::exists(pyEnvPath) && fs::exists(pyEnvPath / L"python.exe")) {
-                fs::path envZipPath;
-                for (const auto& entry : fs::directory_iterator(pyEnvPath)) {
-                    if (isSameExtension(entry.path(), L".zip") && entry.path().filename().wstring().starts_with(L"python")) {
-                        envZipPath = entry.path();
-                        break;
-                    }
-                }
-                if (!envZipPath.empty()) {
-                    PyConfig config;
-                    PyConfig_InitPythonConfig(&config);
-                    PyConfig_SetString(&config, &config.home, fs::canonical(pyEnvPath).c_str());
-                    PyConfig_SetString(&config, &config.executable, fs::canonical(pyEnvPath / L"python.exe").c_str());
-                    PyConfig_SetString(&config, &config.pythonpath_env, envZipPath.c_str());
-                    py::initialize_interpreter(&config);
-                    py::detail::get_num_interpreters_seen() = 1;
-                    {
-                        py::module_::import("importlib.metadata");
-                        py::module_::import("sys").attr("path").attr("append")(wide2Ascii(fs::absolute(L"BaseConfig/pyScripts")));
-                        py::list sysPaths = py::module_::import("sys").attr("path");
-                        std::ofstream ofs(L"BaseConfig/pythonSysPaths.txt");
-                        for (const auto& path : sysPaths) {
-                            ofs << path.cast<std::string>() << std::endl;
-                        }
-                        ofs.close();
-                    }
-                    release = std::make_unique<py::gil_scoped_release>();
-                }
-            }
+            startUpPythonEnv(pyEnvPath, release);
         }
-        catch (...) {
-
-        }
+        catch (...) { }
 
         QCommandLineParser parser;
         parser.addHelpOption();
@@ -159,7 +129,7 @@ int main(int argc, char* argv[])
         }
 
         eApp->init();
-        MainWindow w;
+        MainWindow w{release};
 
         // 2. 创建 QLocalServer，用于接收来自新实例的消息
         QLocalServer server;
@@ -210,11 +180,7 @@ int main(int argc, char* argv[])
         }
 
         int result = a.exec();
-        if (release) {
-            PythonMainInterpreterManager::getInstance().stop();
-            release.reset();
-            py::finalize_interpreter();
-        }
+        shutDownPythonEnv(release);
 
         // 程序退出前，确保服务器关闭
         server.close();

@@ -513,3 +513,46 @@ void PythonManager::registerCustomTypes
     setupTokenizer("targetLang_");
     pythonModule.attr("logger") = m_logger;
 }
+
+bool startUpPythonEnv(const fs::path& pyEnvPath, std::unique_ptr<py::gil_scoped_release>& release) {
+    if (fs::exists(pyEnvPath) && fs::exists(pyEnvPath / L"python.exe")) {
+        fs::path envZipPath;
+        for (const auto& entry : fs::directory_iterator(pyEnvPath)) {
+            if (isSameExtension(entry.path(), L".zip") && entry.path().filename().wstring().starts_with(L"python")) {
+                envZipPath = entry.path();
+                break;
+            }
+        }
+        if (!envZipPath.empty()) {
+            PyConfig config;
+            PyConfig_InitPythonConfig(&config);
+            PyConfig_SetString(&config, &config.home, fs::canonical(pyEnvPath).c_str());
+            PyConfig_SetString(&config, &config.executable, fs::canonical(pyEnvPath / L"python.exe").c_str());
+            PyConfig_SetString(&config, &config.pythonpath_env, envZipPath.c_str());
+            py::initialize_interpreter(&config);
+            py::detail::get_num_interpreters_seen() = 1;
+            {
+                py::module_::import("importlib.metadata");
+                py::module_::import("sys").attr("path").attr("append")(wide2Ascii(fs::absolute(L"BaseConfig/pyScripts")));
+                py::list sysPaths = py::module_::import("sys").attr("path");
+                std::ofstream ofs(L"BaseConfig/pythonSysPaths.txt");
+                if (ofs.is_open()) {
+                    for (const auto& path : sysPaths) {
+                        ofs << path.cast<std::string>() << std::endl;
+                    }
+                }
+            }
+            release = std::make_unique<py::gil_scoped_release>();
+            return true;
+        }
+    }
+    return false;
+}
+
+void shutDownPythonEnv(std::unique_ptr<py::gil_scoped_release>& release) {
+    if (release) {
+        PythonMainInterpreterManager::getInstance().stop();
+        release.reset();
+        py::finalize_interpreter();
+    }
+}

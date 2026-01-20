@@ -1,6 +1,8 @@
 ﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#define PYBIND11_HEADERS
+#include "../GalTranslPP/GPPMacros.hpp"
 #include "ElaWindow.h"
 
 #include <QMainWindow>
@@ -18,13 +20,14 @@ class ElaContentDialog;
 class UpdateChecker;
 
 namespace fs = std::filesystem;
+namespace py = pybind11;
 
 class MainWindow : public ElaWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget* parent = nullptr);
+    MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget* parent = nullptr);
     ~MainWindow();
 
 public Q_SLOTS:
@@ -70,5 +73,6 @@ private:
     UpdateChecker* _updateChecker{nullptr};
 
     toml::ordered_value _globalConfig;
+    std::unique_ptr<py::gil_scoped_release>& _release;
 };
 #endif // MAINWINDOW_H

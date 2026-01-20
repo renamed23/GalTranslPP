@@ -31,9 +31,10 @@
 #include "SettingPage.h"
 
 import Tool;
+import PythonManager;
 
-MainWindow::MainWindow(QWidget* parent)
-    : ElaWindow(parent)
+MainWindow::MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget* parent)
+    : ElaWindow(parent), _release(release)
 {
     if (fs::exists(L"BaseConfig/globalConfig.toml")) {
         try {
@@ -255,6 +256,25 @@ void MainWindow::initContent()
     _commonPostDictPage = new CommonNormalDictPage("post", _globalConfig, this);
     
     _settingPage = new SettingPage(_globalConfig, this);
+    //connect(_settingPage, &SettingPage::restartPythonEnvSignal, this, [=](QString pyEnvPathQStr)
+    //    {
+    //        bool running = std::ranges::any_of(_projectPages, [](auto& page)
+    //            {
+    //                return page->getIsRunning();
+    //            });
+    //        if (running) {
+    //            ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("警告"), tr("有项目正在运行，请先停止运行！"), 3000);
+    //            return;
+    //        }
+    //        try {
+    //            shutDownPythonEnv(_release);
+    //            startUpPythonEnv(pyEnvPathQStr.toStdWString(), _release);
+    //            ElaMessageBar::success(ElaMessageBarType::TopRight, tr("成功"), tr("Python虚拟环境已重启"), 3000);
+    //        }
+    //        catch (...) {
+    //            ElaMessageBar::error(ElaMessageBarType::TopRight, tr("失败"), tr("Python虚拟环境重启失败"), 3000);
+    //        }
+    //    });
 
     addPageNode(tr("主页"), _homePage, ElaIconType::House);
 
@@ -275,7 +295,7 @@ void MainWindow::initContent()
     connect(_commonPostDictPage, &CommonNormalDictPage::commonDictsChanged, this, refreshCommonDicts);
 
     addExpanderNode(tr("项目管理"), _projectExpanderKey, ElaIconType::BriefcaseBlank);
-    const auto& projects = toml::find_or_default<toml::array>(_globalConfig, "projects");
+    const auto projects = toml::find_or_default<toml::array>(_globalConfig, "projects");
     for (const auto& project : projects) {
             if (project.is_string()) {
                 fs::path projectDir(ascii2Wide(project.as_string()));
@@ -546,7 +566,7 @@ void MainWindow::_onRemoveProjectTriggered()
 
 void MainWindow::_onDeleteProjectTriggered()
 {
-    QString pageKey = getCurrentNavigationPageKey();
+    const QString pageKey = getCurrentNavigationPageKey();
     auto it = std::ranges::find_if(_projectPages, [&](auto& page)
         {
             return page->property("ElaPageKey").toString() == pageKey;
@@ -581,8 +601,8 @@ void MainWindow::_onDeleteProjectTriggered()
 
     connect(&helpDialog, &ElaContentDialog::rightButtonClicked, this, [=]()
         {
-            fs::path projectDir = it->get()->getProjectDir();
-            QString projectName = it->get()->getProjectName();
+            const fs::path projectDir = it->get()->getProjectDir();
+            const QString projectName = it->get()->getProjectName();
             try {
                 fs::remove_all(projectDir);
             }
@@ -607,7 +627,7 @@ void MainWindow::_onDeleteProjectTriggered()
 
 void MainWindow::_onSaveProjectTriggered()
 {
-    QString pageKey = getCurrentNavigationPageKey();
+    const QString pageKey = getCurrentNavigationPageKey();
     auto it = std::ranges::find_if(_projectPages, [&](auto& page)
         {
             return page->property("ElaPageKey").toString() == pageKey;

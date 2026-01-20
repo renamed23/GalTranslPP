@@ -1,4 +1,4 @@
-#ifndef SETTINGPAGE_H
+﻿#ifndef SETTINGPAGE_H
 #define SETTINGPAGE_H
 
 #include <toml.hpp>
@@ -10,6 +10,9 @@ class SettingPage : public BasePage
 public:
     Q_INVOKABLE explicit SettingPage(toml::ordered_value& globalConfig, QWidget* parent = nullptr);
     ~SettingPage() override;
+
+Q_SIGNALS:
+    void restartPythonEnvSignal(QString path);
 
 private:
 
