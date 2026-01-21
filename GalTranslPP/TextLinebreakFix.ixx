@@ -215,6 +215,7 @@ void TextLinebreakFix::dPostRun(Sentence* se)
 		m_logger->debug("译文[{}]({}行) -> 修正后译文[{}]({}行)", origTransPreview, origLinebreakCount + 1, se->translated_preview, transLinebreakCount + 1);
 		return;
 	}
+	replaceStrInplace(transViewToModify, se->originalLinebreak, "");
 
 	auto removeRepeat = [](std::vector<size_t>& positions)
 		{
