@@ -51,9 +51,12 @@ export {
         void callLLMToGenerate(int segmentIndex, int threadId);
 
     public:
-        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
-            const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
+        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, 
+            const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
+            const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, 
+            const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
             int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota);
+
         void generate(const std::vector<fs::path>& jsonFiles, const fs::path& outputFilePath);
 
         ~DictionaryGenerator() {
@@ -65,8 +68,10 @@ export {
 
 module :private;
 
-DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
-    const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
+DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, 
+    const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
+    const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, 
+    const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
     int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota)
     : m_controller(controller), m_logger(logger), m_apiPool(apiPool), m_tokenizeSourceLangFunc(tokenizeFunc), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_dictgen.json"),
     m_preProcessFunc(preProcessFunc), m_onPerformApi(onPerformApi), m_systemPrompt(systemPrompt), m_userPrompt(userPrompt), m_apiStrategy(apiStrategy), m_targetLang(targetLang),
@@ -398,13 +403,27 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
     }
 
     // 去重
-    std::set<std::string> seen;
-    std::erase_if(finalList, [&](const auto& item)
+    std::map<std::string, std::string> seen;
+    std::erase_if(finalList, [&](std::tuple<std::string, std::string, std::string>& item)
         {
-            if (seen.contains(std::get<0>(item))) {
+            const auto& orgWord = std::get<0>(item);
+            auto& note = std::get<2>(item);
+            if (auto it = seen.find(orgWord); it != seen.end()) {
+                const auto& noteInSeen = it->second;
+                bool boy = false, girl = false;
+                if (noteInSeen.contains("男性") || note.contains("男性")) {
+                    boy = true;
+                }
+                if (noteInSeen.contains("女性") || note.contains("女性")) {
+                    girl = true;
+                }
+                if (boy && girl) {
+                    note += "，与其它字典存在性别争议";
+                    return false;
+                }
                 return true;
             }
-            seen.insert(std::get<0>(item));
+            seen.insert({ orgWord, note });
             return false;
         });
 
