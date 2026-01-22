@@ -16,7 +16,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 修复 TextLinebreakFix 在特定情况下多加换行的 bug。",
+        "1. 修复自动更新会覆盖默认提示词和字典的 bug。",
     };
 
     mainLayout->addWidget(updateTitle);

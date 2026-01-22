@@ -143,6 +143,13 @@ int main(int argc, char* argv[]) {
                 }
                 catch(...) { }
             }
+            std::set<std::string> excludePreFixes2;
+            for (const auto& preFix : excludePreFixes) {
+                excludePreFixes2.insert(replaceStr(preFix, "/", "\\"));
+            }
+            for (const auto& preFix : excludePreFixes2) {
+                excludePreFixes.insert(preFix);
+            }
             extractZipExclude(sourceZip.toStdWString(), targetDir.toStdWString(), excludePreFixes);
 
 #ifdef Q_OS_WIN
