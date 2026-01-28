@@ -33,8 +33,7 @@ export {
 		template <class... Args>
 		void operator()(Args&&...) const
 			requires(!std::is_invocable_v<MemDPreRun, Args...>)
-		{
-		}
+		{ }
 	};
 
 	template <>

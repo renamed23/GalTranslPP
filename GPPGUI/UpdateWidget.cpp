@@ -17,6 +17,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
         "1. 修复自动更新会覆盖默认提示词和字典的 bug。",
+        "2. 为 log 文件增加了最大大小限制",
     };
 
     mainLayout->addWidget(updateTitle);
@@ -31,4 +32,5 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
 UpdateWidget::~UpdateWidget()
 {
+
 }

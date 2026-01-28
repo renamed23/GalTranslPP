@@ -3,8 +3,8 @@
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 #include <toml.hpp>
-#include <spdlog/sinks/basic_file_sink.h>
 #include <sol/sol.hpp>
 
 module ITranslator;
@@ -71,12 +71,12 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::s
     }
     const auto configData = toml::uparse(configFilePath);
 
-    const std::string& filePlugin = toml::find_or(configData, "plugins", "filePlugin", "NormalJson");
-    const std::string& transEngine = toml::find_or(configData, "plugins", "transEngine", "ForGalJson");
+    const std::string filePlugin = toml::find_or(configData, "plugins", "filePlugin", "NormalJson");
+    const std::string transEngine = toml::find_or(configData, "plugins", "transEngine", "ForGalJson");
     // 日志配置
     spdlog::level::level_enum logLevel;
     bool saveLog = toml::find_or(configData, "common", "saveLog", true);
-    const std::string& logLevelStr = toml::find_or(configData, "common", "logLevel", "info");
+    const std::string logLevelStr = toml::find_or(configData, "common", "logLevel", "info");
     if (logLevelStr == "trace") {
         logLevel = spdlog::level::trace;
     }
@@ -99,20 +99,24 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::s
         throw std::runtime_error("Invalid log level");
     }
 
+    constexpr size_t LOG_FILE_MAX_SIZE_DEFAULT = 1024 * 1024 * 10;
+    const size_t logFileMaxSize = toml::find_or(configData, "common", "logFileMaxSize", LOG_FILE_MAX_SIZE_DEFAULT);
+    const size_t maxRotateFiles = toml::find_or(configData, "common", "maxRotateFiles", 1);
+
     std::shared_ptr<ControllerSink<std::mutex>> controllerSink = std::make_shared<ControllerSink<std::mutex>>(controller);
     std::vector<spdlog::sink_ptr> sinks = { controllerSink };
     if (saveLog) {
         fs::create_directories(projectDir / L"logs");
         for (size_t i = 5; i-- > 0;) {                      // NormalJson_4.log
-            fs::path logFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_" + std::to_wstring(i) + L".log");
-            fs::path newLogFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_" + std::to_wstring(i + 1) + L".log");
+            const fs::path logFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_" + std::to_wstring(i) + L".log");
+            const fs::path newLogFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_" + std::to_wstring(i + 1) + L".log");
             if (!fs::exists(logFilePath)) {
                 continue;
             }
             fs::rename(logFilePath, newLogFilePath);
         }
-        fs::path logFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_0.log");
-        sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.wstring(), true));
+        const fs::path logFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_0.log");
+        sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logFilePath.wstring(), logFileMaxSize, maxRotateFiles));
     }
     std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(wide2Ascii(projectDir) + "-" + transEngine + "-Logger", sinks.begin(), sinks.end());
     //spdlog::register_logger(logger);
@@ -124,9 +128,9 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::s
     logger->info("Logger initialized.");
     // 日志配置结束
 
-    std::string filePluginLower = str2Lower(filePlugin);
+    const std::string filePluginLower = str2Lower(filePlugin);
     if (filePluginLower.ends_with(".lua")) {
-        const std::string& baseClassName = toml::find_or(configData, "plugins", "baseClassName", "NormalJson");
+        const std::string baseClassName = toml::find_or(configData, "plugins", "baseClassName", "NormalJson");
         const std::string scriptFileName = replaceStr(filePlugin, "<PROJECT_DIR>", wide2Ascii(projectDir));
         if (baseClassName == "NormalJson") {
             std::unique_ptr<ITranslator> translator = std::make_unique<LuaTranslator<NormalJsonTranslator>>(
@@ -148,7 +152,7 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::s
         }
     }
     else if (filePluginLower.ends_with(".py")) {
-        const std::string& baseClassName = toml::find_or(configData, "plugins", "baseClassName", "NormalJson");
+        const std::string baseClassName = toml::find_or(configData, "plugins", "baseClassName", "NormalJson");
         const std::string scriptFileName = replaceStr(filePlugin, "<PROJECT_DIR>", wide2Ascii(projectDir));
         if (baseClassName == "NormalJson") {
             std::unique_ptr<ITranslator> translator = std::make_unique<PythonTranslator<NormalJsonTranslator>>(

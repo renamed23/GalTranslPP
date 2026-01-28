@@ -318,7 +318,7 @@ void StartSettingsPage::_setupUI()
 				processLogFunc(post);
 			}
 			else {
-				if (log.length() > 512 * 3) {
+				if (log.length() > 512 * 3 || log.count('\n') > 30) {
 					tempCursor.insertText(log);
 				}
 				else {

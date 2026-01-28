@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 
 export {
 
-	template<typename Base>
-	class LuaTranslator : public Base {
+	template<typename BaseTranslator>
+	class LuaTranslator : public BaseTranslator {
 	private:
 		std::shared_ptr<LuaStateInstance> m_luaState;
 		sol::function m_luaRunFunc;
@@ -39,8 +39,8 @@ export {
 		}
 
 		template <typename... Args>
-		LuaTranslator(const std::string& scriptPath, Args&&... baseArgs) :
-			Base(std::forward<Args>(baseArgs)...), m_scriptPath(scriptPath)
+		LuaTranslator(const std::string& scriptPath, Args&&... args) :
+			BaseTranslator(std::forward<Args>(args)...), m_scriptPath(scriptPath)
 		{
 			m_translatorName = wide2Ascii(fs::path(ascii2Wide(m_scriptPath)).filename());
 			// m_inputDir = L"cache" / projectDir.filename() / (ascii2Wide(m_translatorName) + L"_json_input");
@@ -59,11 +59,11 @@ export {
 
 			sol::state& luaState = *(m_luaState->lua);
 
-			luaState.new_usertype<LuaTranslator<Base>>("LuaTranslator",
+			luaState.new_usertype<LuaTranslator<BaseTranslator>>("LuaTranslator",
 				sol::base_classes, sol::bases<ITranslator,
-				std::conditional_t<std::is_base_of_v<NormalJsonTranslator, Base>, NormalJsonTranslator, void>,
-				std::conditional_t<std::is_base_of_v<EpubTranslator, Base>, EpubTranslator, void>,
-				std::conditional_t<std::is_base_of_v<PDFTranslator, Base>, PDFTranslator, void>
+				std::conditional_t<std::is_base_of_v<NormalJsonTranslator, BaseTranslator>, NormalJsonTranslator, void>,
+				std::conditional_t<std::is_base_of_v<EpubTranslator, BaseTranslator>, EpubTranslator, void>,
+				std::conditional_t<std::is_base_of_v<PDFTranslator, BaseTranslator>, PDFTranslator, void>
 				>()
 			);
 			luaState["luaTranslator"] = this;

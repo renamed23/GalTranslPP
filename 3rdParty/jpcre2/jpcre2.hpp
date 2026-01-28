@@ -1580,9 +1580,9 @@ struct select{
         ///@return Last error message
         virtual String getErrorMessage() const  {
             #if JPCRE2_USE_MINIMUM_CXX_11
-            return select<Char, Map>::getErrorMessage(error_number, error_offset);
+            return select<Char, Map>::getErrorMessage(error_number, (int)error_offset);
             #else
-            return select<Char>::getErrorMessage(error_number, error_offset);
+            return select<Char>::getErrorMessage(error_number, (int)error_offset);
             #endif
         }
 

@@ -18,8 +18,8 @@ namespace py = pybind11;
 
 export {
 
-	template<typename Base>
-	class PythonTranslator : public Base {
+	template<typename BaseTranslator>
+	class PythonTranslator : public BaseTranslator {
 	private:
 		std::shared_ptr<PythonInterpreterInstance> m_pythonInterpreter;
 		py::object* m_pythonRunFunc;
@@ -43,7 +43,7 @@ export {
 
 		template<typename... Args>
 		PythonTranslator(const std::string& modulePath, Args&&... args) :
-			Base(std::forward<Args>(args)...), m_modulePath(modulePath)
+			BaseTranslator(std::forward<Args>(args)...), m_modulePath(modulePath)
 		{
 			bool needRoot = false;
 			this->m_pythonTranslator = true;
@@ -66,7 +66,7 @@ export {
 						const fs::path stdModulePath = fs::weakly_canonical(ascii2Wide(m_modulePath));
 						const std::string moduleName = wide2Ascii(stdModulePath.stem());
 						py::module_ pythonTranslatorModule = py::module_::import(moduleName.c_str());
-						pythonTranslatorModule.attr("pythonTranslator") = (Base*)this;
+						pythonTranslatorModule.attr("pythonTranslator") = (BaseTranslator*)this;
 						(*(m_pythonInterpreter->functions["init"]))();
 					}
 					catch (const pybind11::error_already_set& e) {

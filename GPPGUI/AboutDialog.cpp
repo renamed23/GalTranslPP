@@ -40,7 +40,7 @@ AboutDialog::AboutDialog(QWidget* parent)
     ElaText* licenseText = new ElaText("Apache License 2.0", this);
     licenseText->setWordWrap(false);
     licenseText->setTextPixelSize(14);
-    ElaText* copyrightText = new ElaText(tr("版权所有 © 2025 julixian"), this);
+    ElaText* copyrightText = new ElaText(tr("版权所有 © 2025-2026 julixian"), this);
     copyrightText->setWordWrap(false);
     copyrightText->setTextPixelSize(14);
 
