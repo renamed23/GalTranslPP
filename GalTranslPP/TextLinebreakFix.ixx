@@ -139,7 +139,7 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 			throw std::runtime_error(std::format("TextLinebreakFix-{} 报错阈值必须大于0", pluginRunTimeNames[m_runTime]));
 		}
 
-		m_logger->info("已加载插件 TextLinebreakFix-{}, 换行模式: {}, 优先阈值 {:.2f}, 分段字数阈值: {}, 强制修复: {}, 报错阈值: {}", 
+		m_logger->info("已加载插件 TextLinebreakFix-{}, 换行模式: {}, 优先阈值 {:.3f}, 分段字数阈值: {}, 强制修复: {}, 报错阈值: {}", 
 			pluginRunTimeNames[m_runTime], linebreakMode, m_priorityThreshold, m_segmentThreshold, m_forceFix, m_errorThreshold);
 		if (m_useTokenizer) {
 			m_logger->info("插件 TextLinebreakFix-{} 分词器已启用", pluginRunTimeNames[m_runTime]);
