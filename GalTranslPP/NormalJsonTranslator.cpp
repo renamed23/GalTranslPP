@@ -558,12 +558,12 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
         }
     }
 
-    if (!se->notAnalyzeProblem) {
-        m_problemAnalyzer->analyze(se);
-    }
-
     for (auto& plugin : m_textPlugins) {
         plugin->dPostRun(se);
+    }
+
+    if (!se->notAnalyzeProblem) {
+        m_problemAnalyzer->analyze(se);
     }
 
     std::erase_if(se->problems, [&](std::string& problem)
@@ -746,10 +746,10 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
     m_logger->debug("[线程 {}] 开始处理文件: {}", threadId, wide2Ascii(relInputPath));
 
     std::ifstream ifs;
-    fs::path inputPath = m_needsCombining ? (m_inputCacheDir / relInputPath) : (m_inputDir / relInputPath);
-    fs::path outputPath = m_needsCombining ? (m_outputCacheDir / relInputPath) : (m_outputDir / relInputPath);
-    fs::path cachePath = m_transCacheDir / relInputPath;
-    fs::path showNormalPath = m_projectDir / L"gt_show_normal" / relInputPath;
+    const fs::path inputPath = m_needsCombining ? (m_inputCacheDir / relInputPath) : (m_inputDir / relInputPath);
+    const fs::path outputPath = m_needsCombining ? (m_outputCacheDir / relInputPath) : (m_outputDir / relInputPath);
+    const fs::path cachePath = m_transCacheDir / relInputPath;
+    const fs::path showNormalPath = m_projectDir / L"gt_show_normal" / relInputPath;
 
     createParent(outputPath);
     createParent(cachePath);

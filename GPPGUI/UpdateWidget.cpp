@@ -18,6 +18,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     QStringList updateList = {
         "1. 修复自动更新会覆盖默认提示词和字典的 bug。",
         "2. 为 log 文件增加了最大大小限制",
+        "3. 问题检查改为 dPostRun 之后进行",
     };
 
     mainLayout->addWidget(updateTitle);

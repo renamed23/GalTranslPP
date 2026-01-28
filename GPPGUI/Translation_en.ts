@@ -140,8 +140,9 @@
     </message>
     <message>
         <location filename="AboutDialog.cpp" line="43"/>
-        <source>版权所有 © 2025 julixian</source>
-        <translation>All rights reserved © 2025 julixian</translation>
+        <source>版权所有 © 2025-2026 julixian</source>
+        <oldsource>版权所有 © 2025 julixian</oldsource>
+        <translation type="unfinished">All rights reserved © 2025 julixian</translation>
     </message>
     <message>
         <location filename="AboutDialog.cpp" line="54"/>
