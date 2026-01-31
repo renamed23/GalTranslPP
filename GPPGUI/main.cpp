@@ -9,6 +9,7 @@
 #include <QSharedMemory>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QNetworkProxyFactory>
 
 #ifdef Q_OS_WIN
 #include <Windows.h>
@@ -48,6 +49,8 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     QDir::setCurrent(QApplication::applicationDirPath());
     std::unique_ptr<py::gil_scoped_release> release;
+
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     try {
         bool checkUpdate = true;

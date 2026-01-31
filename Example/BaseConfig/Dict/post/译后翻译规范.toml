@@ -9,7 +9,7 @@ priority = 0
 [[normalDict]]
 org = '娘家'
 rep = '本家'
-conditionTarget = 'orig_text'
+conditionTarget = 'preproc_text'
 conditionReg = '実家'
 isReg = false
 priority = 0
@@ -17,7 +17,7 @@ priority = 0
 [[normalDict]]
 org = '有夫之妇'
 rep = '人妻'
-conditionTarget = 'orig_text'
+conditionTarget = 'preproc_text'
 conditionReg = '人妻|ひとづま'
 isReg = false
 priority = 0
@@ -25,8 +25,8 @@ priority = 0
 [[normalDict]]
 org = '撒旦'
 rep = '魔王'
-conditionTarget = 'orig_text'
-conditionReg = '^(?!.*サタン).*$'
+conditionTarget = 'preproc_text'
+conditionReg = '\A(?![\S\s]*サタン)'
 isReg = false
 priority = 0
 

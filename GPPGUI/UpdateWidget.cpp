@@ -16,9 +16,9 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 修复自动更新会覆盖默认提示词和字典的 bug。",
-        "2. 为 log 文件增加了最大大小限制",
-        "3. 问题检查改为 dPostRun 之后进行",
+        "1. 更新检测/下载时也会调用自动系统代理了",
+        "2. 默认正则编译参数增加 DotAll 特性",
+
     };
 
     mainLayout->addWidget(updateTitle);

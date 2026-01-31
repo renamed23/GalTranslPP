@@ -1,24 +1,16 @@
 [[normalDict]]
-org = '^“([\S\s]*)”$'
+org = '\A“([\S\s]*)”\z'
 rep = '『$1』'
 conditionTarget = 'preproc_text'
-conditionReg = '^『[\S\s]*』$'
+conditionReg = '\A『[\S\s]*』\z'
 isReg = true
 priority = 1
 
 [[normalDict]]
-org = '^“([\S\s]*)”$'
+org = '\A“([\S\s]*)”\z'
 rep = '「$1」'
 conditionTarget = 'preproc_text'
-conditionReg = '^「[\S\s]*」$'
+conditionReg = '\A「[\S\s]*」\z'
 isReg = true
 priority = 1
-
-[[normalDict]]
-org = '。」'
-rep = '」'
-conditionTarget = 'preproc_text'
-conditionReg = '.*(?<!。」)$'
-isReg = false
-priority = 0
 
