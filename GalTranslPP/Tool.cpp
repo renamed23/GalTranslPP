@@ -544,12 +544,11 @@ std::function<std::string(const std::string&)> getTraditionalChineseExtractor(st
     // 是否需要线程安全？(似乎是不需要)
     try {
         std::shared_ptr<opencc::SimpleConverter> converter = std::make_shared<opencc::SimpleConverter>("BaseConfig/opencc/t2s.json");
+        const std::set<std::string> excludeList = {
+            "乾", "阪"
+        };
         std::function<std::string(const std::string&)> result = [=](const std::string& sourceString)
             {
-                static const std::set<std::string> excludeList =
-                {
-                    "乾", "阪"
-                };
                 std::string resultStr;
                 std::vector<std::string> graphemes = splitIntoGraphemes(sourceString);
                 for (const auto& grapheme : graphemes | std::views::filter([&](const std::string& g) { return !excludeList.contains(g); })) {
@@ -575,14 +574,13 @@ std::function<std::string(const std::string&)> getTraditionalChineseExtractor(st
             throw std::runtime_error("ICU-based simplified Chinese conversion is not available");
         }
 
+        // 白名单/排除列表：用于解决简繁转换中的歧义问题。
+        // "著" (U+8457) 是一个典型例子，它在简体中文里也是合法字符，但T->S的转换规则可能导致误判。
+        const std::set<UChar32> excludeList = {
+            U'著', U'乾', U'阪',
+        };
         std::function<std::string(const std::string&)>result = [=](const std::string& sourceString)
             {
-                // 白名单/排除列表：用于解决简繁转换中的歧义问题。
-                // "著" (U+8457) 是一个典型例子，它在简体中文里也是合法字符，但T->S的转换规则可能导致误判。
-                static const std::set<UChar32> excludeList = {
-                    U'著', U'乾', U'阪',
-                };
-
                 icu::UnicodeString uSource = icu::UnicodeString::fromUTF8(sourceString);
                 std::set<UChar32> traditionalChars;
 
@@ -643,11 +641,11 @@ std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadToken
             result = json::parse(ifs).get<decltype(result)>();
         }
         else {
-            logger->debug("未找到分词缓存 {}", wide2Ascii(cachePath));
+            logger->debug("未找到分词缓存 {}", wide2Ascii(cachePath, 65001, nullptr));
         }
     }
     catch (...) {
-        logger->error("读取分词缓存 {} 失败", wide2Ascii(cachePath));
+        logger->error("读取分词缓存 {} 失败", wide2Ascii(cachePath, 65001, nullptr));
     }
     return result;
 }
@@ -659,10 +657,10 @@ void saveTokenizeCache
         std::ofstream ofs(cachePath);
         ofs << j.dump(2);
         ofs.close();
-        logger->debug("分词缓存已保存到 {}", wide2Ascii(cachePath));
+        logger->debug("分词缓存已保存到 {}", wide2Ascii(cachePath, 65001, nullptr));
     }
     catch (...) {
-        logger->error("分词缓存 {} 保存失败", wide2Ascii(cachePath));
+        logger->error("分词缓存 {} 保存失败", wide2Ascii(cachePath, 65001, nullptr));
     }
 }
 
@@ -670,21 +668,21 @@ void extractFileFromZip(const fs::path& zipPath, const fs::path& outputDir, cons
     bit7z::Bit7zLibrary library{ "7z.dll" };
     bit7z::BitFileExtractor extractor{ library, bit7z::BitFormat::Auto };
     extractor.setOverwriteMode(bit7z::OverwriteMode::Overwrite);
-    extractor.extractMatching(wide2Ascii(zipPath), fileName, wide2Ascii(outputDir));
+    extractor.extractMatching(wide2Ascii(zipPath, 65001, nullptr), fileName, wide2Ascii(outputDir, 65001, nullptr));
 }
 
 void extractZip(const fs::path& zipPath, const fs::path& outputDir) {
     bit7z::Bit7zLibrary library{ "7z.dll" };
     bit7z::BitFileExtractor extractor{ library, bit7z::BitFormat::Auto };
     extractor.setOverwriteMode(bit7z::OverwriteMode::Overwrite);
-    extractor.extract(wide2Ascii(zipPath), wide2Ascii(outputDir));
+    extractor.extract(wide2Ascii(zipPath, 65001, nullptr), wide2Ascii(outputDir, 65001, nullptr));
 }
 
 void extractZipExclude(const fs::path& zipPath, const fs::path& outputDir, const std::set<std::string>& excludePrefixes) {
     bit7z::Bit7zLibrary library{ "7z.dll" };
     std::vector<uint32_t> indices;
 
-    bit7z::BitArchiveReader archive{ library, wide2Ascii(zipPath) };
+    bit7z::BitArchiveReader archive{ library, wide2Ascii(zipPath, 65001, nullptr) };
     for (const auto& item : archive) {
         if (
             std::ranges::any_of(excludePrefixes, [&](const std::string& prefix) { return item.path().starts_with(prefix); })
@@ -697,7 +695,7 @@ void extractZipExclude(const fs::path& zipPath, const fs::path& outputDir, const
 
     bit7z::BitFileExtractor extractor{ library, bit7z::BitFormat::Auto };
     extractor.setOverwriteMode(bit7z::OverwriteMode::Overwrite);
-    extractor.extractItems(wide2Ascii(zipPath), indices, wide2Ascii(outputDir));
+    extractor.extractItems(wide2Ascii(zipPath, 65001, nullptr), indices, wide2Ascii(outputDir, 65001, nullptr));
 }
 
 uint64_t calculateFileCRC64(const fs::path& filePath) {
