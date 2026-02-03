@@ -18,7 +18,7 @@
 
 #ifdef PCRE2_HEADERS
 #include <jpcre2.hpp>
-typedef jpcre2::select<char> jpc;
+using jpc = jpcre2::select<char>;
 #endif
 
 #define NESTED_CVT(className, memberName) sol::property([](className& self) \
