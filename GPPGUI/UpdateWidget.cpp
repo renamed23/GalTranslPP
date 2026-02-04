@@ -17,7 +17,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
         "1. 更新检测/下载时也会调用自动系统代理了",
-        "2. 默认正则编译参数增加 DotAll 特性",
+        "2. 默认正则编译参数增加 DotAll 标志",
 
     };
 
