@@ -91,6 +91,7 @@ export {
         toml::ordered_value m_problemOverview = toml::array{};
         std::function<void(fs::path)> m_onFileProcessed;
         std::function<std::string(std::string)> m_onPerformApi;
+        std::function<DictList(DictList)> m_onDictProcessed;
         std::shared_mutex m_transCacheMutex;
         std::mutex m_outputMutex;
 

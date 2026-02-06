@@ -106,4 +106,6 @@ export {
 
     using CheckSeCondFunc = std::function<bool(const Sentence*)>;
 
+    using DictList = std::vector<std::tuple<std::string, std::string, std::string>>;
+
 }

@@ -16,9 +16,8 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 更新检测/下载时也会调用自动系统代理了",
-        "2. 默认正则编译参数增加 DotAll 标志",
-
+        "1. 新增生成字典处理回调 m_onDictProcessed ，用于在生成字典完成后执行一些自定义操作。",
+        
     };
 
     mainLayout->addWidget(updateTitle);

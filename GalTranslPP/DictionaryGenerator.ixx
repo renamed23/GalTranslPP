@@ -22,6 +22,7 @@ export {
         std::shared_ptr<spdlog::logger> m_logger;
         std::function<void(Sentence*)> m_preProcessFunc;
         std::function<std::string(std::string)> m_onPerformApi;
+        std::function<DictList(DictList)> m_onDictProcessed;
         std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
 
         std::string m_systemPrompt;
@@ -42,7 +43,7 @@ export {
         std::unordered_set<std::string> m_nameSet;
 
         // 阶段四的结果 (线程安全)
-        std::vector<std::tuple<std::string, std::string, std::string>> m_finalDict;
+        DictList m_finalDict;
         std::unordered_map<std::string, int> m_finalCounter;
         std::mutex m_resultMutex;
 
@@ -53,7 +54,7 @@ export {
     public:
         DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, 
             const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
-            const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, 
+            const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::function<DictList(DictList)>& onDictProcessed,
             const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
             int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota);
 
@@ -70,11 +71,13 @@ module :private;
 
 DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, 
     const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
-    const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, 
+    const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::function<DictList(DictList)>& onDictProcessed,
     const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
     int maxRetries, int threadsNum, int apiTimeoutMs, bool checkQuota)
-    : m_controller(controller), m_logger(logger), m_apiPool(apiPool), m_tokenizeSourceLangFunc(tokenizeFunc), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_dictgen.json"),
-    m_preProcessFunc(preProcessFunc), m_onPerformApi(onPerformApi), m_systemPrompt(systemPrompt), m_userPrompt(userPrompt), m_apiStrategy(apiStrategy), m_targetLang(targetLang),
+    : m_controller(controller), m_logger(logger), m_apiPool(apiPool), 
+    m_tokenizeSourceLangFunc(tokenizeFunc), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_dictgen.json"),
+    m_preProcessFunc(preProcessFunc), m_onPerformApi(onPerformApi), m_onDictProcessed(onDictProcessed), 
+    m_systemPrompt(systemPrompt), m_userPrompt(userPrompt), m_apiStrategy(apiStrategy), m_targetLang(targetLang),
     m_maxRetries(maxRetries), m_threadsNum(threadsNum), m_apiTimeoutMs(apiTimeoutMs), m_checkQuota(checkQuota)
 {
     m_tokenizeCacheMap = loadTokenizeCache(m_tokenizeCachePath, m_logger);
@@ -385,51 +388,53 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
         m_logger->info("任务终止，将保存已经生成的字典结果。");
     }
     m_logger->info("阶段四：整理并保存结果...");
-    std::vector<std::tuple<std::string, std::string, std::string>> finalList;
 
+    DictList finalList;
     // 按出现次数排序
-    std::ranges::sort(m_finalDict, [&](const auto& a, const auto& b) 
+    std::ranges::sort(m_finalDict, [&](const auto& a, const auto& b)
         {
             return m_finalCounter[std::get<0>(a)] > m_finalCounter[std::get<0>(b)];
         });
 
-    // 过滤
-    for (const auto& item : m_finalDict) {
-        const auto& src = std::get<0>(item);
-        const auto& note = std::get<2>(item);
-        if (m_finalCounter[src] > 1 || note.contains("人名") || note.contains("地名") || m_wordCounter.contains(src) || m_nameSet.contains(src)) {
-            finalList.push_back(item);
+    if (m_onDictProcessed) {
+        finalList = m_onDictProcessed(m_finalDict);
+    }
+    else {
+        // 过滤
+        for (const auto& item : m_finalDict) {
+            const auto& src = std::get<0>(item);
+            const auto& note = std::get<2>(item);
+            if (m_finalCounter[src] > 1 || note.contains("人名") || note.contains("地名") || m_wordCounter.contains(src) || m_nameSet.contains(src)) {
+                finalList.push_back(item);
+            }
         }
+        // 去重
+        std::map<std::string, std::string> seen;
+        std::erase_if(finalList, [&](std::tuple<std::string, std::string, std::string>& item)
+            {
+                const auto& orgWord = std::get<0>(item);
+                auto& note = std::get<2>(item);
+                if (auto it = seen.find(orgWord); it != seen.end()) {
+                    const auto& noteInSeen = it->second;
+                    bool boy = false, girl = false;
+                    if (noteInSeen.contains("男性") || note.contains("男性")) {
+                        boy = true;
+                    }
+                    if (noteInSeen.contains("女性") || note.contains("女性")) {
+                        girl = true;
+                    }
+                    if (boy && girl) {
+                        note += "，与其它字典存在性别争议";
+                        return false;
+                    }
+                    return true;
+                }
+                seen.insert({ orgWord, note });
+                return false;
+            });
     }
 
-    // 去重
-    std::map<std::string, std::string> seen;
-    std::erase_if(finalList, [&](std::tuple<std::string, std::string, std::string>& item)
-        {
-            const auto& orgWord = std::get<0>(item);
-            auto& note = std::get<2>(item);
-            if (auto it = seen.find(orgWord); it != seen.end()) {
-                const auto& noteInSeen = it->second;
-                bool boy = false, girl = false;
-                if (noteInSeen.contains("男性") || note.contains("男性")) {
-                    boy = true;
-                }
-                if (noteInSeen.contains("女性") || note.contains("女性")) {
-                    girl = true;
-                }
-                if (boy && girl) {
-                    note += "，与其它字典存在性别争议";
-                    return false;
-                }
-                return true;
-            }
-            seen.insert({ orgWord, note });
-            return false;
-        });
-
-
     toml::ordered_value arr = toml::array{};
-    
     for (const auto& item : finalList) {
         arr.push_back(toml::ordered_table{ { "org", std::get<0>(item) }, { "rep", std::get<1>(item) }, { "note", std::get<2>(item) } });
     }

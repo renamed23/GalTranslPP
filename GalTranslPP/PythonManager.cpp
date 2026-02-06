@@ -166,6 +166,7 @@ PYBIND11_EMBEDDED_MODULE(gpp_plugin_api, m, py::multiple_interpreters::per_inter
         .def_readwrite("m_jsonToSplitFileParts", &NormalJsonTranslator::m_jsonToSplitFileParts)
         .def_readwrite("m_onFileProcessed", &NormalJsonTranslator::m_onFileProcessed)
         .def_readwrite("m_onPerformApi", &NormalJsonTranslator::m_onPerformApi)
+        .def_readwrite("m_onDictProcessed", &NormalJsonTranslator::m_onDictProcessed)
         .def_property("m_threadPool", [](NormalJsonTranslator& self) -> ctpl::thread_pool& { return self.m_threadPool; }, nullptr, py::return_value_policy::reference_internal)
         .def("preProcess", &NormalJsonTranslator::preProcess)
         .def("postProcess", &NormalJsonTranslator::postProcess)

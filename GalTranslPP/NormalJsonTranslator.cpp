@@ -1220,7 +1220,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
 
         toml::ordered_value newNameTable = toml::ordered_table{};
         newNameTable.comments().push_back("'原名' = [ '译名', 出现次数 ]");
-        for (const auto& key : nameTableKeys | std::views::keys) {
+        for (const std::string& key : nameTableKeys | std::views::keys) {
             try {
                 newNameTable[key] = toml::array{ toml::find_or(orgNameTable, key, 0, ""), nameTableMap[key] };
             }
@@ -1258,7 +1258,8 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 this->preProcess(se);
             };
         DictionaryGenerator generator(m_controller, m_logger, m_apiPool, m_tokenizeSourceLangFunc, m_otherCacheDir,
-            preProcessFunc, m_onPerformApi, m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang,
+            preProcessFunc, m_onPerformApi, m_onDictProcessed,
+            m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang,
             m_maxRetries, m_threadsNum, m_apiTimeOutMs, m_checkQuota);
         const fs::path outputFilePath = m_projectDir / L"项目GPT字典-生成.toml";
         std::vector<fs::path> inputPaths = std::move(relJsonPaths);
