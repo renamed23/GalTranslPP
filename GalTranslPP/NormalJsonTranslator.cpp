@@ -635,6 +635,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         else if (m_smartRetry && retryCount == 3) {
             m_logger->warn("[线程 {}] [文件 {}] 清空上下文后再次尝试...", threadId, wide2Ascii(relInputPath));
             contextHistory.clear();
+            backgroundText.clear();
         }
 
 

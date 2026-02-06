@@ -16,8 +16,9 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 新增生成字典处理回调 m_onDictProcessed ，用于在生成字典完成后执行一些自定义操作。",
-        
+        "1. 新增生成字典处理回调 m_onDictProcessed ，用于在生成字典完成后执行一些自定义操作",
+        "2. 修复清空上下文时没有把 backgroundText 清空的 bug",
+
     };
 
     mainLayout->addWidget(updateTitle);
