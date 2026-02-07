@@ -144,10 +144,12 @@ def unload():
             gamePath = Path(r"D:\GALGAME\linshi\Floating Material")
             targetTransPath = gamePath / "script_dump" / "trans"
             charMapPath = pythonTranslator.m_projectDir / "charMap.json"
-
+            newFontPath = pythonTranslator.m_projectDir / "FloatingMaterial_cnjp.ttf"
 
             result = subprocess.run(
-                [fontChangerPath, pythonTranslator.m_projectDir / "gt_output", "-s"],
+                [fontChangerPath, "gt_output", "-i", "julixiansimhei-Regular.ttf", "-e", "excludeList.json",
+                 "--fontname", "FloatingMaterial", "-s"],
+                cwd=pythonTranslator.m_projectDir,
                 capture_output=True,  # 捕获输出
                 text=True,            # 以文本形式返回
                 encoding='utf-8'
@@ -155,6 +157,7 @@ def unload():
             logger.info(f"返回输出: {result.stdout}")
             shutil.copy(charMapPath, scriptWorkPath)
             shutil.copy(charMapPath, gamePath)
+            shutil.copy(newFontPath, gamePath)
 
             shutil.copytree(pythonTranslator.m_projectDir / "gt_output_sjis_output", targetTransPath, dirs_exist_ok=True)
 
