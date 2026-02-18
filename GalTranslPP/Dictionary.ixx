@@ -63,7 +63,7 @@ export {
         std::string searchStr;
         std::string replaceStr;
         std::unique_ptr<jpc::Regex> searchReg;
-        std::unique_ptr<std::string> replaceModifier;
+        std::unique_ptr<jpc::RegexReplace> rr;
         // 条件字典相关
         std::unique_ptr<CheckSeCondFunc> dictCondition;
         int priority;
@@ -370,7 +370,9 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
                 if (!*entry.searchReg) {
                     throw std::runtime_error(std::format("Normal 字典文件格式错误(正则表达式错误): {}  ——  {}", wide2Ascii(filePath), str));
                 }
-                entry.replaceModifier = std::make_unique<std::string>(toml::find_or(el, "replace_modifier", defaultRegReplaceModifier));
+                const std::string replaceModifier = toml::find_or(el, "replace_modifier", defaultRegReplaceModifier);
+                entry.rr = std::make_unique<jpc::RegexReplace>(entry.searchReg.get());
+                entry.rr->setModifier(replaceModifier);
             }
             else {
                 entry.searchStr = str;
@@ -420,8 +422,7 @@ std::string NormalDictionary::doReplace(const Sentence* sentence, CachePart targ
             })) 
     {
         if (entry.isReg) {
-            jpc::RegexReplace rr(entry.searchReg.get());
-            textToModify = rr.setModifier(*entry.replaceModifier).setSubject(&textToModify).setReplaceWith(&entry.replaceStr).replace();
+            textToModify = entry.rr->setSubject(&textToModify).setReplaceWith(&entry.replaceStr).replace();
         }
         else {
             replaceStrInplace(textToModify, entry.searchStr, entry.replaceStr);

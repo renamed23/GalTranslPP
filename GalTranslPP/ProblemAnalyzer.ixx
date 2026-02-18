@@ -83,16 +83,6 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         }
         return;
     }
-    if (sentence->translated_preview.starts_with("(Failed to translate)")) {
-        sentence->problems.push_back("翻译失败");
-        return;
-    }
-    if (sentence->translated_preview.starts_with("(GPPCProblem:")) {
-        if (size_t pos = sentence->translated_preview.find(')'); pos != std::string::npos) {
-            sentence->problems.push_back(std::format("GPPCProblem: {}", std::string_view(sentence->translated_preview.data() + 13, pos - 13)));
-            sentence->translated_preview = sentence->translated_preview.substr(pos + 1);
-	    }
-    }
 
     // 1. 词频过高
     if (m_problems.highFrequency.use) {
@@ -252,7 +242,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
                     if (result.probability < m_probabilityThreshold) {
                         continue;
                     }
-                    if (result.language != simplifiedTargetLang && langSet.find(result.language) == langSet.end()) {
+                    if (result.language != simplifiedTargetLang && !langSet.contains(result.language)) {
                         sentence->problems.push_back(std::format("引入({}, {:.3f})", result.language, result.probability));
                     }
                 }

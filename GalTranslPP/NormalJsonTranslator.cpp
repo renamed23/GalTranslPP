@@ -564,6 +564,16 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
         }
     }
 
+    if (se->translated_preview.starts_with("(Failed to translate)")) {
+        se->problems.push_back("翻译失败");
+    }
+    if (se->translated_preview.starts_with("(GPPCProblem:")) {
+        if (size_t pos = se->translated_preview.find(')'); pos != std::string::npos) {
+            se->problems.push_back(std::format("GPPCProblem: {}", std::string_view(se->translated_preview.data() + 13, pos - 13)));
+            se->translated_preview = se->translated_preview.substr(pos + 1);
+        }
+    }
+
     for (auto& plugin : m_textPlugins) {
         plugin->dPostRun(se);
     }
