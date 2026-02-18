@@ -25,7 +25,7 @@ export {
 		bool m_needReboot = false;
 
 	public:
-		LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger);
+		LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, LuaManager& luaManager, const std::shared_ptr<spdlog::logger>& logger);
 		bool needReboot() const { return m_needReboot; }
 		void dPreRun(Sentence* se);
 		void preRun(Sentence* se);
@@ -39,7 +39,7 @@ export {
 module :private;
 
 
-LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, LuaManager& luaManager, std::shared_ptr<spdlog::logger> logger)
+LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, LuaManager& luaManager, const std::shared_ptr<spdlog::logger>& logger)
 	: m_logger(logger), m_scriptPath(scriptPath)
 {
 	m_logger->info("正在初始化 Lua 插件 {}", m_scriptPath);

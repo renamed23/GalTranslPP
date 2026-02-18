@@ -63,7 +63,7 @@ export {
         std::string searchStr;
         std::string replaceStr;
         std::unique_ptr<jpc::Regex> searchReg;
-        std::unique_ptr<jpc::RegexReplace> rr;
+        std::unique_ptr<std::string> replaceModifier;
         // 条件字典相关
         std::unique_ptr<CheckSeCondFunc> dictCondition;
         int priority;
@@ -176,7 +176,8 @@ std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, T
     }
 
     // *** 根据 transEngine 添加标题 ***
-    switch (transEngine) {
+    switch (transEngine) 
+	{
     case TransEngine::ForGalJson:
     case TransEngine::DeepseekJson:
         return "# Glossary\n| Src | Dst(/Dst2/..) | Note |\n| --- | --- | --- |\n" + promptContent;
@@ -370,9 +371,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
                 if (!*entry.searchReg) {
                     throw std::runtime_error(std::format("Normal 字典文件格式错误(正则表达式错误): {}  ——  {}", wide2Ascii(filePath), str));
                 }
-                const std::string replaceModifier = toml::find_or(el, "replace_modifier", defaultRegReplaceModifier);
-                entry.rr = std::make_unique<jpc::RegexReplace>(entry.searchReg.get());
-                entry.rr->setModifier(replaceModifier);
+                entry.replaceModifier = std::make_unique<std::string>(toml::find_or(el, "replace_modifier", defaultRegReplaceModifier));
             }
             else {
                 entry.searchStr = str;
@@ -422,7 +421,9 @@ std::string NormalDictionary::doReplace(const Sentence* sentence, CachePart targ
             })) 
     {
         if (entry.isReg) {
-            textToModify = entry.rr->setSubject(&textToModify).setReplaceWith(&entry.replaceStr).replace();
+            // 避免竞态
+            jpc::RegexReplace rr(entry.searchReg.get());
+            textToModify = rr.setModifier(*entry.replaceModifier).setSubject(&textToModify).setReplaceWith(&entry.replaceStr).replace();
         }
         else {
             replaceStrInplace(textToModify, entry.searchStr, entry.replaceStr);

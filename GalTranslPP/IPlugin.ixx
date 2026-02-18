@@ -83,6 +83,6 @@ export {
 		::build { };
 
 	void registerPlugins(std::vector<pro::proxy<PPlugin>>& plugins, const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,
-		PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger>& logger,
+		PythonManager& pythonManager, LuaManager& luaManager, const std::shared_ptr<spdlog::logger>& logger,
 		const toml::value& projectConfig, bool preProcOnly);
 }

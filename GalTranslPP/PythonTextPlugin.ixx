@@ -29,7 +29,7 @@ export {
         bool m_needReboot = false;
 
     public:
-        PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger);
+        PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
         bool needReboot() const { return m_needReboot; }
         void dPreRun(Sentence* se);
         void preRun(Sentence* se);
@@ -42,7 +42,7 @@ export {
 
 module :private;
 
-PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger)
+PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
     : m_logger(logger), m_modulePath(modulePath)
 {
     m_logger->info("正在初始化 Python 插件 {}", m_modulePath);

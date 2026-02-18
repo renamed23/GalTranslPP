@@ -3088,7 +3088,7 @@
     <name>TF2HCfgPage</name>
     <message>
         <location filename="TF2HCfgPage.cpp" line="17"/>
-        <location filename="TF2HCfgPage.cpp" line="58"/>
+        <location filename="TF2HCfgPage.cpp" line="73"/>
         <source>全角半角转换设置</source>
         <translation>Convert settings</translation>
     </message>
@@ -3106,6 +3106,11 @@
         <location filename="TF2HCfgPage.cpp" line="43"/>
         <source>关闭为全转半，开启为半转全</source>
         <translation>Full to half when not enabled, half to full when enabled</translation>
+    </message>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="55"/>
+        <source>不转换的字符</source>
+        <translation>Exclude chars</translation>
     </message>
 </context>
 <context>

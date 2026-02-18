@@ -525,10 +525,11 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
 
     if (se->translated_preview.starts_with("(Failed to translate)")) {
         se->problems.push_back("翻译失败");
+        se->notAnalyzeProblem = true;
     }
     if (se->translated_preview.starts_with("(GPPCProblem:")) {
         if (size_t pos = se->translated_preview.find(')'); pos != std::string::npos) {
-            se->problems.push_back(std::format("GPPCProblem: {}", std::string_view(se->translated_preview.data() + 13, pos - 13)));
+            se->problems.push_back(std::format("GPPCProblem:{}", std::string_view(se->translated_preview.data() + 13, pos - 13)));
             se->translated_preview = se->translated_preview.substr(pos + 1);
         }
     }
@@ -796,7 +797,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             if (i > 0) sentences[i].prev = &sentences[i - 1];
             if (i + 1 < sentences.size()) sentences[i].next = &sentences[i + 1];
         }
-        for (auto& se : sentences) {
+        for (Sentence& se : sentences) {
             preProcess(&se);
         }
     }
@@ -910,7 +911,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path(), additionalCachePath);
             }
             else {
-                std::wstring cacheSpec = relInputPath.stem().wstring() + L"_part_*.json";
+                std::wstring cacheSpec = relInputPath.filename().stem().wstring() + L"_part_*.json";
                 // 非分割优先读整体缓存
                 readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path());
             }
@@ -946,7 +947,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 postProcess(&se);
                 continue;
             }
-            std::string key = generateCacheKey(&se);
+            const std::string key = generateCacheKey(&se);
             auto it = cacheMap.find(key);
             if (it == cacheMap.end()) {
                 toTranslate.push_back(&se);
@@ -988,7 +989,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
     // 读缓存逻辑结束
 
     // 翻译逻辑
-    if (!toTranslate.empty()) {
+    if (m_transEngine != TransEngine::Rebuild && !toTranslate.empty()) {
         std::unique_ptr<py::gil_scoped_release> release;
         if (m_pythonTranslator) {
             release = std::make_unique<py::gil_scoped_release>();

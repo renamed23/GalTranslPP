@@ -5,7 +5,7 @@
 
 #include "ElaToggleSwitch.h"
 #include "ElaText.h"
-#include "ElaToolTip.h"
+#include "ElaLineEdit.h"
 #include "ElaScrollPageArea.h"
 #include "ElaDoubleText.h"
 
@@ -21,7 +21,7 @@ TF2HCfgPage::TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
     QWidget* centerWidget = new QWidget(this);
     QVBoxLayout* mainLayout = new QVBoxLayout(centerWidget);
 
-    // 标点符号转换配置
+    // 标点符号转换
     bool convertPunctuation = toml::find_or(_projectConfig, "plugins", "TextFull2Half", "是否替换标点", true);
     ElaScrollPageArea* punctuationArea = new ElaScrollPageArea(centerWidget);
     QHBoxLayout* punctuationLayout = new QHBoxLayout(punctuationArea);
@@ -35,7 +35,7 @@ TF2HCfgPage::TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
     punctuationLayout->addWidget(punctuationSwitch);
     mainLayout->addWidget(punctuationArea);
 
-    // 反向替换配置
+    // 反向替换
     bool reverseConvert = toml::find_or(_projectConfig, "plugins", "TextFull2Half", "是否反向替换", false);
     ElaScrollPageArea* reverseArea = new ElaScrollPageArea(centerWidget);
     QHBoxLayout* reverseLayout = new QHBoxLayout(reverseArea);
@@ -46,14 +46,29 @@ TF2HCfgPage::TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
     ElaToggleSwitch* reverseSwitch = new ElaToggleSwitch(reverseArea);
     reverseSwitch->setIsToggled(reverseConvert);
     reverseLayout->addWidget(reverseSwitch);
+    mainLayout->addWidget(reverseArea);
+
+    // 不转换的字符
+    std::string excludeChars = toml::find_or(_projectConfig, "plugins", "TextFull2Half", "不转换的字符", "");
+    ElaScrollPageArea* excludeArea = new ElaScrollPageArea(centerWidget);
+    QHBoxLayout* excludeLayout = new QHBoxLayout(excludeArea);
+    ElaText* excludeText = new ElaText(tr("不转换的字符"), excludeArea);
+    excludeText->setWordWrap(false);
+    excludeText->setTextPixelSize(16);
+    excludeLayout->addWidget(excludeText);
+    excludeLayout->addStretch();
+    ElaLineEdit* excludeEdit = new ElaLineEdit(excludeArea);
+    excludeEdit->setText(QString::fromStdString(excludeChars));
+    excludeLayout->addWidget(excludeEdit);
+    mainLayout->addWidget(excludeArea);
 
     _applyFunc = [=]
         {
             insertToml(_projectConfig, "plugins.TextFull2Half.是否替换标点", punctuationSwitch->getIsToggled());
             insertToml(_projectConfig, "plugins.TextFull2Half.是否反向替换", reverseSwitch->getIsToggled());
+            insertToml(_projectConfig, "plugins.TextFull2Half.不转换的字符", excludeEdit->text().toStdString());
         };
 
-    mainLayout->addWidget(reverseArea);
     mainLayout->addStretch();
     centerWidget->setWindowTitle(tr("全角半角转换设置"));
     addCentralWidget(centerWidget);

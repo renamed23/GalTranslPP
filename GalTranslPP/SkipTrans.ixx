@@ -35,7 +35,7 @@ export {
 
     public:
         SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
-            std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime);
+            const std::shared_ptr<spdlog::logger>& logger, PluginRunTime runTime);
         void dPreRun(Sentence* se);
         void preRun(Sentence* se);
         bool needReboot() const { return m_needReboot; }
@@ -46,7 +46,7 @@ export {
 module :private;
 
 SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
-    std::shared_ptr<spdlog::logger> logger, PluginRunTime runTime)
+    const std::shared_ptr<spdlog::logger>& logger, PluginRunTime runTime)
     : m_logger(logger), m_runTime(runTime)
 {
     try {
