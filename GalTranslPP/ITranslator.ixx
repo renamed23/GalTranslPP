@@ -1,4 +1,4 @@
-export module ITranslator;
+﻿export module ITranslator;
 
 import std;
 
@@ -39,5 +39,5 @@ export {
 		virtual ~ITranslator();
 	};
 
-	std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller);
+	std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller);
 }

@@ -25,9 +25,9 @@ export {
     };
 
     struct GppConditionPattern {
+        jpc::Regex conditionReg;
         CachePart conditionTarget = CachePart::None;
         int sentenceOffset = 0;
-        jpc::Regex conditionReg;
     };
     using GPPCondition = std::vector<GppConditionPattern>;
 
@@ -51,7 +51,7 @@ export {
                     conditionTargetStr = conditionTargetStr.substr(5);
                 }
                 pattern.conditionTarget = chooseCachePart(conditionTargetStr);
-                const std::string& conditionRegStr = conditionTbl.at("conditionReg").as_string();
+                const std::string conditionRegStr = conditionTbl.at("conditionReg").as_string();
                 if (conditionRegStr.empty()) {
                     return;
                 }
@@ -90,8 +90,9 @@ export {
             return ConditionType::Gpp;
         }
         if (tbl.contains("conditionScript") && !tbl.at("conditionScript").as_string().empty()
-            && tbl.contains("conditionFunc") && !tbl.at("conditionFunc").as_string().empty()) {
-            std::string conditionScriptStr = str2Lower(tbl.at("conditionScript").as_string());
+            && tbl.contains("conditionFunc") && !tbl.at("conditionFunc").as_string().empty()) 
+        {
+            const std::string conditionScriptStr = str2Lower(tbl.at("conditionScript").as_string());
             if (conditionScriptStr.ends_with(".lua")) {
                 return ConditionType::Lua;
             }
@@ -126,18 +127,19 @@ export {
                 case ConditionType::Lua:
                 {
                     std::string conditionLuaStr = tbl.at("conditionScript").as_string();
+                    replaceStrInplace(conditionLuaStr, "<PROJECT_DIR>", wide2Ascii(projectDir));
                     const std::string& conditionFuncStr = tbl.at("conditionFunc").as_string();
-                    std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager.registerFunction(
-                        replaceStrInplace(conditionLuaStr, "<PROJECT_DIR>", wide2Ascii(projectDir)), conditionFuncStr, needReboot);
+                    const std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager.registerFunction(
+                        conditionLuaStr, conditionFuncStr, needReboot);
                     if (luaStateOpt) {
                         std::shared_ptr<LuaStateInstance> luaState = *luaStateOpt;
-                        sol::function conditionFunc = luaState->functions[conditionFuncStr];
-                        CheckSeCondFunc checkFunc = [luaState, conditionFunc, conditionFuncStr](const Sentence* se) -> bool
+                        sol::function* pConditionFunc = luaState->functions[conditionFuncStr].get();
+                        CheckSeCondFunc checkFunc = [luaState, pConditionFunc, conditionFuncStr](const Sentence* se) -> bool
                             {
                                 std::lock_guard<std::mutex> lock(luaState->executionMutex);
                                 bool result;
                                 try {
-                                    result = conditionFunc(se).get<bool>();
+                                    result = (*pConditionFunc)(se).get<bool>();
                                 }
                                 catch (const sol::error& e) {
                                     throw std::runtime_error(std::format("执行Lua条件函数 {} 时发生错误: {}", conditionFuncStr, e.what()));
@@ -155,19 +157,20 @@ export {
                 case ConditionType::Python:
                 {
                     std::string conditionPythonStr = tbl.at("conditionScript").as_string();
-                    const std::string& conditionFuncStr = tbl.at("conditionFunc").as_string();
-                    std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager.registerFunction(
-                        replaceStrInplace(conditionPythonStr, "<PROJECT_DIR>", wide2Ascii(projectDir)), conditionFuncStr, needReboot);
+                    replaceStrInplace(conditionPythonStr, "<PROJECT_DIR>", wide2Ascii(projectDir));
+                    const std::string conditionFuncStr = tbl.at("conditionFunc").as_string();
+                    const std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager.registerFunction(
+                        conditionPythonStr, conditionFuncStr, needReboot);
                     if (pythonInterpreterOpt) {
                         std::shared_ptr<PythonInterpreterInstance> pythonInterpreter = *pythonInterpreterOpt;
-                        std::reference_wrapper<py::object> conditionFunc = *(pythonInterpreter->functions[conditionFuncStr]);
-                        CheckSeCondFunc checkFunc = [pythonInterpreter, conditionFunc, conditionFuncStr](const Sentence* se) -> bool
+                        py::object* pConditionFunc = pythonInterpreter->functions[conditionFuncStr].get();
+                        CheckSeCondFunc checkFunc = [pythonInterpreter, pConditionFunc, conditionFuncStr](const Sentence* se) -> bool
                             {
                                 bool result;
                                 pythonInterpreter->submitTask([&]()
                                     {
                                         try {
-                                            result = conditionFunc.get()(se).cast<bool>();
+                                            result = (*pConditionFunc)(se).cast<bool>();
                                         }
                                         catch (const py::error_already_set& e) {
                                             throw std::runtime_error(std::format("执行Python条件函数 {} 时发生错误: {}", conditionFuncStr, e.what()));
@@ -260,7 +263,8 @@ bool checkGppCondition(const GPPCondition& gppCondition, const Sentence* se) {
                         }
                     });
             };
-            switch (pattern.conditionTarget) {
+            switch (pattern.conditionTarget) 
+    		    {
             case CachePart::Names:
                 return checkAnyOf(sentenceToCheck->names);
             case CachePart::NamesPreview:

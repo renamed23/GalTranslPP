@@ -268,13 +268,12 @@ PythonInterpreterInstance::PythonInterpreterInstance() {
     auto createSubInterpreterTaskFunc = [&]()
         {
             try {
-                PyInterpreterConfig cfg;
-                std::memset(&cfg, 0, sizeof(cfg));
+                PyInterpreterConfig cfg = { 0 };
                 cfg.allow_daemon_threads = 1;
                 cfg.allow_threads = 1;
                 cfg.check_multi_interp_extensions = 1;
                 cfg.gil = PyInterpreterConfig_OWN_GIL;
-                subInterpreter = std::unique_ptr<py::subinterpreter>(new py::subinterpreter{ py::subinterpreter::create(cfg) });
+                subInterpreter = std::make_unique<py::subinterpreter>(py::subinterpreter::create(cfg));
             }
             catch (const std::exception& e) {
                 throw std::runtime_error(std::format("PythonInterpreterInstance 构造时出现异常: {}", e.what()));
@@ -285,7 +284,7 @@ PythonInterpreterInstance::PythonInterpreterInstance() {
 }
 
 PythonInterpreterInstance::~PythonInterpreterInstance() {
-    auto functionClearTaskFunc = [&]()
+    auto functionClearTaskFunc = [this]()
         {
             try {
                 this->functions.clear();
@@ -311,7 +310,7 @@ PythonInterpreterInstance::~PythonInterpreterInstance() {
     PythonMainInterpreterManager::getInstance().submitTask(std::move(destroySubInterpreterTaskFunc)).get();
 }
 
-void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger>& logger)
+void checkPythonDependencies(const std::vector<std::string>& dependencies, const std::shared_ptr<spdlog::logger>& logger)
 {
     for (const auto& dependency : dependencies) {
         logger->debug("正在检查依赖 {}", dependency);
@@ -349,7 +348,7 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, std::
 }
 
 std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
-(const std::string& moduleName, const std::string& modelName, std::shared_ptr<spdlog::logger>& logger, bool& needReboot) {
+(const std::string& moduleName, const std::string& modelName, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot) {
 
     std::lock_guard<std::mutex> lock(m_mutex);
     if (auto moduleFuncLocked = m_nlpModuleFunctions[moduleName][modelName].lock()) {
@@ -407,13 +406,13 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
 std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registerFunction
 (const std::string& modulePath, const std::string& functionName, bool& needReboot) {
 
-    fs::path stdModulePath = fs::weakly_canonical(ascii2Wide(modulePath));
+    const fs::path stdModulePath = fs::weakly_canonical(ascii2Wide(modulePath));
     if (!fs::exists(stdModulePath)) {
         m_logger->error("Script is not found: {}", modulePath);
         return std::nullopt;
     }
 
-    std::string moduleName = wide2Ascii(stdModulePath.stem());
+    const std::string moduleName = wide2Ascii(stdModulePath.stem());
     auto it = m_interpreters.find(stdModulePath);
     if (it == m_interpreters.end()) {
         std::shared_ptr<PythonInterpreterInstance> pythonInterpreter = std::make_shared<PythonInterpreterInstance>();
@@ -443,24 +442,22 @@ std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registe
 
     std::shared_ptr<PythonInterpreterInstance> pythonInterpreter = it->second;
     if (!pythonInterpreter->functions.contains(functionName)) {
-        bool success = true;
+        bool success = false;
         pythonInterpreter->submitTask([&]()
             {
                 try {
                     py::module_ pythonModule = py::module_::import(moduleName.c_str());
                     if (!py::hasattr(pythonModule, functionName.c_str())) {
                         m_logger->debug("Failed to load function {} from script {}", functionName, modulePath);
-                        success = false;
                         return;
                     }
-                    std::unique_ptr<py::object> pyFunc = std::unique_ptr<py::object>(new py::object{ pythonModule.attr(functionName.c_str()) });
-                    py::object& func = *pyFunc;
-                    if (!func || !py::isinstance<py::function>(func)) {
+                    std::unique_ptr<py::object> pFunc = std::make_unique<py::object>(pythonModule.attr(functionName.c_str()));
+                    if (const py::object& func = *pFunc; !func || !py::isinstance<py::function>(func)) {
                         m_logger->debug("Failed to load function {} from script {}", functionName, modulePath);
-                        success = false;
                         return;
                     }
-                    pythonInterpreter->functions.insert({ functionName, std::move(pyFunc) });
+                    pythonInterpreter->functions.insert({ functionName, std::move(pFunc) });
+                    success = true;
                 }
                 catch (const py::error_already_set& e) {
                     throw std::runtime_error(std::format("加载模块 {} 的函数 {} 时出现异常: {}", moduleName, functionName, e.what()));
@@ -479,7 +476,7 @@ void PythonManager::registerCustomTypes
     py::module_ pythonModule = py::module_::import(moduleName.c_str());
     auto setupTokenizer = [&](const std::string& mode)
         {
-            std::string useTokenizerFlag = mode + "useTokenizer";
+            const std::string useTokenizerFlag = mode + "useTokenizer";
             if (py::hasattr(pythonModule, useTokenizerFlag.c_str()) && pythonModule.attr(useTokenizerFlag.c_str()).cast<bool>()) {
                 const std::string tokenizerBackend = pythonModule.attr((mode + "tokenizerBackend").c_str()).cast<std::string>();
                 if (tokenizerBackend == "MeCab") {

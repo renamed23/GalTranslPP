@@ -47,8 +47,7 @@ export {
 
 module :private;
 
-int getSplittedFileIndex(const std::wstring& path)
-{
+int getSplittedFileIndex(const std::wstring& path) {
     size_t pos1 = path.find_last_of(L'_') + 1;
     size_t pos2 = path.find_last_of(L'.');
     return std::stoi(path.substr(pos1, pos2 - pos1));
@@ -91,7 +90,8 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
 
     std::string history;
 
-    switch (transEngine) {
+    switch (transEngine) 
+	{
     case TransEngine::ForGalTsv: 
     {
         history = "NAME\tDST\tID\n"; // Or DST\tID for novel
@@ -196,7 +196,8 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
 }
 
 void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, std::string& inputBlock, TransEngine transEngine) {
-    switch (transEngine) {
+    switch (transEngine) 
+	{
     case TransEngine::ForGalTsv: 
     {
         for (const auto& pSentence : batchToTransThisRound) {
@@ -253,7 +254,8 @@ void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, std::m
 
 void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
     std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText) {
-    if (size_t pos = content.find("</think>"); pos != std::string::npos) {
+    
+	if (size_t pos = content.find("</think>"); pos != std::string::npos) {
         content = content.substr(pos + 8);
     }
     else if (pos = content.find("<end_think>"); pos != std::string::npos) {
@@ -267,7 +269,6 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
         rm.setSubject(&content).setNumberedSubstringVector(&vecNum);
         if (rm.match() > 0 && vecNum.size() > 0 && vecNum[0].size() > 1) {
             backgroudText = std::move(replaceStrInplace(vecNum[0][1], "<ORIGINAL>", backgroudText));
-            UErrorCode errorCode = U_ZERO_ERROR;
             icu::UnicodeString uString = icu::UnicodeString::fromUTF8(backgroudText);
             int32_t endIndex = uString.moveIndex32(0, 256);
             if (endIndex < uString.length()) {
@@ -282,7 +283,8 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
         }
     }
 
-    switch (transEngine) {
+    switch (transEngine) 
+	{
     case TransEngine::ForGalTsv:
     {
         size_t start = content.find("NAME\tDST\tID");
@@ -447,7 +449,7 @@ void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::
         });
 
     for (const auto& relPartPath : partPaths) {
-        fs::path partPath = outputCacheDir / relPartPath;
+        const fs::path partPath = outputCacheDir / relPartPath;
         if (fs::exists(partPath)) {
             try {
                 ifs.open(partPath);
@@ -466,7 +468,7 @@ void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::
         }
     }
 
-    fs::path finalOutputPath = outputDir / originalRelFilePath;
+    const fs::path finalOutputPath = outputDir / originalRelFilePath;
     createParent(finalOutputPath);
     std::ofstream ofs(finalOutputPath);
     ofs << combinedJson.dump(2);

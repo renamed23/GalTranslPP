@@ -16,8 +16,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 新增生成字典处理回调 m_onDictProcessed ，用于在生成字典完成后执行一些自定义操作而不是默认的去重",
-        "2. 修复清空上下文时没有把 backgroundText 清空的 bug",
+        "1. 新增模型层面的问题检测，可通过Prompt让模型在翻译可疑句子时在译文结果前加上\"(GPPCProblem:xxx)\"格式的句子来让模型自己添加问题",
 
     };
 

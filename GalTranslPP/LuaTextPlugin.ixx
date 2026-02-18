@@ -15,11 +15,11 @@ export {
 	class LuaTextPlugin {
 	private:
 		std::shared_ptr<LuaStateInstance> m_luaState;
-		sol::function m_luaDPreRunFunc;
-		sol::function m_luaPreRunFunc;
-		sol::function m_luaPostRunFunc;
-		sol::function m_luaDPostRunFunc;
-		sol::function m_luaUnloadFunc;
+		sol::function* m_luaDPreRunFunc = nullptr;
+		sol::function* m_luaPreRunFunc = nullptr;
+		sol::function* m_luaPostRunFunc = nullptr;
+		sol::function* m_luaDPostRunFunc = nullptr;
+		sol::function* m_luaUnloadFunc = nullptr;
 		std::string m_scriptPath;
 		std::shared_ptr<spdlog::logger> m_logger;
 		bool m_needReboot = false;
@@ -49,11 +49,11 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 	}
 	m_luaState = luaStateOpt.value();
 
-	auto registerFunctionFunc = [&](const std::string& funcName, sol::function& func)
+	auto registerFunctionFunc = [&](const std::string& funcName, sol::function*& pFunc)
 		{
 			luaStateOpt = luaManager.registerFunction(m_scriptPath, funcName, m_needReboot);
 			if (luaStateOpt.has_value()) {
-				func = m_luaState->functions[funcName];
+				pFunc = m_luaState->functions[funcName].get();
 				m_logger->info("{} {}函数注册成功", m_scriptPath, funcName);
 			}
 		};
@@ -64,7 +64,8 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 	registerFunctionFunc("unload", m_luaUnloadFunc);
 
 	try {
-		m_luaState->functions["init"](projectDir);
+		std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
+		(*(m_luaState->functions["init"]))(projectDir);
 	}
 	catch (const sol::error& e) {
 		m_logger->error("{} init函数执行失败", m_scriptPath);
@@ -75,12 +76,12 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 }
 
 LuaTextPlugin::~LuaTextPlugin() {
-	if (!m_luaUnloadFunc.valid()) {
+	if (!m_luaUnloadFunc) {
 		return;
 	}
 	try {
 		std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
-		m_luaUnloadFunc();
+		(*m_luaUnloadFunc)();
 	}
 	catch (const sol::error&) {
 		m_logger->error("{} unload函数执行失败", m_scriptPath);
@@ -88,12 +89,12 @@ LuaTextPlugin::~LuaTextPlugin() {
 }
 
 void LuaTextPlugin::dPreRun(Sentence* se) {
-	if (!m_luaDPreRunFunc.valid()) {
+	if (!m_luaDPreRunFunc) {
 		return;
 	}
-	std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
 	try {
-		m_luaDPreRunFunc(se);
+		std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
+		(*m_luaDPreRunFunc)(se);
 	}
 	catch (const sol::error& e) {
 		m_logger->error("{} dPreRun函数执行失败", m_scriptPath);
@@ -102,12 +103,12 @@ void LuaTextPlugin::dPreRun(Sentence* se) {
 }
 
 void LuaTextPlugin::preRun(Sentence* se) {
-	if (!m_luaPreRunFunc.valid()) {
+	if (!m_luaPreRunFunc) {
 		return;
 	}
-	std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
 	try {
-		m_luaPreRunFunc(se);
+		std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
+		(*m_luaPreRunFunc)(se);
 	}
 	catch (const sol::error& e) {
 		m_logger->error("{} preRun函数执行失败", m_scriptPath);
@@ -116,12 +117,12 @@ void LuaTextPlugin::preRun(Sentence* se) {
 }
 
 void LuaTextPlugin::postRun(Sentence* se) {
-	if (!m_luaPostRunFunc.valid()) {
+	if (!m_luaPostRunFunc) {
 		return;
 	}
-	std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
 	try {
-		m_luaPostRunFunc(se);
+		std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
+		(*m_luaPostRunFunc)(se);
 	}
 	catch (const sol::error& e) {
 		m_logger->error("{} postRun函数执行失败", m_scriptPath);
@@ -130,12 +131,12 @@ void LuaTextPlugin::postRun(Sentence* se) {
 }
 
 void LuaTextPlugin::dPostRun(Sentence* se) {
-	if (!m_luaDPostRunFunc.valid()) {
+	if (!m_luaDPostRunFunc) {
 		return;
 	}
-	std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
 	try {
-		m_luaDPostRunFunc(se);
+		std::lock_guard<std::mutex> lock(m_luaState->executionMutex);
+		(*m_luaDPostRunFunc)(se);
 	}
 	catch (const sol::error& e) {
 		m_logger->error("{} dPostRun函数执行失败", m_scriptPath);

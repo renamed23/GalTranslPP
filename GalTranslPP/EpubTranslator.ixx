@@ -24,33 +24,25 @@ export {
     };
 
     struct CallbackPattern {
-        jpc::Regex org;
-        jpc::RegexReplace rep{&org};
+        std::unique_ptr<jpc::Regex> org;
+        std::unique_ptr<jpc::RegexReplace> rep;
 
-        CallbackPattern() = default;
-        CallbackPattern(CallbackPattern&) = delete;
-        CallbackPattern(CallbackPattern&& other) {
-            org = std::move(other.org);
-            rep = std::move(other.rep);
-            rep.setRegexObject(&org);
+        CallbackPattern() {
+            org = std::make_unique<jpc::Regex>();
+            rep = std::make_unique<jpc::RegexReplace>(org.get());
         }
     };
 
     struct RegexPattern {
-        jpc::Regex org;
-        jpc::RegexReplace rep{&org};
+        std::unique_ptr<jpc::Regex> org;
+        std::unique_ptr<jpc::RegexReplace> rep;
 
         std::multimap<int, CallbackPattern> callbackPatterns;
         bool isCallback;
 
-        RegexPattern() = default;
-        RegexPattern(RegexPattern&) = delete;
-        RegexPattern(RegexPattern&& other) {
-            org = std::move(other.org);
-            rep = std::move(other.rep);
-            callbackPatterns = std::move(other.callbackPatterns);
-            isCallback = other.isCallback;
-            rep.setRegexObject(&org);
+        RegexPattern() {
+            org = std::make_unique<jpc::Regex>();
+            rep = std::make_unique<jpc::RegexReplace>(org.get());
         }
     };
 
@@ -100,7 +92,7 @@ export {
 
         virtual void run() override;
 
-        EpubTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger);
+        EpubTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger);
 
         virtual ~EpubTranslator() override
         {
@@ -131,13 +123,13 @@ void extractTextNodes(GumboNode* node, std::vector<std::pair<std::string, EpubTe
         return;
     }
 
-    GumboVector* children = &node->v.element.children;
+    const GumboVector* children = &node->v.element.children;
     for (unsigned int i = 0; i < children->length; ++i) {
         extractTextNodes(static_cast<GumboNode*>(children->data[i]), sentences);
     }
 }
 
-EpubTranslator::EpubTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger) :
+EpubTranslator::EpubTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger) :
     NormalJsonTranslator(projectDir, controller, logger,
         // m_inputDir                                                m_inputCacheDir
         // m_outputDir                                               m_outputCacheDir
@@ -176,8 +168,8 @@ void EpubTranslator::init()
                     RegexPattern regexPattern;
                     const std::string compileModifier = toml::find_or(regexTbl, "compile_modifier", defaultRegCompileModifier);
                     const std::string replaceModifier = toml::find_or(regexTbl, "replace_modifier", defaultRegReplaceModifier);
-                    regexPattern.org.setPattern(regexOrg).setModifier(compileModifier).compile();
-                    regexPattern.rep.setModifier(replaceModifier);
+                    regexPattern.org->setPattern(regexOrg).setModifier(compileModifier).compile();
+                    regexPattern.rep->setModifier(replaceModifier);
                     if (!regexPattern.org) {
                         throw std::runtime_error("预处理正则编译失败: " + regexOrg);
                     }
@@ -203,19 +195,19 @@ void EpubTranslator::init()
                                 toml::find_or(callbackTbl, "replaceStr", "");
                             const std::string callbackCompileModifier = toml::find_or(callbackTbl, "compile_modifier", defaultRegCompileModifier);
                             const std::string callbackReplaceModifier = toml::find_or(callbackTbl, "replace_modifier", defaultRegReplaceModifier);
-                            callbackPattern.org.setPattern(callbackOrg).setModifier(callbackCompileModifier).compile();
-                            callbackPattern.rep.setModifier(callbackReplaceModifier);
+                            callbackPattern.org->setPattern(callbackOrg).setModifier(callbackCompileModifier).compile();
+                            callbackPattern.rep->setModifier(callbackReplaceModifier);
                             if (!callbackPattern.org) {
                                 throw std::runtime_error(std::format("预处理正则回调正则编译失败: [{}]", callbackOrg));
                             }
-                            callbackPattern.rep.setReplaceWith(callbackRep);
+                            callbackPattern.rep->setReplaceWith(callbackRep);
                             regexPattern.callbackPatterns.insert({ group, std::move(callbackPattern) });
                         }
                     }
                     else {
                         const std::string& regexRep = regexTbl.contains("rep") ? toml::find_or(regexTbl, "rep", "") :
                             toml::find_or(regexTbl, "replaceStr", "");
-                        regexPattern.rep.setReplaceWith(regexRep);
+                        regexPattern.rep->setReplaceWith(regexRep);
                     }
 
                     patterns.push_back(std::move(regexPattern));
@@ -262,16 +254,16 @@ void EpubTranslator::beforeRun()
     auto regexReplace = [this](std::vector<RegexPattern>& regexPatterns, std::string& content)
         {
             for (RegexPattern& reg : regexPatterns) {
-                reg.rep.setSubject(&content);
+                reg.rep->setSubject(&content);
                 if (reg.isCallback) {
-                    content = reg.rep.nreplace(jpc::MatchEvaluator([&](const jpc::NumSub& m1, void*, void*)
+                    content = reg.rep->nreplace(jpc::MatchEvaluator([&](const jpc::NumSub& m1, void*, void*)
                         {
                             std::string result;
                             for (size_t i = 1; i < m1.size(); i++) {
                                 std::string groupStr = m1[i];
                                 auto equalRange = reg.callbackPatterns.equal_range((int)i);
                                 for (auto it = equalRange.first; it != equalRange.second; ++it) {
-                                    groupStr = it->second.rep.setSubject(&groupStr).replace();
+                                    groupStr = it->second.rep->setSubject(&groupStr).replace();
                                 }
                                 result.append(groupStr);
                             }
@@ -279,16 +271,16 @@ void EpubTranslator::beforeRun()
                         }));
                 }
                 else {
-                    content = reg.rep.replace();
+                    content = reg.rep->replace();
                 }
             }
         };
 
 
     for (const auto& epubPath : epubFiles) {
-        fs::path relEpubPath = fs::relative(epubPath, m_epubInputDir); // dir1/book1.epub
-        fs::path bookUnpackPath = m_tempUnpackDir / relEpubPath.parent_path() / relEpubPath.stem(); // cache/myproject/epub_unpacked/dir1/book1
-        fs::path bookRebuildPath = m_tempRebuildDir / relEpubPath.parent_path() / relEpubPath.stem(); // cache/myproject/epub_rebuild/dir1/book1
+        const fs::path relEpubPath = fs::relative(epubPath, m_epubInputDir); // dir1/book1.epub
+        const fs::path bookUnpackPath = m_tempUnpackDir / relEpubPath.parent_path() / relEpubPath.stem(); // cache/myproject/epub_unpacked/dir1/book1
+        const fs::path bookRebuildPath = m_tempRebuildDir / relEpubPath.parent_path() / relEpubPath.stem(); // cache/myproject/epub_rebuild/dir1/book1
 
         // 解压 EPUB 文件
         m_logger->debug("解压 {} 到 {}", wide2Ascii(epubPath), wide2Ascii(bookUnpackPath));
@@ -298,7 +290,7 @@ void EpubTranslator::beforeRun()
         // 从html中提取json和元数据
         createParent(bookRebuildPath);
         fs::copy(bookUnpackPath, bookRebuildPath, fs::copy_options::recursive);
-        fs::path relBookDir = relEpubPath.parent_path() / relEpubPath.stem(); // dir1/book1
+        const fs::path relBookDir = relEpubPath.parent_path() / relEpubPath.stem(); // dir1/book1
         for (const auto& htmlEntry : fs::recursive_directory_iterator(bookUnpackPath)) {
             if (htmlEntry.is_regular_file() && (isSameExtension(htmlEntry.path(), L".html") || isSameExtension(htmlEntry.path(), L".xhtml"))) {
 
@@ -315,10 +307,10 @@ void EpubTranslator::beforeRun()
                 if (sentences.empty()) continue;
 
                 // 创建json相对路径
-                fs::path relativePath = fs::relative(htmlEntry.path(), bookUnpackPath); // OEBPS/chapter1.html
-                fs::path showNormalHtmlPath = m_projectDir / L"epub_show_normal" / relBookDir / relativePath;
-                fs::path showNormalPostHtmlPath = m_projectDir / L"epub_show_normal_post" / relBookDir / relativePath;
-                fs::path relJsonPath = relBookDir / relativePath.replace_extension(".json"); // dir1/book1/OEBPS/chapter1.json
+                const fs::path relativePath = fs::relative(htmlEntry.path(), bookUnpackPath); // OEBPS/chapter1.html
+                const fs::path showNormalHtmlPath = m_projectDir / L"epub_show_normal" / relBookDir / relativePath;
+                const fs::path showNormalPostHtmlPath = m_projectDir / L"epub_show_normal_post" / relBookDir / relativePath;
+                const fs::path relJsonPath = relBookDir / fs::path(relativePath).replace_extension(L".json"); // dir1/book1/OEBPS/chapter1.json
 
 
                 // 存储映射关系
@@ -383,33 +375,33 @@ void EpubTranslator::beforeRun()
                 const JsonInfo& jsonInfo = m_jsonToInfoMap[relJsonPath];
                 const fs::path& originalHtmlPath = jsonInfo.htmlPath;
                 const fs::path rebuiltHtmlPath = m_tempRebuildDir / fs::relative(originalHtmlPath, m_tempUnpackDir);
-                const auto& metadata = jsonInfo.metadata;
+                const auto& metadatas = jsonInfo.metadata;
 
                 // 替换 HTML 内容的逻辑
                 std::ifstream ifs;
                 const std::string& originalContent = jsonInfo.content;
 
                 ifs.open(m_outputDir / relJsonPath);
-                json translatedData = json::parse(ifs);
+                json translatedDatas = json::parse(ifs);
                 ifs.close();
 
-                if (metadata.size() != translatedData.size()) {
-                    throw std::runtime_error(std::format("[文件 {}] 元数据和翻译数据数量不匹配，无法重组({}meta/{}trans)", wide2Ascii(rebuiltHtmlPath), metadata.size(), translatedData.size()));
+                if (metadatas.size() != translatedDatas.size()) {
+                    throw std::runtime_error(std::format("[文件 {}] 元数据和翻译数据数量不匹配，无法重组({}meta/{}trans)", wide2Ascii(rebuiltHtmlPath), metadatas.size(), translatedDatas.size()));
                 }
 
                 std::string newContent;
                 newContent.reserve(originalContent.length() * 2);
                 size_t lastPos = 0;
 
-                for (size_t i = 0; i < metadata.size(); ++i) {
-                    std::string translatedText = translatedData[i]["message"].get<std::string>();
-                    std::string replacement = m_bilingualOutput ?
-                        (translatedText + "<br/><span style=\"color:" + m_originalTextColor + "; font-size:" + m_originalTextScale +
-                            "em;\">" + originalContent.substr(metadata[i].offset, metadata[i].length) + "</span>")
+                for (auto [metadata, translatedData] : std::views::zip(metadatas, translatedDatas)) {
+                    const std::string translatedText = translatedData["message"].get<std::string>();
+                    const std::string replacement = m_bilingualOutput ?
+                        std::format("<br/><span style=\"color:{}; font-size:{}em;\">{}</span>", m_originalTextColor, m_originalTextScale,
+                            std::string_view(originalContent.data() + metadata.offset, metadata.length))
                         : translatedText;
-                    newContent.append(originalContent.substr(lastPos, metadata[i].offset - lastPos));
+                    newContent.append(originalContent.substr(lastPos, metadata.offset - lastPos));
                     newContent.append(replacement);
-                    lastPos = metadata[i].offset + metadata[i].length;
+                    lastPos = metadata.offset + metadata.length;
                 }
                 if (lastPos < originalContent.length()) {
                     newContent.append(originalContent.substr(lastPos));
@@ -430,10 +422,10 @@ void EpubTranslator::beforeRun()
                 ofs.close();
             }
 
-            fs::path relEpubPath = fs::relative(epubPath, m_epubInputDir);
-            fs::path bookRebuildPath = m_tempRebuildDir / relEpubPath.parent_path() / relEpubPath.stem();
+            const fs::path relEpubPath = fs::relative(epubPath, m_epubInputDir);
+            const fs::path bookRebuildPath = m_tempRebuildDir / relEpubPath.parent_path() / relEpubPath.stem();
 
-            fs::path outputEpubPath = m_epubOutputDir / relEpubPath;
+            const fs::path outputEpubPath = m_epubOutputDir / relEpubPath;
             createParent(outputEpubPath);
             m_logger->debug("正在打包 {}", wide2Ascii(outputEpubPath));
 
@@ -444,7 +436,7 @@ void EpubTranslator::beforeRun()
             }
 
             // --- 步骤一：优先处理 mimetype 文件，且不压缩 ---
-            fs::path mimetypePath = bookRebuildPath / "mimetype";
+            const fs::path mimetypePath = bookRebuildPath / "mimetype";
             if (fs::exists(mimetypePath)) {
                 zip_source_t* s = zip_source_file(za, wide2Ascii(mimetypePath).c_str(), 0, 0);
                 if (!s) {
@@ -471,7 +463,7 @@ void EpubTranslator::beforeRun()
 
             // --- 步骤二：处理其他所有文件和目录 ---
             for (const auto& entry : fs::recursive_directory_iterator(bookRebuildPath)) {
-                fs::path relativePath = fs::relative(entry.path(), bookRebuildPath);
+                const fs::path relativePath = fs::relative(entry.path(), bookRebuildPath);
                 std::string entryName = wide2Ascii(relativePath);
                 std::ranges::replace(entryName, '\\', '/');
 

@@ -26,7 +26,8 @@ public:
 	// 从 sol::object 转换到 json 的辅助函数
 	static json solObj2JsonValue(sol::object obj) {
 		sol::type type = obj.get_type();
-		switch (type) {
+		switch (type) 
+		{
 		case sol::type::string:
 			return obj.as<std::string>();
 		case sol::type::number:
@@ -90,7 +91,8 @@ public:
 	// 递归转换函数：将 json 转换为 sol::object
 	static sol::object jsonValue2SolObject(const json& value, sol::state_view lua) {
 		// 检查节点类型并进行相应转换
-		switch (value.type()) {
+		switch (value.type()) 
+		{
 		case json::value_t::string:
 			return sol::make_object(lua, value.get<std::string>());
 		case json::value_t::number_unsigned:
@@ -129,7 +131,8 @@ public:
 	// 从 sol::object 转换到 toml::node 的辅助函数
 	static toml::value solObj2TomlValue(sol::object obj) {
 		sol::type type = obj.get_type();
-		switch (type) {
+		switch (type) 
+		{
 		case sol::type::string:
 			return toml::value(obj.as<std::string>());
 		case sol::type::number:
@@ -251,12 +254,12 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 	}
 
 	if (!it->second->functions.contains(functionName)) {
-		sol::function func = (*(it->second->lua))[functionName];
-		if (!func.valid()) {
+		std::unique_ptr<sol::function> pFunc = std::make_unique<sol::function>((*(it->second->lua))[functionName]);
+		if (!pFunc->valid()) {
 			m_logger->debug("Failed to find function {} in script {}", functionName, scriptPath);
 			return std::nullopt;
 		}
-		it->second->functions[functionName] = func;
+		it->second->functions.insert({ functionName, std::move(pFunc) });
 	}
 
 	return it->second;
@@ -683,6 +686,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 			std::string result;
 			return matcher->replaceAll(icu::UnicodeString::fromUTF8(rep), status).toUTF8String(result);
 		};
+	//utilsTable["pcre2RegexMatch"]
 
 	// 绑定 spdlog::logger
 	lua.new_enum("spdlogLevel",

@@ -25,9 +25,14 @@ using ordered_json = nlohmann::ordered_json;
 namespace py = pybind11;
 namespace fs = std::filesystem;
 
+NormalJsonTranslator::~NormalJsonTranslator() 
+{
+    m_logger->info("所有任务已完成！NormalJsonTranslator结束。");
+}
+
 NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger,
-    std::optional<fs::path> inputDir, std::optional<fs::path> inputCacheDir,
-    std::optional<fs::path> outputDir, std::optional<fs::path> outputCacheDir) :
+                                           std::optional<fs::path> inputDir, std::optional<fs::path> inputCacheDir,
+                                           std::optional<fs::path> outputDir, std::optional<fs::path> outputCacheDir) :
     m_projectDir(projectDir), m_controller(controller), m_logger(logger), m_luaManager(logger), m_pythonManager(logger)
 {
     m_logger->info("GalTransl++ NormalJsonTranslator 启动...");
@@ -236,7 +241,8 @@ void NormalJsonTranslator::init()
                 std::string systemKey;
                 std::string userKey;
 
-                switch (m_transEngine) {
+                switch (m_transEngine) 
+            	    {
                 case TransEngine::ForGalJson:
                     systemKey = "FORGALJSON_SYSTEM";
                     userKey = "FORGALJSON_TRANS_PROMPT_EN";
@@ -581,7 +587,7 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
                         auto checkFunc = [&]() -> bool
                             {
                                 problem = "Current problem:" + problem;
-                                bool result = skipProblemCondition.second.value()(se);
+                                const bool result = skipProblemCondition.second.value()(se);
                                 problem = problem.substr(16);
                                 return result;
                             };
@@ -606,7 +612,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
     std::string contextHistory = buildContextHistory(batch, m_transEngine, m_contextHistorySize, 1024);
     std::string glossary = m_gptDictionary->generatePrompt(batch, m_transEngine);
 
-    while (retryCount < m_maxRetries) {
+    while (retryCount == 0 || retryCount < m_maxRetries) {
 
         if (m_controller->shouldStop()) {
             return false;
@@ -726,7 +732,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
     }
 
     size_t failedCount = 0;
-    for (auto& pSentence : batch | std::views::filter([](const Sentence* pSentence) { return !pSentence->complete; })) {
+    for (Sentence* pSentence : batch | std::views::filter([](const Sentence* pSentence) { return !pSentence->complete; })) {
         ++failedCount;
         pSentence->pre_translated_text = "(Failed to translate)" + pSentence->pre_processed_text;
         pSentence->complete = true;
@@ -734,7 +740,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         m_controller->updateBar(); // 失败
     }
     m_logger->error("[线程 {}] [文件 {}] 批次翻译在 {} 次重试后彻底失败，共翻译 {} / {} 句。",
-        threadId, wide2Ascii(relInputPath), m_maxRetries, batch.size() - failedCount, batch.size());
+        threadId, wide2Ascii(relInputPath), retryCount, batch.size() - failedCount, batch.size());
     return false;
 }
 
@@ -850,7 +856,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
         std::vector<fs::path> cachePaths;
 
-        auto readAllPotentialPartFileCache = [&](const std::wstring& cacheSpec, const fs::path& specParentDir, std::optional<fs::path> additionalCachePath = std::nullopt)
+        auto readAllPotentialPartFileCache = [&](const std::wstring& cacheSpec, const fs::path& specParentDir, const std::optional<fs::path>& additionalCachePath = std::nullopt)
             {
                 for (const auto& entry : fs::directory_iterator(specParentDir)) {
                     if (!entry.is_regular_file()) {
@@ -886,7 +892,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 if (auto it = m_splitFilePartsToJson.find(relInputPath); it != m_splitFilePartsToJson.end() && fs::exists(m_transCacheDir / it->second)) {
                     additionalCachePath = m_transCacheDir / it->second;
                 }
-                // 这个逻辑还挺耗时的，我自己尝试优化结果大败而归
+                // 这个逻辑还挺耗时的
                 size_t pos = relInputPath.filename().wstring().rfind(L"_part_");
                 std::wstring orgStem = relInputPath.filename().wstring().substr(0, pos);
                 std::wstring cacheSpec = orgStem + L"_part_*.json";
@@ -923,7 +929,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
 
 
-        for (auto& se : sentences) {
+        for (Sentence& se : sentences) {
             if (se.complete) {
                 m_completedSentences++;
                 m_controller->updateBar(); // 跳过已完成的句子

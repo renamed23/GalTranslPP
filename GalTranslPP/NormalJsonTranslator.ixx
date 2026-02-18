@@ -42,8 +42,9 @@ export {
         fs::path m_projectDir;
 
         // relPathString, backgroundText
-        std::map<std::string, std::string> m_backgroundTextCacheMap;
         std::mutex m_backgroundTextCacheMapMutex;
+        std::map<std::string, std::string> m_backgroundTextCacheMap;
+
         std::string m_systemPrompt;
         std::string m_userPrompt;
         std::string m_targetLang;
@@ -51,13 +52,14 @@ export {
         int m_totalSentences = 0;
         std::atomic<int> m_completedSentences = 0;
 
+        bool m_pythonTranslator = false;
+
         int m_threadsNum;
         int m_batchSize;
         int m_contextHistorySize;
         int m_maxRetries;
         int m_saveCacheInterval;
         int m_apiTimeOutMs;
-        bool m_pythonTranslator = false;
         bool m_checkQuota;
         bool m_smartRetry;
         bool m_usePreDictInName;
@@ -82,6 +84,8 @@ export {
         LuaManager m_luaManager;
 
         bool m_needsCombining = false;
+        std::shared_mutex m_transCacheMutex;
+        std::mutex m_outputMutex;
         // 输入分割文件相对路径到原始json相对路径的映射
         std::map<fs::path, fs::path> m_splitFilePartsToJson;
         // 原始json相对路径到多个输入分割文件相对路径及其有没有完成的映射
@@ -92,8 +96,6 @@ export {
         std::function<void(fs::path)> m_onFileProcessed;
         std::function<std::string(std::string)> m_onPerformApi;
         std::function<DictList(DictList)> m_onDictProcessed;
-        std::shared_mutex m_transCacheMutex;
-        std::mutex m_outputMutex;
 
         ctpl::thread_pool m_threadPool{1};
         std::unique_ptr<APIPool> m_apiPool;
@@ -118,10 +120,7 @@ export {
             std::optional<fs::path> inputDir = std::nullopt, std::optional<fs::path> inputCacheDir = std::nullopt,
             std::optional<fs::path> outputDir = std::nullopt, std::optional<fs::path> outputCacheDir = std::nullopt);
 
-        virtual ~NormalJsonTranslator() override
-        {
-            m_logger->info("所有任务已完成！NormalJsonTranslator结束。");
-        }
+        virtual ~NormalJsonTranslator() override;
 
         void init();
         std::optional<std::vector<fs::path>> beforeRun();
@@ -131,6 +130,3 @@ export {
         virtual void run() override;
     };
 }
-
-module :private;
-

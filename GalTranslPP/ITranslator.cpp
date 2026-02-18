@@ -43,7 +43,7 @@ ITranslator::~ITranslator()
 template<typename Mutex>
 class ControllerSink : public spdlog::sinks::base_sink<Mutex> {
 public:
-    explicit ControllerSink(std::shared_ptr<IController> controller)
+    explicit ControllerSink(const std::shared_ptr<IController>& controller)
         : m_controller(controller) {
     }
 
@@ -63,7 +63,7 @@ private:
     std::shared_ptr<IController> m_controller;
 };
 
-std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller)
+std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller)
 {
     const fs::path configFilePath = projectDir / L"config.toml";
     if (!fs::exists(configFilePath)) {

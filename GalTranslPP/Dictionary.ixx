@@ -41,7 +41,7 @@ export {
     public:
 
         GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, const std::function<NLPResult(const std::string&)>& tokenizeSourceLangFunc,
-            LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger);
+            LuaManager& luaManager, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
 
         ~GptDictionary() {
             saveTokenizeCache(m_tokenizeCacheMap, m_tokenizeCachePath, m_logger);
@@ -51,9 +51,9 @@ export {
 
         void loadFromFile(const fs::path& filePath, bool& needReboot);
 
-        std::string generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine);
+        std::string generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) const;
 
-        std::string doReplace(const Sentence* se, CachePart targetToModify);
+        std::string doReplace(const Sentence* se, CachePart targetToModify) const;
 
         void checkDictUse(Sentence* sentence, CachePart base, CachePart check);
     };
@@ -81,7 +81,7 @@ export {
     public:
 
         NormalDictionary(const fs::path& projectDir,
-            LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger) 
+            LuaManager& luaManager, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger) 
             : m_projectDir(projectDir), m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger) {}
 
         void loadFromFile(const fs::path& filePath, bool& needReboot);
@@ -96,7 +96,7 @@ export {
 module :private;
 
 GptDictionary::GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, const std::function<NLPResult(const std::string&)>& tokenizeSourceLangFunc,
-    LuaManager& luaManager, PythonManager& pythonManager, std::shared_ptr<spdlog::logger> logger)
+    LuaManager& luaManager, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
     : m_projectDir(projectDir), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_gptdict.json"),
     m_tokenizeSourceLangFunc(tokenizeSourceLangFunc),
     m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger)
@@ -126,7 +126,7 @@ void GptDictionary::sort() {
     }
 }
 
-std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) {
+std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) const {
     std::string batchText;
     for (const auto& s : batch) {
         batchText += s->name + ": " + s->pre_processed_text + "\n";
@@ -136,7 +136,8 @@ std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, T
     for (const auto& entry : m_entries) {
         if (batchText.contains(entry.searchStr)) {
             // *** 根据 transEngine 选择格式 ***
-            switch (transEngine) {
+            switch (transEngine) 
+        	    {
             case TransEngine::ForGalJson:
             case TransEngine::DeepseekJson:
                 promptContent += "| " + entry.searchStr + " | " + entry.replaceStr + " |";
@@ -237,7 +238,7 @@ void GptDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
     m_logger->info("已加载 GPT 字典: {}, 共 {} 个词条", wide2Ascii(filePath.filename()), count);
 }
 
-std::string GptDictionary::doReplace(const Sentence* se, CachePart targetToModify) {
+std::string GptDictionary::doReplace(const Sentence* se, CachePart targetToModify) const {
     std::string textToModify = chooseString(se, targetToModify);
     for (const auto& entry : m_entries) {
         if (textToModify.contains(entry.searchStr)) {
@@ -252,7 +253,7 @@ uint8_t checkTransIncludeReplace(const std::string& trans, const std::string& re
         {
             return std::string_view(subStrView.begin(), subStrView.end());
         }),
-        [&](std::string_view subStr)
+        [&](const std::string_view subStr)
         {
             return trans.contains(subStr);
         }) ? 1 : 2;
@@ -277,20 +278,20 @@ void GptDictionary::checkDictUse(Sentence* sentence, CachePart base, CachePart c
         }
         
         if (entry.otherEntriesWhoseSearchStrContainsThatInThisEntry) {
-            auto it = std::ranges::find_if(*entry.otherEntriesWhoseSearchStrContainsThatInThisEntry, [&](size_t otherEntryIndex)
+            auto it = std::ranges::find_if(*entry.otherEntriesWhoseSearchStrContainsThatInThisEntry, [&](const size_t otherEntryIndex)
                 {
                     return checkResults[otherEntryIndex] == 1;
                 });
             if (it != entry.otherEntriesWhoseSearchStrContainsThatInThisEntry->end()) {
-                GptDictEntry& otherEntryRef = m_entries[*it];
-                sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用，但使用了 " +
-                    otherEntryRef.searchStr + "->" + otherEntryRef.replaceStr + " 这一包含性字典");
+                const GptDictEntry& otherEntryRef = m_entries[*it];
+                sentence->problems.push_back(std::format("GPT字典 {}->{} 未使用，但使用了 {}->{} 这一包含性字典", entry.searchStr, entry.replaceStr, 
+                        otherEntryRef.searchStr, otherEntryRef.replaceStr));
                 continue;
             }
         }
         if (entry.searchStr.length() > 15) {
             // 如果字典单独出现且长度大于 15 字节，则默认认为是字典未正确使用的情况
-            sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用");
+            sentence->problems.push_back(std::format("GPT字典 {}->{} 未使用", entry.searchStr, entry.replaceStr));
             continue;
         }
 
@@ -326,7 +327,7 @@ void GptDictionary::checkDictUse(Sentence* sentence, CachePart base, CachePart c
 
         if (found) {
             // 如果原文有完整的 searchStr 词组且译文中没有使用对应的词，几乎可以肯定是字典未正确使用的情况
-            sentence->problems.push_back("GPT字典 " + entry.searchStr + "->" + entry.replaceStr + " 未使用");
+            sentence->problems.push_back(std::format("GPT字典 {}->{} 未使用", entry.searchStr, entry.replaceStr));
         }
         
     }
@@ -347,7 +348,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
         if (!dictData.contains("normalDict")) {
             return;
         }
-        const auto dicts = dictData.at("normalDict").as_array();
+        const auto& dicts = dictData.at("normalDict").as_array();
         for (const auto& el : dicts) {
             NormalDictEntry entry;
             if (!el.contains("org") && !el.contains("searchStr")) {

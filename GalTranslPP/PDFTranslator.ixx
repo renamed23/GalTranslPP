@@ -38,7 +38,7 @@ export {
 
         virtual void run() override;
 
-        PDFTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger);
+        PDFTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger);
 
         virtual ~PDFTranslator() override
         {
@@ -51,7 +51,7 @@ export {
 
 module :private;
 
-PDFTranslator::PDFTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger) :
+PDFTranslator::PDFTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger) :
     NormalJsonTranslator(projectDir, controller, logger,
         // m_inputDir                                                m_inputCacheDir
         // m_outputDir                                               m_outputCacheDir

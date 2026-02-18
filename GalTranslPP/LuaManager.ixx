@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #include <toml.hpp>
 #include <spdlog/spdlog.h>
@@ -14,7 +14,7 @@ export {
 
 	struct LuaStateInstance {
 		std::unique_ptr<sol::state> lua;
-		std::map<std::string, sol::function> functions;
+		std::map<std::string, std::unique_ptr<sol::function>> functions;
 		std::mutex executionMutex; // 用于保护这个特定 lua 实例的执行
 		LuaStateInstance() : lua(std::make_unique<sol::state>()) {}
 	};

@@ -80,7 +80,7 @@ export {
         }
         
         std::shared_ptr<py::object> registerNLPFunction
-        (const std::string& moduleName, const std::string& modelName, std::shared_ptr<spdlog::logger>& logger, bool& needReboot);
+        (const std::string& moduleName, const std::string& modelName, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot);
 
     private:
 
@@ -138,7 +138,7 @@ export {
         std::optional<std::shared_ptr<PythonInterpreterInstance>> registerFunction
         (const std::string& modulePath, const std::string& functionName, bool& needReboot);
 
-        PythonManager(std::shared_ptr<spdlog::logger> logger) : m_logger(logger) {}
+        PythonManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
 
     private:
 
@@ -149,7 +149,7 @@ export {
         std::shared_ptr<spdlog::logger> m_logger;
     };
 
-    void checkPythonDependencies(const std::vector<std::string>& dependencies, std::shared_ptr<spdlog::logger>& logger);
+    void checkPythonDependencies(const std::vector<std::string>& dependencies, const std::shared_ptr<spdlog::logger>& logger);
 
     bool startUpPythonEnv(const fs::path& pyEnvPath, std::unique_ptr<py::gil_scoped_release>& release);
     void shutDownPythonEnv(std::unique_ptr<py::gil_scoped_release>& release);

@@ -3,7 +3,6 @@
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
-#include <ctpl_stl.h>
 
 export module LuaTranslator;
 
@@ -19,9 +18,10 @@ export {
 
 	template<typename BaseTranslator>
 	class LuaTranslator : public BaseTranslator {
+
 	private:
 		std::shared_ptr<LuaStateInstance> m_luaState;
-		sol::function m_luaRunFunc;
+		sol::function* m_luaRunFunc;
 		std::string m_scriptPath;
 		std::string m_translatorName;
 		bool m_needReboot = false;
@@ -31,7 +31,7 @@ export {
 		{
 			this->m_logger->info("开始运行 LuaTranslator...");
 			try {
-				m_luaRunFunc();
+				(*m_luaRunFunc)();
 			}
 			catch (const sol::error& e) {
 				throw std::runtime_error(std::format("LuaTranslator 运行时异常: {}", e.what()));
@@ -54,23 +54,15 @@ export {
 				throw std::runtime_error("LuaTranslator 获取 run 函数失败。");
 			}
 			m_luaState = luaStateOpt.value();
-			m_luaRunFunc = m_luaState->functions["run"];
+			m_luaRunFunc = m_luaState->functions["run"].get();
 			this->m_luaManager.registerFunction(m_scriptPath, "unload", m_needReboot);
 
 			sol::state& luaState = *(m_luaState->lua);
+			luaState["luaTranslator"] = (BaseTranslator*)this;
 
-			luaState.new_usertype<LuaTranslator<BaseTranslator>>("LuaTranslator",
-				sol::base_classes, sol::bases<ITranslator,
-				std::conditional_t<std::is_base_of_v<NormalJsonTranslator, BaseTranslator>, NormalJsonTranslator, void>,
-				std::conditional_t<std::is_base_of_v<EpubTranslator, BaseTranslator>, EpubTranslator, void>,
-				std::conditional_t<std::is_base_of_v<PDFTranslator, BaseTranslator>, PDFTranslator, void>
-				>()
-			);
-			luaState["luaTranslator"] = this;
-
-			sol::function initFunc = m_luaState->functions["init"];
+			sol::function* initFunc = m_luaState->functions["init"].get();
 			try {
-				initFunc();
+				(*initFunc)();
 			}
 			catch (const sol::error& e) {
 				throw std::runtime_error(std::format("初始化 LuaTranslator 失败：{}", e.what()));
@@ -83,8 +75,8 @@ export {
 
 		virtual ~LuaTranslator() override
 		{
-			if (auto unloadFunc = m_luaState->functions["unload"]; unloadFunc.valid()) {
-				unloadFunc();
+			if (auto& unloadFunc = m_luaState->functions["unload"]; unloadFunc.operator bool() && unloadFunc->valid()) {
+				(*unloadFunc)();
 			}
 			this->m_logger->info("所有任务已完成！LuaTranslator {} 结束。", m_translatorName);
 		}

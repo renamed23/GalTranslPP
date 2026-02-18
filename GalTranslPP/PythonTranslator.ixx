@@ -20,6 +20,7 @@ export {
 
 	template<typename BaseTranslator>
 	class PythonTranslator : public BaseTranslator {
+
 	private:
 		std::shared_ptr<PythonInterpreterInstance> m_pythonInterpreter;
 		py::object* m_pythonRunFunc;
@@ -87,8 +88,10 @@ export {
 						if (auto& unloadFuncPtr = m_pythonInterpreter->functions["unload"]; unloadFuncPtr.operator bool() && py::isinstance<py::function>(*unloadFuncPtr)) {
 							(*unloadFuncPtr)();
 						}
-						this->m_onFileProcessed = {};
-						this->m_onPerformApi = {};
+
+						this->m_onFileProcessed = nullptr;
+						this->m_onPerformApi = nullptr;
+						this->m_onDictProcessed = nullptr;
 					}
 					catch (const py::error_already_set& e) {
 						throw std::runtime_error(std::format("卸载 PythonTranslator 时发生错误: {}", e.what()));

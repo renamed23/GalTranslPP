@@ -1,8 +1,12 @@
 ﻿module;
 
 #include <spdlog/spdlog.h>
+#pragma  warning( push ) 
+#pragma  warning( disable: 4244 )
+#pragma  warning( disable: 4251 )
+#pragma  warning( disable: 4267 )
 #include <cld3/nnet_language_identifier.h>
-#include <cld3/language_identifier_features.h>
+#pragma  warning(  pop  ) 
 
 export module ProblemAnalyzer;
 
@@ -53,7 +57,7 @@ export {
 
 	public:
 
-        ProblemAnalyzer(std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, std::shared_ptr<spdlog::logger> logger)
+        ProblemAnalyzer(std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, const std::shared_ptr<spdlog::logger>& logger)
             : m_gptDictionary(gptDictionary), m_targetLang(targetLang), m_logger(logger) {}
 
         ~ProblemAnalyzer() {
@@ -83,6 +87,12 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         sentence->problems.push_back("翻译失败");
         return;
     }
+    if (sentence->translated_preview.starts_with("(GPPCProblem:")) {
+        if (size_t pos = sentence->translated_preview.find(')'); pos != std::string::npos) {
+            sentence->problems.push_back(std::format("GPPCProblem: {}", std::string_view(sentence->translated_preview.data() + 13, pos - 13)));
+            sentence->translated_preview = sentence->translated_preview.substr(pos + 1);
+	    }
+    }
 
     // 1. 词频过高
     if (m_problems.highFrequency.use) {
@@ -92,7 +102,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         if (wordCount > 20) {
             const auto [mostWordOrg, wordCountOrg] = getMostCommonChar(origText);
             if (wordCount > (wordCountOrg > 0 ? wordCountOrg * 2 : 20)) {
-                sentence->problems.push_back("词频过高-'" + mostWord + "'" + std::to_string(wordCount) + "次");
+                sentence->problems.push_back(std::format("词频过高-'{}'{}次", mostWord, wordCount));
             }
         }
     }
@@ -328,10 +338,10 @@ void ProblemAnalyzer::overwriteCompareObj(const std::string& problemKey, const s
             obj.base = chooseCachePart(base);
             obj.check = chooseCachePart(check);
             if (obj.base == CachePart::None) {
-                throw std::invalid_argument("未知缓存键: " + base);
+                throw std::invalid_argument(std::format("未知缓存键: {}", base));
             }
             if (obj.check == CachePart::None) {
-                throw std::invalid_argument("未知缓存键: " + check);
+                throw std::invalid_argument(std::format("未知缓存键: {}", check));
             }
         };
 

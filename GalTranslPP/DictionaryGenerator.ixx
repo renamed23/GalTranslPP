@@ -52,7 +52,7 @@ export {
         void callLLMToGenerate(int segmentIndex, int threadId);
 
     public:
-        DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, 
+        DictionaryGenerator(const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, std::unique_ptr<APIPool>& apiPool, 
             const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
             const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::function<DictList(DictList)>& onDictProcessed,
             const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
@@ -69,7 +69,7 @@ export {
 
 module :private;
 
-DictionaryGenerator::DictionaryGenerator(std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger, std::unique_ptr<APIPool>& apiPool, 
+DictionaryGenerator::DictionaryGenerator(const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, std::unique_ptr<APIPool>& apiPool,
     const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
     const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::function<DictList(DictList)>& onDictProcessed,
     const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
@@ -170,6 +170,11 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
                 m_logger->trace("原文: {}\n分词实体结果: {}", segment, entityStr);
             }
         };
+
+    const std::set<std::string> excludeEntities =
+    {
+        "TITLE_AFFIX", "QUANTITY", "ORDINAL", "DATE", "MONEY"
+    };
     for (const auto& segment : m_segments) {
         if (auto it = m_tokenizeCacheMap.find(segment); it != m_tokenizeCacheMap.end()) {
             EntityVec& entityVec = it->second;
@@ -178,12 +183,8 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
         else {
             NLPResult result = m_tokenizeSourceLangFunc(segment);
             EntityVec& entityVec = std::get<1>(result);
-            std::erase_if(entityVec, [](const std::vector<std::string>& entity)
+            std::erase_if(entityVec, [&excludeEntities](const std::vector<std::string>& entity)
                 {
-                    static const std::set<std::string> excludeEntities =
-                    {
-                        "TITLE_AFFIX", "QUANTITY", "ORDINAL", "DATE", "MONEY"
-                    };
                     if (excludeEntities.contains(entity[1])) {
                         return true;
                     }
