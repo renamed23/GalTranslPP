@@ -29,19 +29,19 @@ export {
     class GptDictionary {
     private:
         std::unordered_map<std::string, WordPosVec> m_tokenizeCacheMap;
-        std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
+        const std::function<NLPResult(const std::string&)>& m_tokenizeSourceLangFunc;
         fs::path m_projectDir;
         fs::path m_tokenizeCachePath;
         std::vector<GptDictEntry> m_entries;
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_mutex m_tokenizeCacheMapMutex;
-        LuaManager& m_luaManager;
-        PythonManager& m_pythonManager;
+        const std::unique_ptr<LuaManager>& m_luaManager;
+        const std::unique_ptr<PythonManager>& m_pythonManager;
 
     public:
 
         GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, const std::function<NLPResult(const std::string&)>& tokenizeSourceLangFunc,
-            LuaManager& luaManager, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
+            const std::unique_ptr<LuaManager>&, const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
 
         ~GptDictionary() {
             saveTokenizeCache(m_tokenizeCacheMap, m_tokenizeCachePath, m_logger);
@@ -75,13 +75,13 @@ export {
         fs::path m_projectDir;
         std::vector<NormalDictEntry> m_entries;
         std::shared_ptr<spdlog::logger> m_logger;
-        LuaManager& m_luaManager;
-        PythonManager& m_pythonManager;
+        const std::unique_ptr<LuaManager>& m_luaManager;
+        const std::unique_ptr<PythonManager>& m_pythonManager;
 
     public:
 
         NormalDictionary(const fs::path& projectDir,
-            LuaManager& luaManager, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger) 
+            const std::unique_ptr<LuaManager>& luaManager, const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
             : m_projectDir(projectDir), m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger) {}
 
         void loadFromFile(const fs::path& filePath, bool& needReboot);
@@ -96,7 +96,7 @@ export {
 module :private;
 
 GptDictionary::GptDictionary(const fs::path& projectDir, const fs::path& otherCacheDir, const std::function<NLPResult(const std::string&)>& tokenizeSourceLangFunc,
-    LuaManager& luaManager, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
+    const std::unique_ptr<LuaManager>& luaManager, const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
     : m_projectDir(projectDir), m_tokenizeCachePath(otherCacheDir / L"tokenizeCache_gptdict.json"),
     m_tokenizeSourceLangFunc(tokenizeSourceLangFunc),
     m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger)

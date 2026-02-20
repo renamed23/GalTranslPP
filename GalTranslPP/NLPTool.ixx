@@ -15,16 +15,16 @@ namespace py = pybind11;
 
 export {
 
-    std::function<NLPResult(const std::string&)> getMeCabTokenizeFunc(const std::string& mecabDictDir, std::shared_ptr<spdlog::logger>& logger);
+    std::function<NLPResult(const std::string&)> getMeCabTokenizeFunc(const std::string& mecabDictDir, const std::shared_ptr<spdlog::logger>& logger);
 
     std::function<NLPResult(const std::string&)> getNLPTokenizeFunc(const std::vector<std::string>& dependencies, const std::string& moduleName,
-        const std::string& modelName, std::shared_ptr<spdlog::logger>& logger, bool& needReboot);
+        const std::string& modelName, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot);
 }
 
 
 module :private;
 
-std::function<NLPResult(const std::string&)> getMeCabTokenizeFunc(const std::string& mecabDictDir, std::shared_ptr<spdlog::logger>& logger)
+std::function<NLPResult(const std::string&)> getMeCabTokenizeFunc(const std::string& mecabDictDir, const std::shared_ptr<spdlog::logger>& logger)
 {
     std::shared_ptr<MeCab::Model> mecabModel = std::shared_ptr<MeCab::Model>(
         MeCab::Model::create(("-r BaseConfig/mecabDict/mecabrc -d " + ascii2Ascii(mecabDictDir)).c_str())
@@ -64,7 +64,7 @@ std::function<NLPResult(const std::string&)> getMeCabTokenizeFunc(const std::str
 }
 
 std::function<NLPResult(const std::string&)> getNLPTokenizeFunc(const std::vector<std::string>& dependencies, const std::string& moduleName,
-    const std::string& modelName, std::shared_ptr<spdlog::logger>& logger, bool& needReboot)
+    const std::string& modelName, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot)
 {
     checkPythonDependencies(dependencies, logger);
     std::shared_ptr<py::object> pythonNLPFunc = PythonMainInterpreterManager::getInstance()

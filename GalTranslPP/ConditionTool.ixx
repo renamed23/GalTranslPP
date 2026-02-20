@@ -105,7 +105,8 @@ export {
 
     template<typename TC>
     CheckSeCondFunc getCheckSeCondFunc(const toml::basic_value<TC>& condElem, const fs::path& projectDir,
-        PythonManager& pythonManager, LuaManager& luaManager, std::shared_ptr<spdlog::logger>& logger, bool& needReboot) {
+        const std::unique_ptr<PythonManager>& pythonManager, const std::unique_ptr<LuaManager>& luaManager, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot) 
+    {
         std::vector<CheckSeCondFunc> funcs;
 
         auto appendFunctionFunc = [&](const auto& tbl)
@@ -129,7 +130,7 @@ export {
                     std::string conditionLuaStr = tbl.at("conditionScript").as_string();
                     replaceStrInplace(conditionLuaStr, "<PROJECT_DIR>", wide2Ascii(projectDir));
                     const std::string& conditionFuncStr = tbl.at("conditionFunc").as_string();
-                    const std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager.registerFunction(
+                    const std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager->registerFunction(
                         conditionLuaStr, conditionFuncStr, needReboot);
                     if (luaStateOpt) {
                         std::shared_ptr<LuaStateInstance> luaState = *luaStateOpt;
@@ -159,7 +160,7 @@ export {
                     std::string conditionPythonStr = tbl.at("conditionScript").as_string();
                     replaceStrInplace(conditionPythonStr, "<PROJECT_DIR>", wide2Ascii(projectDir));
                     const std::string conditionFuncStr = tbl.at("conditionFunc").as_string();
-                    const std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager.registerFunction(
+                    const std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager->registerFunction(
                         conditionPythonStr, conditionFuncStr, needReboot);
                     if (pythonInterpreterOpt) {
                         std::shared_ptr<PythonInterpreterInstance> pythonInterpreter = *pythonInterpreterOpt;

@@ -29,7 +29,8 @@ export {
         bool m_needReboot = false;
 
     public:
-        PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
+        PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, 
+            const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
         bool needReboot() const { return m_needReboot; }
         void dPreRun(Sentence* se);
         void preRun(Sentence* se);
@@ -42,11 +43,12 @@ export {
 
 module :private;
 
-PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, PythonManager& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
+PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string& modulePath, 
+    const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
     : m_logger(logger), m_modulePath(modulePath)
 {
     m_logger->info("正在初始化 Python 插件 {}", m_modulePath);
-    std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager.registerFunction(m_modulePath, "init", m_needReboot);
+    std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager->registerFunction(m_modulePath, "init", m_needReboot);
     if (!pythonInterpreterOpt.has_value()) {
         throw std::runtime_error(std::format("{} init函数初始化失败", m_modulePath));
     }
@@ -54,7 +56,7 @@ PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string
 
     auto registerFunctionFunc = [&](const std::string& funcName, py::object*& func)
         {
-            pythonInterpreterOpt = pythonManager.registerFunction(m_modulePath, funcName, m_needReboot);
+            pythonInterpreterOpt = pythonManager->registerFunction(m_modulePath, funcName, m_needReboot);
             if (pythonInterpreterOpt.has_value()) {
                 func = m_pythonInterpreter->functions[funcName].get();
                 m_logger->info("{} {}函数注册成功", m_modulePath, funcName);

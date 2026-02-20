@@ -80,8 +80,8 @@ export {
         using SkipProblemCondition = std::pair<jpc::Regex, std::optional<CheckSeCondFunc>>;
         std::vector<SkipProblemCondition> m_skipProblems;
 
-        PythonManager m_pythonManager;
-        LuaManager m_luaManager;
+        std::unique_ptr<PythonManager> m_pythonManager;
+        std::unique_ptr<LuaManager> m_luaManager;
 
         bool m_needsCombining = false;
         std::shared_mutex m_transCacheMutex;
@@ -116,7 +116,7 @@ export {
         void processFile(const fs::path& relInputPath, int threadId);
 
     public:
-        NormalJsonTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger,
+        NormalJsonTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger,
             std::optional<fs::path> inputDir = std::nullopt, std::optional<fs::path> inputCacheDir = std::nullopt,
             std::optional<fs::path> outputDir = std::nullopt, std::optional<fs::path> outputCacheDir = std::nullopt);
 

@@ -49,17 +49,17 @@ export {
 			bool needRoot = false;
 			this->m_pythonTranslator = true;
 			m_translatorName = wide2Ascii(fs::path(ascii2Wide(m_modulePath)).stem());
-			std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = this->m_pythonManager.registerFunction(m_modulePath, "init", needRoot);
+			std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = this->m_pythonManager->registerFunction(m_modulePath, "init", needRoot);
 			if (!pythonInterpreterOpt.has_value()) {
 				throw std::runtime_error("PythonTranslator 获取 init 函数失败！");
 			}
-			pythonInterpreterOpt = this->m_pythonManager.registerFunction(m_modulePath, "run", needRoot);
+			pythonInterpreterOpt = this->m_pythonManager->registerFunction(m_modulePath, "run", needRoot);
 			if (!pythonInterpreterOpt.has_value()) {
 				throw std::runtime_error("PythonTranslator 获取 run 函数失败！");
 			}
 			m_pythonInterpreter = pythonInterpreterOpt.value();
 			m_pythonRunFunc = m_pythonInterpreter->functions["run"].get();
-			this->m_pythonManager.registerFunction(m_modulePath, "unload", needRoot);
+			this->m_pythonManager->registerFunction(m_modulePath, "unload", needRoot);
 
 			m_pythonInterpreter->submitTask([&]()
 				{

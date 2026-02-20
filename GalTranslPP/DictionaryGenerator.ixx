@@ -16,14 +16,14 @@ export {
     class DictionaryGenerator {
 
     private:
-        std::unique_ptr<APIPool>& m_apiPool;
+        const std::unique_ptr<APIPool>& m_apiPool;
         fs::path m_tokenizeCachePath;
         std::shared_ptr<IController> m_controller;
         std::shared_ptr<spdlog::logger> m_logger;
-        std::function<void(Sentence*)> m_preProcessFunc;
-        std::function<std::string(std::string)> m_onPerformApi;
-        std::function<DictList(DictList)> m_onDictProcessed;
-        std::function<NLPResult(const std::string&)> m_tokenizeSourceLangFunc;
+        const std::function<void(Sentence*)>& m_preProcessFunc;
+        const std::function<std::string(std::string)>& m_onPerformApi;
+        const std::function<DictList(DictList)>& m_onDictProcessed;
+        const std::function<NLPResult(const std::string&)>& m_tokenizeSourceLangFunc;
 
         std::string m_systemPrompt;
         std::string m_userPrompt;
@@ -52,7 +52,7 @@ export {
         void callLLMToGenerate(int segmentIndex, int threadId);
 
     public:
-        DictionaryGenerator(const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, std::unique_ptr<APIPool>& apiPool, 
+        DictionaryGenerator(const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, const std::unique_ptr<APIPool>& apiPool, 
             const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
             const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::function<DictList(DictList)>& onDictProcessed,
             const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,
@@ -69,7 +69,7 @@ export {
 
 module :private;
 
-DictionaryGenerator::DictionaryGenerator(const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, std::unique_ptr<APIPool>& apiPool,
+DictionaryGenerator::DictionaryGenerator(const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, const std::unique_ptr<APIPool>& apiPool,
     const std::function<NLPResult(const std::string&)>& tokenizeFunc, const fs::path& otherCacheDir,
     const std::function<void(Sentence*)>& preProcessFunc, const std::function<std::string(std::string)>& onPerformApi, const std::function<DictList(DictList)>& onDictProcessed,
     const std::string& systemPrompt, const std::string& userPrompt, const std::string& apiStrategy, const std::string& targetLang,

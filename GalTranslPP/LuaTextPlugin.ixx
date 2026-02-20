@@ -25,7 +25,7 @@ export {
 		bool m_needReboot = false;
 
 	public:
-		LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, LuaManager& luaManager, const std::shared_ptr<spdlog::logger>& logger);
+		LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, const std::unique_ptr<LuaManager>& luaManager, const std::shared_ptr<spdlog::logger>& logger);
 		bool needReboot() const { return m_needReboot; }
 		void dPreRun(Sentence* se);
 		void preRun(Sentence* se);
@@ -39,11 +39,11 @@ export {
 module :private;
 
 
-LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, LuaManager& luaManager, const std::shared_ptr<spdlog::logger>& logger)
+LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, const std::unique_ptr<LuaManager>& luaManager, const std::shared_ptr<spdlog::logger>& logger)
 	: m_logger(logger), m_scriptPath(scriptPath)
 {
 	m_logger->info("正在初始化 Lua 插件 {}", m_scriptPath);
-	std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager.registerFunction(m_scriptPath, "init", m_needReboot);
+	std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager->registerFunction(m_scriptPath, "init", m_needReboot);
 	if (!luaStateOpt.has_value()) {
 		throw std::runtime_error(std::format("{} init函数初始化失败", m_scriptPath));
 	}
@@ -51,7 +51,7 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 
 	auto registerFunctionFunc = [&](const std::string& funcName, sol::function*& pFunc)
 		{
-			luaStateOpt = luaManager.registerFunction(m_scriptPath, funcName, m_needReboot);
+			luaStateOpt = luaManager->registerFunction(m_scriptPath, funcName, m_needReboot);
 			if (luaStateOpt.has_value()) {
 				pFunc = m_luaState->functions[funcName].get();
 				m_logger->info("{} {}函数注册成功", m_scriptPath, funcName);

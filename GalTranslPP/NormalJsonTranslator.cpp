@@ -30,10 +30,12 @@ NormalJsonTranslator::~NormalJsonTranslator()
     m_logger->info("所有任务已完成！NormalJsonTranslator结束。");
 }
 
-NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, std::shared_ptr<IController> controller, std::shared_ptr<spdlog::logger> logger,
+NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger,
                                            std::optional<fs::path> inputDir, std::optional<fs::path> inputCacheDir,
-                                           std::optional<fs::path> outputDir, std::optional<fs::path> outputCacheDir) :
-    m_projectDir(projectDir), m_controller(controller), m_logger(logger), m_luaManager(logger), m_pythonManager(logger)
+                                           std::optional<fs::path> outputDir, std::optional<fs::path> outputCacheDir) 
+    :
+    m_projectDir(projectDir), m_controller(controller), m_logger(logger), 
+    m_luaManager(std::make_unique<LuaManager>(logger)), m_pythonManager(std::make_unique<PythonManager>(logger))
 {
     m_logger->info("GalTransl++ NormalJsonTranslator 启动...");
     m_inputDir = inputDir.value_or(m_projectDir / L"gt_input");

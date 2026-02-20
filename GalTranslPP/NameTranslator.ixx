@@ -16,10 +16,10 @@ export {
     private:
         std::shared_ptr<IController> m_controller;
         std::shared_ptr<spdlog::logger> m_logger;
-        std::unique_ptr<APIPool>& m_apiPool;
-        std::unique_ptr<GptDictionary>& m_gptDictionary;
+        const std::unique_ptr<APIPool>& m_apiPool;
+        const std::unique_ptr<GptDictionary>& m_gptDictionary;
 
-        std::function<std::string(std::string)> m_onPerformApi;
+        const std::function<std::string(std::string)>& m_onPerformApi;
 
         std::string m_systemPrompt;
         std::string m_userPrompt;
@@ -30,14 +30,14 @@ export {
         bool m_checkQuota;
 
         // 内部辅助函数
-        void translateBatch(std::vector<std::string>& batchNames, std::unordered_map<std::string, std::string>& resultMap);
+        void translateBatch(const std::vector<std::string>& batchNames, std::unordered_map<std::string, std::string>& resultMap);
 
     public:
         NameTranslator(
-            std::shared_ptr<IController> controller,
-            std::shared_ptr<spdlog::logger> logger,
-            std::unique_ptr<APIPool>& apiPool,
-            std::unique_ptr<GptDictionary>& gptDictionary,
+            const std::shared_ptr<IController>& controller,
+            const std::shared_ptr<spdlog::logger>& logger,
+            const std::unique_ptr<APIPool>& apiPool,
+            const std::unique_ptr<GptDictionary>& gptDictionary,
             const std::function<std::string(std::string)>& onPerformApi,
             const std::string& systemPrompt,
             const std::string& userPrompt,
@@ -57,10 +57,10 @@ export {
 module :private;
 
 NameTranslator::NameTranslator(
-    std::shared_ptr<IController> controller,
-    std::shared_ptr<spdlog::logger> logger,
-    std::unique_ptr<APIPool>& apiPool,
-    std::unique_ptr<GptDictionary>& gptDictionary,
+    const std::shared_ptr<IController>& controller,
+    const std::shared_ptr<spdlog::logger>& logger,
+    const std::unique_ptr<APIPool>& apiPool,
+    const std::unique_ptr<GptDictionary>& gptDictionary,
     const std::function<std::string(std::string)>& onPerformApi,
     const std::string& systemPrompt,
     const std::string& userPrompt,
@@ -78,7 +78,7 @@ NameTranslator::NameTranslator(
 
 }
 
-void NameTranslator::translateBatch(std::vector<std::string>& batchNames, std::unordered_map<std::string, std::string>& resultMap) {
+void NameTranslator::translateBatch(const std::vector<std::string>& batchNames, std::unordered_map<std::string, std::string>& resultMap) {
 
     // 1. 准备 Glossary
     // 为了利用 GptDictionary，我们需要构造假的 Sentence 对象
@@ -97,7 +97,7 @@ void NameTranslator::translateBatch(std::vector<std::string>& batchNames, std::u
         dummyPtrs.push_back(&se);
     }
 
-    std::string glossary = m_gptDictionary->generatePrompt(dummyPtrs, TransEngine::NameTrans);
+    const std::string glossary = m_gptDictionary->generatePrompt(dummyPtrs, TransEngine::NameTrans);
 
     // 2. 准备 Prompt
     std::string prompt = m_userPrompt;

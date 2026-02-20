@@ -17,7 +17,7 @@ export {
         std::unique_ptr<std::mt19937> m_gen;
 
     public:
-        APIPool(std::shared_ptr<spdlog::logger> logger);
+        APIPool(const std::shared_ptr<spdlog::logger>& logger);
 
         void loadApis(const std::vector<TranslationApi>& apis);
 
@@ -32,15 +32,15 @@ export {
         bool isEmpty();
     };
 
-    bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
-        const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+    bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+        const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, const std::shared_ptr<spdlog::logger>& m_logger,
         int& retryCount, int threadId, bool m_checkQuota);
 }
 
 
 module :private;
 
-APIPool::APIPool(std::shared_ptr<spdlog::logger> logger) : m_logger(logger), m_gen(std::make_unique<std::mt19937>(std::random_device{}())) {}
+APIPool::APIPool(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger), m_gen(std::make_unique<std::mt19937>(std::random_device{}())) {}
 
 void APIPool::loadApis(const std::vector<TranslationApi>& apis) {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -77,21 +77,21 @@ void APIPool::resortTokens() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_apis.size() > 1) {
-        std::rotate(m_apis.begin(), m_apis.begin() + 1, m_apis.end());
+        std::ranges::rotate(m_apis, m_apis.begin() + 1);
     }
 }
 
 void APIPool::reportProblem(const TranslationApi& badAPI) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    auto it = std::ranges::find_if(m_apis, [&](const TranslationApi& api)
+    const auto it = std::ranges::find_if(m_apis, [&](const TranslationApi& api)
         {
             return api.apikey == badAPI.apikey;
         });
     if (it == m_apis.end()) {
         return;
     }
-    auto durationInSec = std::chrono::duration_cast<std::chrono::seconds>
+    const auto durationInSec = std::chrono::duration_cast<std::chrono::seconds>
         (std::chrono::steady_clock::now() - it->lastReportTime).count();
     if (durationInSec < 10) {
         it->reportCount++;
@@ -111,8 +111,8 @@ bool APIPool::isEmpty() {
     return m_apis.empty();
 }
 
-bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
-    const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+    const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, const std::shared_ptr<spdlog::logger>& m_logger,
     int& retryCount, int threadId, bool m_checkQuota)
 {
     if (response.success) {
@@ -120,7 +120,7 @@ bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiP
     }
 
     std::string lowerErrorMsg = response.content;
-    std::transform(lowerErrorMsg.begin(), lowerErrorMsg.end(), lowerErrorMsg.begin(), ::tolower);
+    str2LowerInplace(lowerErrorMsg);
 
     // 情况一：额度用尽 (Quota)
     if (

@@ -52,12 +52,12 @@ export {
         std::string m_codePage;
 
 		Problems m_problems;
-        std::unique_ptr<GptDictionary>& m_gptDictionary;
+        const std::unique_ptr<GptDictionary>& m_gptDictionary;
         std::string m_targetLang;
 
 	public:
 
-        ProblemAnalyzer(std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, const std::shared_ptr<spdlog::logger>& logger)
+        ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, const std::shared_ptr<spdlog::logger>& logger)
             : m_gptDictionary(gptDictionary), m_targetLang(targetLang), m_logger(logger) {}
 
         ~ProblemAnalyzer() {

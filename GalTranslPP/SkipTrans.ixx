@@ -26,7 +26,7 @@ export {
         std::shared_ptr<spdlog::logger> m_logger;
         bool m_skipH;
 
-        void processSkipSentence(Sentence* se, const std::string& info);
+        static void processSkipSentence(Sentence* se, const std::string& info);
         void skipImpl(Sentence* se);
 
         bool m_needReboot = false;
@@ -34,7 +34,8 @@ export {
         PluginRunTime m_runTime;
 
     public:
-        SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
+        SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, 
+            const std::unique_ptr<PythonManager>& pythonManager, const std::unique_ptr<LuaManager>& luaManager,
             const std::shared_ptr<spdlog::logger>& logger, PluginRunTime runTime);
         void dPreRun(Sentence* se);
         void preRun(Sentence* se);
@@ -45,7 +46,8 @@ export {
 
 module :private;
 
-SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, PythonManager& pythonManager, LuaManager& luaManager,
+SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfig, 
+    const std::unique_ptr<PythonManager>& pythonManager, const std::unique_ptr<LuaManager>& luaManager,
     const std::shared_ptr<spdlog::logger>& logger, PluginRunTime runTime)
     : m_logger(logger), m_runTime(runTime)
 {

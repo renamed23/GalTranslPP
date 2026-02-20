@@ -10,11 +10,10 @@ projects = []
 pyEnvPath = "BaseConfig/python-3.12.10-embed-amd64"
 themeMode = 0
 windowDisplayMode = 1
-windowHeight = 681
-windowPosX = 76
-windowPosY = 50
+windowHeight = 691
+windowPosX = 20
+windowPosY = 32
 windowWidth = 1308
-lastCommonNormalDictPath = "C:/Users/julixian/Desktop/Works/VS/GalTranslPP/Release/GPPGUI/BaseConfig/Dict/post/00通用字典_符号_译后.toml"
 
 [commonGptDicts]
 dictNames = ["通用GPT字典", "通用GPT_H字典"]
@@ -42,7 +41,6 @@ dictNames = [
     "译后翻译规范",
     "译后生僻字矫正",
     "译后标点修复",
-    "00通用字典_符号_译后",
 ]
 
     [commonPostDicts.spec."译后生僻字矫正"]
@@ -81,18 +79,6 @@ openMode = 1
 4 = 75
 5 = 60
 
-[commonPostDicts.spec."00通用字典_符号_译后"]
-defaultOn = false
-openMode = 1
-
-[commonPostDicts.spec."00通用字典_符号_译后".columnWidth]
-0 = 200
-1 = 150
-2 = 100
-3 = 172
-4 = 75
-5 = 60
-
 [commonPreDicts]
 dictNames = ["译前H统一", "译前H口吃矫正"]
 
@@ -121,7 +107,7 @@ dictNames = ["译前H统一", "译前H口吃矫正"]
         5 = 60
 
 [showDockWidget]
-235 = true
+237 = true
 
 [[popularCards]]
 cardFloatPixmap = ':/GPPGUI/Resource/Image/IARC_7+.svg.png'

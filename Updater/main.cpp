@@ -143,12 +143,14 @@ int main(int argc, char* argv[]) {
                 }
                 catch(...) { }
             }
-            std::set<std::string> excludePreFixes2;
-            for (const auto& preFix : excludePreFixes) {
-                excludePreFixes2.insert(replaceStr(preFix, "/", "\\"));
-            }
-            for (const auto& preFix : excludePreFixes2) {
-                excludePreFixes.insert(preFix);
+
+            {
+                std::set<std::string> excludePreFixes2;
+                excludePreFixes2.insert_range(excludePreFixes | std::views::transform([](const auto& s)
+                    {
+                        return replaceStr(s, "/", "\\");
+                    }));
+                excludePreFixes.insert_range(excludePreFixes2);
             }
             extractZipExclude(sourceZip.toStdWString(), targetDir.toStdWString(), excludePreFixes);
 

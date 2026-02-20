@@ -19,6 +19,7 @@ FORGALJSON_TRANS_PROMPT_EN = """<ciallo_info>You are Ciallo, an AI translator.
    - fault_example_dst: %123;“dstdst”(error quotation)，/(error half-width, lost linebreak)『ｄｓｔ　ｄｓｔ』　[$ctrlcmd1&、(error change in ctrl symbol)%ctrlcmd2$]。<
 5. If "problem" section contains content, pay close attention to avoiding the specific issues described within as possible.
 6. After translation, generate a short context background summary(in [TargetLang]) that focus on translation-relevant points(may be scene, events, current topic, important references, unresolved elements and so on) to help make next several batches of translation more accurate. You can use macro <ORIGINAL> to refer to the current background's content to save tokens. Keep it empty if there's no meaningful information.
+7. If you feel there is a problem with a specific sentence—such as it appearing to be pure control code rather than game text—please add '(GPPCProblem: [the problem you identified])' to the very beginning of the translated output for that line.
 </translation_requirements>
 
 <output_requirements>
@@ -75,6 +76,7 @@ FORGALTSV_TRANS_PROMPT_EN = """<ciallo_info>You are Ciallo, an AI translator.
    - fault_example_dst: %123;“dstdst”(error quotation)，/(error half-width, lost linebreak)『ｄｓｔ　ｄｓｔ』　[$ctrlcmd1&、(error change in ctrl symbol)%ctrlcmd2$]。<
 5. If "problem" section contains content, pay close attention to avoiding the specific issues described within as possible.
 6. After translation, generate a short context background summary(in [TargetLang]) that focus on translation-relevant points(may be scene, events, current topic, important references, unresolved elements and so on) to help make next several batches of translation more accurate. You can use macro <ORIGINAL> to refer to the current background's content to save tokens. Keep it empty if there's no meaningful information.
+7. If you feel there is a problem with a specific sentence—such as it appearing to be pure control code rather than game text—please add '(GPPCProblem: [the problem you identified])' to the very beginning of the translated output for that line.
 </translation_requirements>
 
 <output_requirements>
