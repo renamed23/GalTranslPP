@@ -1,4 +1,4 @@
-module;
+﻿module;
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
@@ -19,7 +19,7 @@ export {
     std::tuple<bool, std::string> rejectPDF(const fs::path& orgPDFPath, const fs::path& translatedJsonPath, const fs::path& outputPDFPath,
         bool noMono = false, bool noDual = false, bool showProgress = false);
 
-    void checkPDFDependency(std::shared_ptr<spdlog::logger>& logger);
+    void checkPDFDependency(const std::shared_ptr<spdlog::logger>& logger);
 }
 
 
@@ -29,7 +29,7 @@ module :private;
 
 std::tuple<bool, std::string> extractPDF(const fs::path& pdfPath, const fs::path& jsonPath, bool showProgress)
 {
-    bool success = false;
+    bool success;
     std::string message;
     auto extractTaskFunc = [&]()
         {
@@ -44,7 +44,7 @@ std::tuple<bool, std::string> extractPDF(const fs::path& pdfPath, const fs::path
 std::tuple<bool, std::string> rejectPDF(const fs::path& orgPDFPath, const fs::path& translatedJsonPath, const fs::path& outputPDFPath,
     bool noMono, bool noDual, bool showProgress)
 {
-    bool success = false;
+    bool success;
     std::string message;
     auto rejectTaskFunc = [&]()
         {
@@ -55,6 +55,6 @@ std::tuple<bool, std::string> rejectPDF(const fs::path& orgPDFPath, const fs::pa
     return std::make_tuple(success, message);
 }
 
-void checkPDFDependency(std::shared_ptr<spdlog::logger>& logger) {
+void checkPDFDependency(const std::shared_ptr<spdlog::logger>& logger) {
     checkPythonDependencies({ "babeldoc" }, logger);
 }

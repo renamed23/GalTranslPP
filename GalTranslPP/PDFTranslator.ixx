@@ -135,15 +135,14 @@ void PDFTranslator::beforeRun()
                 m_logger->warn("未找到与 {} 对应的元数据，跳过", wide2Ascii(relProcessedFile));
                 return;
             }
-            fs::path origPDFPath = m_jsonToPDFPathMap[relProcessedFile];
-            fs::path relPDFPath = fs::relative(origPDFPath, m_pdfInputDir);
-            fs::path outputPDFFile = m_pdfOutputDir / relPDFPath;
+            const fs::path& origPDFPath = m_jsonToPDFPathMap[relProcessedFile];
+            const fs::path relPDFPath = fs::relative(origPDFPath, m_pdfInputDir);
+            const fs::path outputPDFFile = m_pdfOutputDir / relPDFPath;
             createParent(outputPDFFile);
 
-            bool success = false;
-            std::string message;
             m_logger->info("正在回注文件: {}", wide2Ascii(relPDFPath));
-            std::tie(success, message) = rejectPDF(origPDFPath, m_outputDir / relProcessedFile, outputPDFFile.parent_path(), false, !m_bilingualOutput);
+            auto [success, message] = rejectPDF(origPDFPath, m_outputDir / relProcessedFile, 
+                outputPDFFile.parent_path(), false, !m_bilingualOutput);
             if (success) {
                 m_logger->info("成功翻译文件: {}", message);
             }

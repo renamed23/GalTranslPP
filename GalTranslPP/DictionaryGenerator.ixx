@@ -20,9 +20,9 @@ export {
         fs::path m_tokenizeCachePath;
         std::shared_ptr<IController> m_controller;
         std::shared_ptr<spdlog::logger> m_logger;
-        const std::function<void(Sentence*)> m_preProcessFunc;
-        const std::function<std::string(std::string)>& m_onPerformApi;
-        const std::function<DictList(DictList)>& m_onDictProcessed;
+        const std::function<void(Sentence*)> m_preProcessFunc; // 临时对象，不能设置引用
+        const std::function<std::string(std::string)>& m_onPerformApi;  // 由于 NormalJsonTranslator 生命周期包含了 DictionaryGenrator
+        const std::function<DictList(DictList)>& m_onDictProcessed;  	// 所以从前者类成员中传递过来的 function 可设置为引用
         const std::function<NLPResult(const std::string&)>& m_tokenizeSourceLangFunc;
 
         std::string m_systemPrompt;
