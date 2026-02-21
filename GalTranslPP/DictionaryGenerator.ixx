@@ -20,7 +20,7 @@ export {
         fs::path m_tokenizeCachePath;
         std::shared_ptr<IController> m_controller;
         std::shared_ptr<spdlog::logger> m_logger;
-        const std::function<void(Sentence*)>& m_preProcessFunc;
+        const std::function<void(Sentence*)> m_preProcessFunc;
         const std::function<std::string(std::string)>& m_onPerformApi;
         const std::function<DictList(DictList)>& m_onDictProcessed;
         const std::function<NLPResult(const std::string&)>& m_tokenizeSourceLangFunc;
@@ -282,7 +282,7 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
     if (m_controller->shouldStop()) {
         return;
     }
-    std::string text = m_segments[segmentIndex];
+    const std::string& text = m_segments[segmentIndex];
     std::string hint;
     for (const auto& name : m_nameSet) {
         if (text.contains(name)) {
