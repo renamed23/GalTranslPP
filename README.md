@@ -370,9 +370,12 @@ nvcc --version
 ### Lua/Python 内嵌
 
 </summary>
-这两种语言在程序内均为热更新(只要没有被其它任务占用)，更改后重新运行即可看到新的结果。  
-可以非常方便的编写自定义的 **文件解析/文本处理/任务结束后处理** 等脚本。  
-具体的代码示例详见 `Example/Lua` 及 `Example/Python`，工具函数/类函数的签名需要你自行翻阅一下 `LuaManager.cpp` 和 `PythonManager.cpp`。  
+这两种语言在程序内均为热更新(只要没有被其它任务占用)，更改后重新运行即可看到新的结果。
+
+可以非常方便的编写自定义的 **文件解析/文本处理/任务结束后处理** 等脚本。
+
+具体的代码示例详见 `Example/Lua` 及 `Example/Python`，工具函数/类函数的签名需要你自行翻阅一下 `LuaManager.cpp` 和 `PythonManager.cpp`。
+
 </details>
 
 ## 其它程序说明
