@@ -14,6 +14,8 @@ pythonTranslator = None
 
 logger = None
 
+lock = threading.Lock()
+
 def process_file(rel_file_path, worker_id):
     """包装函数，worker_id是线程编号"""
     try:
@@ -41,7 +43,7 @@ def worker(worker_id, task_queue):
 def multi_threads_run(relFilePaths):
     # 多线程使用手动线程管理
     # 因为子解释器里用 多进程 或 ThreadPoolExecutor 会有一些妙妙小问题
-    # 在不进行大模型翻译时行为趋近于单线程，因为我只在大模型翻译部分释放了 C++ 侧占有的 GIL
+    # 在不进行大模型翻译时行为趋近于单线程，因为我只在大模型翻译部分释放了 C++ 侧占有的 GIL，否则又会有一些妙妙小问题
     MAX_WORKERS = 29
     pythonTranslator.m_controller.makeBar(pythonTranslator.m_totalSentences, MAX_WORKERS)
     task_queue = queue.Queue()
@@ -57,7 +59,7 @@ def multi_threads_run(relFilePaths):
         t.daemon = False
         t.start()
         threads.append(t)
-        logger.info(f"启动工作线程 {worker_id}")
+        logger.debug(f"启动工作线程 {worker_id}")
     
     # 将所有任务放入队列
     for relFilePath in relFilePaths:
@@ -86,23 +88,38 @@ def run():
     if relFilePaths is None:
         logger.info("可能是 DumpName 或 GenDict 之类无需 processFile 的 TransEngine")
         return
-    # 简单的单线程处理
-    # for relFilePath in relFilePaths:
-    #     pythonTranslator.processFile(relFilePath, 0)
+
+    """
+    简单的单线程处理，如果实在改不懂多线程的话也可以凑合用
+    for relFilePath in relFilePaths:
+        pythonTranslator.processFile(relFilePath, 0)
+        pythonTranslator.normalJsonTranslator_afterRun()
+        return
+    """
+
     multi_threads_run(relFilePaths)
     pythonTranslator.normalJsonTranslator_afterRun()
     return
 
+
     # 继承 Epub 的小小示例，同样建议先看完 Lua 部分的说明
     pythonTranslator.epubTranslator_beforeRun()
     # std::function<void(fs::path)>
+    # 在 Epub 下这个 function 本来的作用是判断是否一本书的所有 json 都翻译完毕，如果是则创建新 Epub
     orgOnFileProcessedInEpubTranslator = pythonTranslator.m_onFileProcessed
     # 同 Lua，这里也可以是闭包
     # 但如果设定了这个，那么则禁止使用 xxTranslator_process() 系列会在 C++ 侧创建线程的函数
     # 否则会导致死锁，因为 C++ 侧开辟的线程不具有 GIL，无法调用 python 闭包
+    # 并且 pythonTranslator 的 m_onFileProcessed 会取消对线程安全的保证
+    # 如果继承的不是 NormalJsonTranslator，强烈建议覆写 m_onFileProcessed 并在 python 侧重新做加锁操作
     def new_call_back(rel_file_path_processed):
-        logger.info("拦截然后加一条日志喵")
-        orgOnFileProcessedInEpubTranslator(rel_file_path_processed)
+        logger.info("此处应当加锁")
+        lock.acquire()
+        try:
+            orgOnFileProcessedInEpubTranslator(rel_file_path_processed)
+        finally:
+            lock.release()
+            
     pythonTranslator.m_onFileProcessed = new_call_back
     relFilePaths = pythonTranslator.normalJsonTranslator_beforeRun()
     if relFilePaths is None:

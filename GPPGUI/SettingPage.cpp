@@ -94,20 +94,19 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     }
     eApp->setWindowDisplayMode((ElaApplicationType::WindowDisplayMode)windowDisplayMode);
 
-    connect(windowModeButtonGroup, QOverload<QAbstractButton*, bool>::of(&QButtonGroup::buttonToggled), this, [=](QAbstractButton* button, bool isToggled) {
-        if (isToggled)
+    connect(windowModeButtonGroup, QOverload<QAbstractButton*, bool>::of(&QButtonGroup::buttonToggled), this, [=](QAbstractButton* button, bool isToggled)
         {
             eApp->setWindowDisplayMode((ElaApplicationType::WindowDisplayMode)windowModeButtonGroup->id(button));
-        }
-    });
-    connect(eApp, &ElaApplication::pWindowDisplayModeChanged, this, [=]() {
-        auto button = windowModeButtonGroup->button(eApp->getWindowDisplayMode());
-        ElaRadioButton* elaRadioButton = qobject_cast<ElaRadioButton*>(button);
-        if (elaRadioButton)
+        });
+    connect(eApp, &ElaApplication::pWindowDisplayModeChanged, this, [=]()
         {
-            elaRadioButton->setChecked(true);
-        }
-    });
+            auto button = windowModeButtonGroup->button(eApp->getWindowDisplayMode());
+            ElaRadioButton* elaRadioButton = qobject_cast<ElaRadioButton*>(button);
+            if (elaRadioButton) 
+            {
+                elaRadioButton->setChecked(true);
+            }
+        });
 
     ElaScrollPageArea* windowModeSwitchArea = new ElaScrollPageArea(this);
     QHBoxLayout* windowModeSwitchLayout = new QHBoxLayout(windowModeSwitchArea);
@@ -147,19 +146,53 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     navigationGroup->addButton(maximumButton, 3);
     int navigationMode = toml::find_or(_globalConfig, "navigationMode", 0);
     abstractButton = navigationGroup->button(navigationMode);
-    if (abstractButton) {
+    if (abstractButton) 
+    {
         abstractButton->setChecked(true);
     }
     window->setNavigationBarDisplayMode((ElaNavigationType::NavigationDisplayMode)navigationMode);
 
-    connect(navigationGroup, QOverload<QAbstractButton*, bool>::of(&QButtonGroup::buttonToggled), this, [=](QAbstractButton* button, bool isToggled) {
-        if (isToggled)
+    connect(navigationGroup, QOverload<QAbstractButton*, bool>::of(&QButtonGroup::buttonToggled), this, [=](QAbstractButton* button, bool isToggled) 
         {
             window->setNavigationBarDisplayMode((ElaNavigationType::NavigationDisplayMode)navigationGroup->id(button));
-        }
-    });
+        });
 
 
+    // 页面切换特效
+    ElaRadioButton* noneButton = new ElaRadioButton("None", this);
+    ElaRadioButton* popupButton = new ElaRadioButton("Popup", this);
+    ElaRadioButton* scaleButton = new ElaRadioButton("Scale", this);
+    ElaRadioButton* flipButton = new ElaRadioButton("Flip", this);
+    ElaRadioButton* blurButton = new ElaRadioButton("Blur", this);
+    ElaScrollPageArea* stackSwitchModeArea = new ElaScrollPageArea(this);
+    QHBoxLayout* stackSwitchModeLayout = new QHBoxLayout(stackSwitchModeArea);
+    ElaText* stackSwitchModeText = new ElaText(tr("页面切换特效"), this);
+    stackSwitchModeText->setWordWrap(false);
+    stackSwitchModeText->setTextPixelSize(15);
+    stackSwitchModeLayout->addWidget(stackSwitchModeText);
+    stackSwitchModeLayout->addStretch();
+    stackSwitchModeLayout->addWidget(noneButton);
+    stackSwitchModeLayout->addWidget(popupButton);
+    stackSwitchModeLayout->addWidget(scaleButton);
+    stackSwitchModeLayout->addWidget(flipButton);
+    stackSwitchModeLayout->addWidget(blurButton);
+    QButtonGroup* stackSwitchGroup = new QButtonGroup(this);
+    stackSwitchGroup->addButton(noneButton, 0);
+    stackSwitchGroup->addButton(popupButton, 1);
+    stackSwitchGroup->addButton(scaleButton, 2);
+    stackSwitchGroup->addButton(flipButton, 3);
+    stackSwitchGroup->addButton(blurButton, 4);
+    int stackSwitchMode = toml::find_or(_globalConfig, "stackSwitchMode", 1);
+    abstractButton = stackSwitchGroup->button(stackSwitchMode);
+    if (abstractButton) {
+        abstractButton->setChecked(true);
+    }
+    window->setStackSwitchMode((ElaWindowType::StackSwitchMode)stackSwitchMode);
+
+    connect(stackSwitchGroup, QOverload<QAbstractButton*, bool>::of(&QButtonGroup::buttonToggled), this, [=](QAbstractButton* button, bool isToggled)
+        {
+            window->setStackSwitchMode((ElaWindowType::StackSwitchMode)stackSwitchGroup->id(button));
+        });
 
 
     ElaText* helperText = new ElaText(tr("应用程序设置"), this);
@@ -371,6 +404,8 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
             insertToml(_globalConfig, "themeMode", (int)eTheme->getThemeMode());
             insertToml(_globalConfig, "windowDisplayMode", windowModeButtonGroup->id(windowModeButtonGroup->checkedButton()));
             insertToml(_globalConfig, "navigationMode", navigationGroup->id(navigationGroup->checkedButton()));
+            insertToml(_globalConfig, "stackSwitchMode", stackSwitchGroup->id(stackSwitchGroup->checkedButton()));
+
             insertToml(_globalConfig, "autoRefreshAfterTranslate", autoRefreshSwitch->getIsToggled());
             insertToml(_globalConfig, "defaultNameTableOpenMode", nameTableOpenModeGroup->id(nameTableOpenModeGroup->checkedButton()));
             insertToml(_globalConfig, "defaultDictOpenMode", dictOpenModeGroup->id(dictOpenModeGroup->checkedButton()));
@@ -391,6 +426,7 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     centerLayout->addWidget(themeSwitchArea);
     centerLayout->addWidget(windowModeSwitchArea);
     centerLayout->addWidget(guideBarModeArea);
+    centerLayout->addWidget(stackSwitchModeArea);
     centerLayout->addSpacing(15);
     centerLayout->addWidget(helperText);
     centerLayout->addSpacing(10);

@@ -1,4 +1,4 @@
-// StartSettingsPage.h
+﻿// StartSettingsPage.h
 
 #ifndef STARTSETTINGSPAGE_H
 #define STARTSETTINGSPAGE_H
@@ -16,6 +16,7 @@ namespace fs = std::filesystem;
 class ElaPushButton;
 class ElaProgressBar;
 class ElaComboBox;
+class ElaPlainTextEdit;
 class ElaProgressRing;
 class ElaLCDNumber;
 class NJCfgPage;
@@ -31,6 +32,8 @@ public:
     explicit StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
     ~StartSettingsPage() override;
     virtual void apply2Config() override;
+
+    void clearLog();
 
 Q_SIGNALS:
     void startTranslating();  // 让projectSettings去保存配置
@@ -52,6 +55,8 @@ private:
     ElaPushButton* _startTranslateButton;
     ElaPushButton* _stopTranslateButton;
     ElaProgressBar* _progressBar;
+
+    ElaPlainTextEdit* _logOutput;
 
     ElaComboBox* _fileFormatComboBox;
 

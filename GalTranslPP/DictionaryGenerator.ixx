@@ -442,7 +442,7 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
     
     arr.as_array_fmt().fmt = toml::array_format::multiline;
     std::ofstream ofs(outputFilePath);
-    ofs << toml::format(toml::ordered_value{ toml::ordered_table{{ "gptDict", arr }} });
+    ofs << toml::ordered_value{ toml::ordered_table{{ "gptDict", arr }} };
     ofs.close();
     m_logger->info("字典生成完成，共 {} 个词语，已保存到 {}", finalList.size(), wide2Ascii(outputFilePath));
 }

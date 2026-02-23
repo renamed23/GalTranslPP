@@ -226,7 +226,7 @@ void CommonGptDictPage::_setupUI()
 							dictArr.push_back(dictTable);
 						}
 						dictArr.as_array_fmt().fmt = toml::array_format::multiline;
-						ofs << toml::format(toml::ordered_value{ toml::ordered_table{{"gptDict", dictArr}} });
+						ofs << toml::ordered_value{ toml::ordered_table{{"gptDict", dictArr}} };
 						ofs.close();
 						plainTextEdit->setPlainText(ReadDicts::readDictsStr(it->dictPath));
 					}
@@ -486,7 +486,7 @@ void CommonGptDictPage::_setupUI()
 			}
 			QWidget* pageMainWidget = createGptTab(dictPath);
 			tabWidget->addTab(pageMainWidget, QString(dictPath.stem().wstring()));
-			it++;
+			++it;
 		}
 	}
 	else {
@@ -497,7 +497,8 @@ void CommonGptDictPage::_setupUI()
 
 	connect(importButton, &ElaPushButton::clicked, this, [=]()
 		{
-			QString importDictPathStr = QFileDialog::getOpenFileName(this, tr("选择字典文件"), QString::fromStdString(toml::find_or(_globalConfig, "lastCommonGptDictPath", "./")),
+			QString importDictPathStr = QFileDialog::getOpenFileName(this, tr("选择字典文件"), 
+				QString::fromStdString(toml::find_or(_globalConfig, "lastCommonGptDictPath", "./")),
 				"TOML files (*.toml);;JSON files (*.json);;TSV files (*.tsv *.txt)");
 			if (importDictPathStr.isEmpty()) {
 				return;
@@ -526,7 +527,8 @@ void CommonGptDictPage::_setupUI()
 			QWidget* pageMainWidget = createGptTab(importDictPath);
 			tabWidget->addTab(pageMainWidget, QString(importDictPath.stem().wstring()));
 			tabWidget->setCurrentIndex(tabWidget->count() - 1);
-			ElaMessageBar::success(ElaMessageBarType::TopLeft, tr("创建成功"), tr("字典页 ") + QString(importDictPath.stem().wstring()) + tr(" 已创建"), 3000);
+			ElaMessageBar::success(ElaMessageBarType::TopLeft, tr("创建成功"), tr("字典页 ") + 
+				QString(importDictPath.stem().wstring()) + tr(" 已创建"), 3000);
 		});
 
 	connect(addNewTabButton, &ElaPushButton::clicked, this, [=]()
@@ -567,7 +569,8 @@ void CommonGptDictPage::_setupUI()
 			QWidget* pageMainWidget = createGptTab(newDictPath);
 			tabWidget->addTab(pageMainWidget, dictName);
 			tabWidget->setCurrentIndex(tabWidget->count() - 1);
-			ElaMessageBar::success(ElaMessageBarType::TopLeft, tr("创建成功"), tr("字典页 ") + QString(newDictPath.stem().wstring()) + tr(" 已创建"), 3000);
+			ElaMessageBar::success(ElaMessageBarType::TopLeft, tr("创建成功"), tr("字典页 ") + 
+				QString(newDictPath.stem().wstring()) + tr(" 已创建"), 3000);
 		});
 
 
@@ -594,7 +597,7 @@ void CommonGptDictPage::_setupUI()
 
 			auto& spec = _globalConfig["commonGptDicts"]["spec"];
 			if (spec.is_table()) {
-				for (const auto& [key, value] : spec.as_table()) {
+				for (const auto& key : spec.as_table() | std::views::keys) {
 					if (
 						!std::ranges::any_of(dictNamesArr, [&](const auto& elem)
 							{

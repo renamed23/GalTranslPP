@@ -1,4 +1,4 @@
-#include "CommonNormalDictPage.h"
+﻿#include "CommonNormalDictPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -254,7 +254,7 @@ void CommonNormalDictPage::_setupUI()
 							dictTbl["conditionReg"].as_string_fmt().fmt = toml::string_format::literal;
 							dictArr.push_back(dictTbl);
 						}
-						ofs << toml::format(toml::ordered_value{ toml::ordered_table{{"normalDict", dictArr}} });
+						ofs << toml::ordered_value{ toml::ordered_table{{"normalDict", dictArr}} };
 						ofs.close();
 						plainTextEdit->setPlainText(ReadDicts::readDictsStr(it->dictPath));
 					}
@@ -526,7 +526,8 @@ void CommonNormalDictPage::_setupUI()
 
 	connect(importButton, &ElaPushButton::clicked, this, [=]()
 		{
-			QString importDictPathStr = QFileDialog::getOpenFileName(this, tr("选择字典文件"), QString::fromStdString(toml::find_or(_globalConfig, "lastCommonNormalDictPath", "./")),
+			QString importDictPathStr = QFileDialog::getOpenFileName(this, tr("选择字典文件"), 
+				QString::fromStdString(toml::find_or(_globalConfig, "lastCommonNormalDictPath", "./")),
 				"TOML files (*.toml);;JSON files (*.json)");
 			if (importDictPathStr.isEmpty()) {
 				return;
@@ -555,7 +556,8 @@ void CommonNormalDictPage::_setupUI()
 			QWidget* pageMainWidget = createNormalTab(importDictPath);
 			tabWidget->addTab(pageMainWidget, QString(importDictPath.stem().wstring()));
 			tabWidget->setCurrentIndex(tabWidget->count() - 1);
-			ElaMessageBar::success(ElaMessageBarType::TopLeft, tr("创建成功"), tr("字典页 ") + QString(importDictPath.stem().wstring()) + tr(" 已创建"), 3000);
+			ElaMessageBar::success(ElaMessageBarType::TopLeft, tr("创建成功"), tr("字典页 ") + 
+				QString(importDictPath.stem().wstring()) + tr(" 已创建"), 3000);
 		});
 
 	connect(addNewTabButton, &ElaPushButton::clicked, this, [=]()
@@ -624,7 +626,7 @@ void CommonNormalDictPage::_setupUI()
 
 			auto& spec = _globalConfig[_modeConfigKey]["spec"];
 			if (spec.is_table()) {
-				for (const auto& [key, value] : spec.as_table()) {
+				for (const auto& key : spec.as_table() | std::views::keys) {
 					if (
 						!std::ranges::any_of(dictNamesArr, [&](const auto& elem)
 							{

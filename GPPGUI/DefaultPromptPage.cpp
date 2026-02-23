@@ -1,4 +1,4 @@
-#include "DefaultPromptPage.h"
+﻿#include "DefaultPromptPage.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -127,7 +127,7 @@ void DefaultPromptPage::_setupUI()
 				{
 					result();
 					std::ofstream ofs(defaultPromptPath);
-					ofs << toml::format(_promptConfig);
+					ofs << _promptConfig;
 					ofs.close();
 					ElaMessageBar::success(ElaMessageBarType::TopRight, tr("保存成功"), tr("默认 ") + promptName + tr(" 提示词配置已保存。"), 3000);
 				});
@@ -154,7 +154,7 @@ void DefaultPromptPage::_setupUI()
 			gendictApplyFunc();
 			nametransApplyFunc();
 			std::ofstream ofs(defaultPromptPath);
-			ofs << toml::format(_promptConfig);
+			ofs << _promptConfig;
 			ofs.close();
 		};
 

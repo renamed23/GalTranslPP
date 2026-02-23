@@ -1,4 +1,4 @@
-#include "NameTableSettingsPage.h"
+﻿#include "NameTableSettingsPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -254,7 +254,7 @@ void NameTableSettingsPage::_setupUI()
 					}
 					tbl[entry.original.toStdString()] = toml::array{ entry.translation.toStdString(), entry.count };
 				}
-				ofs << toml::format(tbl);
+				ofs << tbl;
 				ofs.close();
 				plainTextEdit->setPlainText(readNameTableStr());
 			}

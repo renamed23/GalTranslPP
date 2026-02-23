@@ -64,6 +64,10 @@ void StartSettingsPage::apply2Config()
 	}
 }
 
+void StartSettingsPage::clearLog() {
+	_logOutput->clear();
+}
+
 void StartSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
@@ -73,13 +77,13 @@ void StartSettingsPage::_setupUI()
 	QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
 
 	// 日志输出
-	ElaPlainTextEdit* logOutput = new ElaPlainTextEdit(topWidget);
-	logOutput->setReadOnly(true);
-	QFont font = logOutput->font();
+	_logOutput = new ElaPlainTextEdit(topWidget);
+	_logOutput->setReadOnly(true);
+	QFont font = _logOutput->font();
 	font.setPixelSize(14);
-	logOutput->setFont(font);
-	logOutput->setPlaceholderText(tr("日志输出"));
-	topLayout->addWidget(logOutput);
+	_logOutput->setFont(font);
+	_logOutput->setPlaceholderText(tr("日志输出"));
+	topLayout->addWidget(_logOutput);
 
 
 	ElaScrollPageArea* buttonArea = new ElaScrollPageArea(mainWidget);
@@ -183,9 +187,9 @@ void StartSettingsPage::_setupUI()
 	connect(_startTranslateButton, &ElaPushButton::clicked, this, &StartSettingsPage::_onStartTranslatingClicked);
 	connect(_startTranslateButton, &ElaPushButton::clicked, this, [=]()
 		{
-			QScrollBar* scrollBar = logOutput->verticalScrollBar();
+			QScrollBar* scrollBar = _logOutput->verticalScrollBar();
 			bool scrollIsAtBottom = (scrollBar->value() == scrollBar->maximum());
-			QTextCursor tempCursor(logOutput->document());
+			QTextCursor tempCursor(_logOutput->document());
 			tempCursor.movePosition(QTextCursor::End);
 			tempCursor.insertText("\n\n");
 			if (scrollIsAtBottom) {
@@ -238,22 +242,22 @@ void StartSettingsPage::_setupUI()
 			constexpr int MAX_LOG_LINE_COUNT = 10000;
 
 			// 禁用更新可以防止在进行大量操作时出现闪烁，并提高性能
-			logOutput->setUpdatesEnabled(false);
+			_logOutput->setUpdatesEnabled(false);
 
 			// 1. 智能滚动判断: 记住修改前的位置
-			QScrollBar* scrollBar = logOutput->verticalScrollBar();
+			QScrollBar* scrollBar = _logOutput->verticalScrollBar();
 			bool scrollIsAtBottom = (scrollBar->value() >= scrollBar->maximum() - 4); // 减去一个小的容差
 
 			// 如果用户没有滚动到底部，我们就需要“锚定”他当前看到的视图
 			int firstVisibleBlockNumber = -1;
 			if (!scrollIsAtBottom) {
 				// 获取视口左上角位置的文本光标，从而得到当前可见的第一个文本块
-				QTextCursor firstVisibleCursor = logOutput->cursorForPosition(QPoint(0, 0));
+				QTextCursor firstVisibleCursor = _logOutput->cursorForPosition(QPoint(0, 0));
 				firstVisibleBlockNumber = firstVisibleCursor.blockNumber();
 			}
 
 			// 2. 追加日志 (使用一个临时的“影子”光标在后台进行操作)
-			QTextCursor tempCursor(logOutput->document());
+			QTextCursor tempCursor(_logOutput->document());
 			tempCursor.movePosition(QTextCursor::End);
 			tempCursor.setCharFormat(QTextCharFormat());
 
@@ -330,11 +334,11 @@ void StartSettingsPage::_setupUI()
 
 			// 3. 清理旧日志
 			int toRemoveLineCount = 0;
-			int currentLineCount = logOutput->document()->lineCount();
+			int currentLineCount = _logOutput->document()->lineCount();
 			if (currentLineCount > MAX_LOG_LINE_COUNT) {
 				toRemoveLineCount = currentLineCount - MAX_LOG_LINE_COUNT;
 
-				QTextCursor deleteCursor(logOutput->document());
+				QTextCursor deleteCursor(_logOutput->document());
 				deleteCursor.movePosition(QTextCursor::Start);
 				// 选中要删除的行数
 				deleteCursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, toRemoveLineCount);
@@ -353,18 +357,18 @@ void StartSettingsPage::_setupUI()
 				if (newTargetBlockNumber < 0) newTargetBlockNumber = 0;
 
 				// 找到这个新的文本块
-				QTextBlock targetBlock = logOutput->document()->findBlockByNumber(newTargetBlockNumber);
+				QTextBlock targetBlock = _logOutput->document()->findBlockByNumber(newTargetBlockNumber);
 				if (targetBlock.isValid()) {
 					// 创建一个光标并移动到这个块的开头
 					QTextCursor newCursor(targetBlock);
-					logOutput->setTextCursor(newCursor); // 将编辑器的光标设置到这里
+					_logOutput->setTextCursor(newCursor); // 将编辑器的光标设置到这里
 					// 这一步是可选的，但可以确保光标行完全可见
-					logOutput->ensureCursorVisible(); 
+					_logOutput->ensureCursorVisible(); 
 				}
 			}
 
 			// 所有操作完成后，重新启用更新，让界面一次性刷新
-			logOutput->setUpdatesEnabled(true);
+			_logOutput->setUpdatesEnabled(true);
 		});
 	connect(_worker, &TranslatorWorker::addThreadNumSignal, this, [=]()
 		{
@@ -483,7 +487,8 @@ void StartSettingsPage::_workFinished(int exitCode)
 	switch (exitCode)
 	{
 	case -2:
-		ElaMessageBar::error(ElaMessageBarType::BottomRight, tr("翻译失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的翻译任务失败，请检查日志输出。"), 3000);
+		ElaMessageBar::error(ElaMessageBarType::BottomRight, tr("翻译失败"), tr("项目 ") + 
+			QString(_projectDir.filename().wstring()) + tr(" 的翻译任务失败，请检查日志输出。"), 3000);
 
 		// 显示通知消息
 		_trayIcon->showMessage(
@@ -494,11 +499,13 @@ void StartSettingsPage::_workFinished(int exitCode)
 		);
 		break;
 	case -1:
-		ElaMessageBar::error(ElaMessageBarType::BottomRight, tr("翻译失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 连工厂函数都失败了，玩毛啊"), 3000);
+		ElaMessageBar::error(ElaMessageBarType::BottomRight, tr("翻译失败"), tr("项目 ") + 
+			QString(_projectDir.filename().wstring()) + tr(" 连工厂函数都失败了，玩毛啊"), 3000);
 		break;
 	case 0:
 		if (_transEngine == "DumpName" || _transEngine == "GenDict") {
-			ElaMessageBar::success(ElaMessageBarType::BottomRight, tr("生成完成"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的生成任务已完成。"), 3000);
+			ElaMessageBar::success(ElaMessageBarType::BottomRight, tr("生成完成"), tr("项目 ") + 
+				QString(_projectDir.filename().wstring()) + tr(" 的生成任务已完成。"), 3000);
 			_trayIcon->showMessage(
 				tr("生成完成"),                  // 标题
 					tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的生成任务已完成。"),      // 内容
@@ -507,7 +514,8 @@ void StartSettingsPage::_workFinished(int exitCode)
 			);
 		}
 		else if (_transEngine == "ShowNormal") {
-			ElaMessageBar::success(ElaMessageBarType::BottomRight, tr("生成完成"), tr("请在 show_normal 文件夹中查收项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的预处理结果。"), 3000);
+			ElaMessageBar::success(ElaMessageBarType::BottomRight, tr("生成完成"), 
+				tr("请在 show_normal 文件夹中查收项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的预处理结果。"), 3000);
 			_trayIcon->showMessage(
 				tr("生成完成"),                  // 标题
 					tr("请在 show_normal 文件夹中查收项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的预处理结果。"),      // 内容
@@ -516,7 +524,8 @@ void StartSettingsPage::_workFinished(int exitCode)
 			);
 		}
 		else {
-			ElaMessageBar::success(ElaMessageBarType::BottomRight, tr("翻译完成"), tr("请在 gt_output 文件夹中查收项目 ") + QString(_projectDir.filename().wstring()) + " 的翻译结果。", 3000);
+			ElaMessageBar::success(ElaMessageBarType::BottomRight, tr("翻译完成"), 
+				tr("请在 gt_output 文件夹中查收项目 ") + QString(_projectDir.filename().wstring()) + " 的翻译结果。", 3000);
 			_trayIcon->showMessage(
 				tr("翻译完成"),                  // 标题
 					tr("请在 gt_output 文件夹中查收项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的翻译结果。"),      // 内容
@@ -532,7 +541,8 @@ void StartSettingsPage::_workFinished(int exitCode)
 			QSystemTrayIcon::Information, // 图标类型 (Information, Warning, Critical)
 			5000                          // 显示时长 (毫秒)
 		);
-		ElaMessageBar::information(ElaMessageBarType::BottomRight, tr("停止成功"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的翻译任务已终止"), 3000);
+		ElaMessageBar::information(ElaMessageBarType::BottomRight, tr("停止成功"), tr("项目 ") + 
+			QString(_projectDir.filename().wstring()) + tr(" 的翻译任务已终止"), 3000);
 		break;
 	default:
 		break;

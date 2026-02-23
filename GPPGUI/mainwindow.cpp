@@ -7,7 +7,7 @@
 #include <QApplication>
 #include <QDesktopServices>
 #include <QMessageBox>
-
+#include <QShortcut>
 
 #include "ElaContentDialog.h"
 #include "ElaDockWidget.h"
@@ -89,11 +89,11 @@ MainWindow::MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget
         });
     this->setIsDefaultClosed(false);
 
-    auto closeCallback = [=](bool directlyClose)
+    auto closeCallback = [=](bool closeByMessageCard)
         {
             if (
                 !(toml::find_or(_globalConfig, "allowCloseWhenRunning", false)) &&
-                std::any_of(_projectPages.begin(), _projectPages.end(), [](const auto& page)
+                std::ranges::any_of(_projectPages, [](const auto& page)
                     {
                         if (page->getIsRunning()) {
                             ElaMessageBar::warning(ElaMessageBarType::TopRight, tr("警告"),
@@ -106,7 +106,7 @@ MainWindow::MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget
             {
                 return;
             }
-            if (directlyClose) {
+            if (closeByMessageCard) {
                 _onCloseWindowClicked(true);
             }
             else {
@@ -243,6 +243,11 @@ void MainWindow::initEdgeLayout()
         {
             eTheme->setThemeMode(eTheme->getThemeMode() == ElaThemeType::Light ? ElaThemeType::Dark : ElaThemeType::Light);
         });
+    connect(appBarMenu->addElaIconAction(ElaIconType::BroomWide, tr("清空当前项目翻译日志")), &QAction::triggered, this, [=]()
+	    {
+            _onClearLog(true);
+	    });
+
     setCustomMenu(appBarMenu);
 }
 
@@ -351,11 +356,31 @@ void MainWindow::initContent()
                 setWindowTitle("Galtransl++");
             }
         });*/
+
+    const std::string clearShortcut = toml::find_or(_globalConfig, "clearLogShortcut", "Ctrl+L");
+    _clearLogShortcut = new QShortcut(QKeySequence(QString::fromStdString(clearShortcut)), this);
+    connect(_clearLogShortcut, &QShortcut::activated, this, [=]()
+	    {
+            _onClearLog(false);
+	    });
+}
+
+void MainWindow::_onClearLog(bool forceClear) {
+    QString pageKey = getCurrentNavigationPageKey();
+    auto it = std::ranges::find_if(_projectPages, [&](auto& page)
+        {
+            return page->property("ElaPageKey").toString() == pageKey;
+        });
+    if (it == _projectPages.end()) {
+        return;
+    }
+    it->get()->clearLog(forceClear);
 }
 
 void MainWindow::_onNewProjectTriggered()
 {
-    QString parentPath = QFileDialog::getExistingDirectory(this, tr("选择新项目的存放位置"), QString::fromStdString(toml::find_or(_globalConfig, "lastProjectPath", "./Projects")));
+    QString parentPath = QFileDialog::getExistingDirectory(this, tr("选择新项目的存放位置"), 
+        QString::fromStdString(toml::find_or(_globalConfig, "lastProjectPath", "./Projects")));
     if (parentPath.isEmpty()) {
         return;
     }
@@ -446,7 +471,7 @@ void MainWindow::_onNewProjectTriggered()
         addCommonDictsToProjectConfig("commonPostDicts", "postDict");
 
         std::ofstream ofs(newProjectDir / L"config.toml");
-        ofs << toml::format(configData);
+        ofs << configData;
         ofs.close();
     }
     catch (...) {
@@ -480,7 +505,8 @@ void MainWindow::_onNewProjectTriggered()
 
 void MainWindow::_onOpenProjectTriggered()
 {
-    QString projectPath = QFileDialog::getExistingDirectory(this, tr("选择已有项目的文件夹路径"), QString::fromStdString(toml::find_or(_globalConfig, "lastProjectPath", "./Projects")));
+    QString projectPath = QFileDialog::getExistingDirectory(this, tr("选择已有项目的文件夹路径"), 
+        QString::fromStdString(toml::find_or(_globalConfig, "lastProjectPath", "./Projects")));
     if (projectPath.isEmpty()) {
         return;
     }
@@ -559,7 +585,8 @@ void MainWindow::_onRemoveProjectTriggered()
                     this->navigation(_projectPages.back()->property("ElaPageKey").toString());
                 }
             }
-            ElaMessageBar::success(ElaMessageBarType::TopRight, tr("移除成功"), tr("项目 ") + projectName + tr(" 已从项目管理中移除！"), 3000);
+            ElaMessageBar::success(ElaMessageBarType::TopRight, tr("移除成功"), 
+                tr("项目 ") + projectName + tr(" 已从项目管理中移除！"), 3000);
         });
     helpDialog.exec();
 }
@@ -620,7 +647,8 @@ void MainWindow::_onDeleteProjectTriggered()
                     this->navigation(_projectPages.back()->property("ElaPageKey").toString());
                 }
             }
-            ElaMessageBar::success(ElaMessageBarType::TopRight, tr("删除成功"), tr("项目 ") + projectName + tr(" 已从项目管理和磁盘中移除！"), 3000);
+            ElaMessageBar::success(ElaMessageBarType::TopRight, tr("删除成功"), 
+                tr("项目 ") + projectName + tr(" 已从项目管理和磁盘中移除！"), 3000);
         });
     helpDialog.exec();
 }
@@ -638,7 +666,8 @@ void MainWindow::_onSaveProjectTriggered()
     }
 
     it->get()->apply2Config();
-    ElaMessageBar::success(ElaMessageBarType::TopRight, tr("保存成功"), tr("项目 ") + it->get()->getProjectName() + tr(" 配置信息已保存！"), 3000);
+    ElaMessageBar::success(ElaMessageBarType::TopRight, tr("保存成功"), 
+        tr("项目 ") + it->get()->getProjectName() + tr(" 配置信息已保存！"), 3000);
 }
 
 void MainWindow::_onFinishTranslating(QString nodeKey)
@@ -661,6 +690,7 @@ void MainWindow::_onCloseWindowClicked(bool restart)
     insertToml(_globalConfig, "projects", projects);
 
     _settingPage->apply2Config();
+    insertToml(_globalConfig, "clearLogShortcut", _clearLogShortcut->key().toString().toStdString());
 
     std::ofstream ofs(L"BaseConfig/globalConfig.toml");
     ofs << _globalConfig;

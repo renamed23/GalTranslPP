@@ -913,7 +913,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path(), additionalCachePath);
             }
             else {
-                std::wstring cacheSpec = relInputPath.filename().stem().wstring() + L"_part_*.json";
+                std::wstring cacheSpec = relInputPath.stem().wstring() + L"_part_*.json";
                 // 非分割优先读整体缓存
                 readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path());
             }
@@ -1111,20 +1111,20 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
         combineOutputFiles(originalRelFilePath, splitFileParts, m_outputCacheDir, m_outputDir, m_logger);
         std::unique_lock<std::mutex> lock(m_outputMutex);
-        if (m_pythonTranslator) {
-            lock.unlock(); // 非常神奇
-        }
         if (m_onFileProcessed) {
+            if (m_pythonTranslator) {
+                lock.unlock(); // 非常神奇,总之如果 m_onFileProcessed 是 python 侧赋值的闭包的话，这里的不 unlock 就会死锁
+            }
             m_onFileProcessed(originalRelFilePath);
         }
         m_logger->debug("[线程 {}] [文件 {}] 合并处理完成。", threadId, wide2Ascii(originalRelFilePath));
     }
     else {
         std::unique_lock<std::mutex> lock(m_outputMutex);
-        if (m_pythonTranslator) {
-            lock.unlock();
-        }
         if (m_onFileProcessed) {
+            if (m_pythonTranslator) {
+                lock.unlock();
+            }
             m_onFileProcessed(relInputPath);
         }
     }
@@ -1249,7 +1249,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             }
         }
         ofs.open(nameTablePath);
-        ofs << toml::format(newNameTable);
+        ofs << newNameTable;
         ofs.close();
         m_logger->info("已更新 人名替换表.toml 文件");
         if (m_transEngine == TransEngine::DumpName) {
@@ -1300,7 +1300,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             if (!value.is_array() || value.size() == 0) {
                 continue;
             }
-            const std::string& transName = toml::find_or(value, 0, "");
+            const std::string transName = toml::find_or(value, 0, "");
             if (!transName.empty()) {
                 m_logger->trace("发现原名 '{}' 的译名 '{}'", key, transName);
                 m_nameMap.insert({ key, transName });
@@ -1331,7 +1331,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                         const std::vector<ordered_json> parts = splitImplFunc(data, m_splitFileNum);
                         const std::wstring relStem = relJsonPath.parent_path() / relJsonPath.stem();
                         for (size_t i = 0; i < parts.size(); ++i) {
-                            const fs::path relPartPath = relStem + L"_part_" + std::to_wstring(i) + relJsonPath.extension().wstring();
+                            const fs::path relPartPath = std::format(L"{}_part_{}{}", relStem, i, relJsonPath.extension().wstring());
                             m_splitFilePartsToJson[relPartPath] = relJsonPath;
                             m_jsonToSplitFileParts[relJsonPath].insert({ relPartPath, false });
                             const fs::path partPath = m_inputCacheDir / relPartPath;

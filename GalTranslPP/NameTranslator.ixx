@@ -230,7 +230,7 @@ void NameTranslator::run(const fs::path& nameTablePath) {
 
     // 5. 保存文件
     std::ofstream ofs(nameTablePath);
-    ofs << toml::format(nameTableData);
+    ofs << nameTableData;
     ofs.close();
 
     m_logger->info("NameTrans: 处理完成，已更新 {} 个译名，保存至 {}", updatedCount, wide2Ascii(nameTablePath));

@@ -1,4 +1,4 @@
-#include "DictSettingsPage.h"
+﻿#include "DictSettingsPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -6,17 +6,13 @@
 #include <QStackedWidget>
 #include <QFileDialog>
 
-#include "ElaText.h"
-#include "ElaLineEdit.h"
 #include "ElaIconButton.h"
 #include "ElaTabWidget.h"
 #include "ElaScrollPageArea.h"
 #include "ElaToolTip.h"
 #include "ElaTableView.h"
 #include "ElaPushButton.h"
-#include "ElaMultiSelectComboBox.h"
 #include "ElaMessageBar.h"
-#include "ElaToggleSwitch.h"
 #include "ElaPlainTextEdit.h"
 #include "ReadDicts.h"
 
@@ -56,7 +52,7 @@ void DictSettingsPage::_setupUI()
 
 
 	auto createDictTabFunc =
-		[=]<typename EntryType>(std::function<QString()> readPlainTextFunc, std::function<QList<EntryType>()> readEntriesFunc,
+		[=]<typename EntryType>(const std::function<QString()>& readPlainTextFunc, const std::function<QList<EntryType>()>& readEntriesFunc,
 			QList<EntryType>& withdrawList, const std::string& configKey, const QString& tabName) 
 		-> std::pair<std::function<void()>, std::function<void(bool)>>
 	{
@@ -145,7 +141,8 @@ void DictSettingsPage::_setupUI()
 		}
 
 		stackedWidget->addWidget(dictTableView);
-		stackedWidget->setCurrentIndex(toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableOpenMode", toml::find_or(_globalConfig, "defaultDictOpenMode", 0)));
+		stackedWidget->setCurrentIndex(toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableOpenMode", 
+			toml::find_or(_globalConfig, "defaultDictOpenMode", 0)));
 		plainTextModeButtom->setEnabled(stackedWidget->currentIndex() != 0);
 		tableModeButtom->setEnabled(stackedWidget->currentIndex() != 1);
 		addDictButton->setEnabled(stackedWidget->currentIndex() == 1);
@@ -186,7 +183,7 @@ void DictSettingsPage::_setupUI()
 							dictArr.push_back(dictTbl);
 						}
 						dictArr.as_array_fmt().fmt = toml::array_format::multiline;
-						ofs << toml::format(toml::ordered_value{ toml::ordered_table{{"gptDict", dictArr}} });
+						ofs << toml::ordered_value{ toml::ordered_table{{"gptDict", dictArr}} };
 						ofs.close();
 						plainTextEdit->setPlainText(ReadDicts::readDictsStr(_projectDir / (tabName.toStdWString() + L".toml")));
 					}
@@ -219,7 +216,7 @@ void DictSettingsPage::_setupUI()
 							dictTbl["conditionReg"].as_string_fmt().fmt = toml::string_format::literal;
 							dictArr.push_back(dictTbl);
 						}
-						ofs << toml::format(toml::ordered_value{ toml::ordered_table{{"normalDict", dictArr}} });
+						ofs << toml::ordered_value{ toml::ordered_table{{"normalDict", dictArr}} };
 						ofs.close();
 						plainTextEdit->setPlainText(readPlainTextFunc());
 					}
@@ -241,7 +238,8 @@ void DictSettingsPage::_setupUI()
 				else {
 					filter = "TOML files (*.toml);;JSON files (*.json)";
 				}
-				QString dictPathStr = QFileDialog::getOpenFileName(this, tr("选择字典文件"), QString::fromStdString(toml::find_or(_globalConfig, "lastProjectDictPath", wide2Ascii(_projectDir))), filter);
+				QString dictPathStr = QFileDialog::getOpenFileName(this, tr("选择字典文件"), 
+					QString::fromStdString(toml::find_or(_globalConfig, "lastProjectDictPath", wide2Ascii(_projectDir))), filter);
 				if (dictPathStr.isEmpty()) {
 					return;
 				}
@@ -343,7 +341,8 @@ void DictSettingsPage::_setupUI()
 		{
 			return ReadDicts::readGptDicts(gptDictPaths);
 		};
-	auto refreshAndSaveGptDictFunc = createDictTabFunc(gptReadPlainTextFunc, gptReadEntriesFunc, _withdrawGptList, "gpt", QString(gptDictPaths.front().stem().wstring()));
+	auto refreshAndSaveGptDictFunc = 
+		createDictTabFunc(gptReadPlainTextFunc, gptReadEntriesFunc, _withdrawGptList, "gpt", QString(gptDictPaths.front().stem().wstring()));
 
 
 	fs::path preDictPath = _projectDir / tr("项目译前字典.toml").toStdWString();
@@ -355,7 +354,8 @@ void DictSettingsPage::_setupUI()
 		{
 			return ReadDicts::readNormalDicts(preDictPath);
 		};
-	auto refreshAndSavePreDictFunc = createDictTabFunc(preReadPlainTextFunc, preReadEntriesFunc, _withdrawPreList, "pre", QString(preDictPath.stem().wstring()));
+	auto refreshAndSavePreDictFunc = 
+		createDictTabFunc(preReadPlainTextFunc, preReadEntriesFunc, _withdrawPreList, "pre", QString(preDictPath.stem().wstring()));
 	
 
 	fs::path postDictPath = _projectDir / tr("项目译后字典.toml").toStdWString();
@@ -367,7 +367,8 @@ void DictSettingsPage::_setupUI()
 		{
 			return ReadDicts::readNormalDicts(postDictPath);
 		};
-	auto refreshAndSavePostDictFunc = createDictTabFunc(postReadPlainTextFunc, postReadEntriesFunc, _withdrawPostList, "post", QString(postDictPath.stem().wstring()));
+	auto refreshAndSavePostDictFunc = 
+		createDictTabFunc(postReadPlainTextFunc, postReadEntriesFunc, _withdrawPostList, "post", QString(postDictPath.stem().wstring()));
 
 
 	_refreshFunc = [=]()

@@ -1,4 +1,4 @@
-// ProjectSettingsPage.h
+﻿// ProjectSettingsPage.h
 
 #ifndef PROJECTSETTINGSPAGE_H
 #define PROJECTSETTINGSPAGE_H
@@ -37,7 +37,7 @@ public:
 
     virtual void apply2Config() override;
     void refreshCommonDicts();
-
+    void clearLog(bool forceClear);
 
 Q_SIGNALS:
         void finishTranslatingSignal(QString nodeKey); // 用于加红点提示翻译完成

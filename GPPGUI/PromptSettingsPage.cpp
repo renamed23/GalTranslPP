@@ -1,4 +1,4 @@
-#include "PromptSettingsPage.h"
+﻿#include "PromptSettingsPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -144,7 +144,7 @@ void PromptSettingsPage::_setupUI()
 			gendictApplyFunc();
 			nametransApplyFunc();
 			std::ofstream ofs(_projectDir / L"Prompt.toml");
-			ofs << toml::format(_promptConfig);
+			ofs << _promptConfig;
 			ofs.close();
 		};
 

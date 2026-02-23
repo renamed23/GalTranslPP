@@ -5,17 +5,16 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QStackedWidget>
+
 #ifdef Q_OS_WIN
 #include <Windows.h>
 #endif
 
-#include "ElaToggleButton.h"
 #include "ElaToolButton.h"
 #include "ElaMessageBar.h"
 #include "ElaMenu.h"
 #include "ElaMenuBar.h"
 #include "ElaText.h"
-#include "ElaScrollPageArea.h"
 
 #include "APISettingsPage.h"
 #include "PluginSettingsPage.h"
@@ -42,7 +41,8 @@ ProjectSettingsPage::ProjectSettingsPage(toml::ordered_value& globalConfig, cons
     }
     catch (...) {
         _projectConfig = toml::ordered_table{};
-        ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的配置文件不符合 toml 规范"), 3000);
+        ElaMessageBar::error(ElaMessageBarType::TopLeft, 
+            tr("解析失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的配置文件不符合 toml 规范"), 3000);
     }
     insertToml(_projectConfig, "GUIConfig.isRunning", false);
 
@@ -93,6 +93,14 @@ QString ProjectSettingsPage::getProjectName()
 fs::path ProjectSettingsPage::getProjectDir()
 {
     return _projectDir;
+}
+
+void ProjectSettingsPage::clearLog(bool forceClear) {
+    if (forceClear || _stackedWidget->currentIndex() == 8) {
+        _startSettingsPage->clearLog();
+        ElaMessageBar::success(ElaMessageBarType::Bottom, 
+            tr("清理成功"), tr("已清空项目 ") + getProjectName() + tr(" 的日志输出窗口"), 3000);
+    }
 }
 
 void ProjectSettingsPage::_setupUI()
@@ -270,7 +278,8 @@ void ProjectSettingsPage::_onRefreshProjectConfig()
         _projectConfig = toml::uoparse(_projectDir / L"config.toml");
     }
     catch (...) {
-        ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的配置文件不符合规范"), 3000);
+        ElaMessageBar::error(ElaMessageBarType::TopLeft, 
+            tr("解析失败"), tr("项目 ") + QString(_projectDir.filename().wstring()) + tr(" 的配置文件不符合规范"), 3000);
         return;
     }
     insertToml(_projectConfig, "GUIConfig.isRunning", false);

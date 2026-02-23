@@ -379,7 +379,7 @@ void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateI
 				if (!ofs.is_open()) {
 					return std::make_tuple(false, std::string("Failed to open file for writing"));
 				}
-				ofs << toml::format(tomlValue);
+				ofs << tomlValue;
 				ofs.close();
 				return std::make_tuple(true, std::nullopt);
 			}

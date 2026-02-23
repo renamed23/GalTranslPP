@@ -18,6 +18,7 @@ class SettingPage;
 class ProjectSettingsPage;
 class ElaContentDialog;
 class UpdateChecker;
+class QShortcut;
 
 namespace fs = std::filesystem;
 namespace py = pybind11;
@@ -28,13 +29,13 @@ class MainWindow : public ElaWindow
 
 public:
     MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget* parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 public Q_SLOTS:
     void checkUpdate();
 
 protected:
-    virtual void mouseReleaseEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
 
 private Q_SLOTS:
     void _onNewProjectTriggered();
@@ -44,6 +45,7 @@ private Q_SLOTS:
     void _onSaveProjectTriggered();
     void _onFinishTranslating(QString nodeKey);
     void _onCloseWindowClicked(bool restart);
+    void _onClearLog(bool forceClear);
 
 private:
 
@@ -66,6 +68,8 @@ private:
     QString _aboutKey;
     QString _transIllustrationKey;
     QString _settingKey;
+
+    QShortcut* _clearLogShortcut{nullptr};
 
     QList<QSharedPointer<ProjectSettingsPage>> _projectPages;
 
