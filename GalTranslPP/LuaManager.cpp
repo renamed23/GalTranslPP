@@ -265,7 +265,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 	return it->second;
 }
 
-void LuaManager::registerCustomTypes(std::shared_ptr<LuaStateInstance> luaStateInstance, const std::string& scriptPath, bool& needReboot) {
+void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath, bool& needReboot) {
 	sol::state& lua = *(luaStateInstance->lua);
 	// 绑定 NameType 枚举
 	lua.new_enum("NameType",

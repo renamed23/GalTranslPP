@@ -228,13 +228,21 @@ void PythonMainInterpreterManager::daemonThreadFunc() {
         if (!taskOpt) {
             break;
         }
-        auto task = std::move(*taskOpt);
+        const std::unique_ptr<PythonTask> task = std::move(taskOpt.value());
         try {
             task->taskFunc();
             task->promise.set_value();
         }
+        catch (const py::error_already_set& e) {
+            task->promise.set_exception(
+                std::make_exception_ptr(
+                    std::runtime_error(std::format("PythonMainInterpreterManager exception: {}", e.what()))
+                )
+            );
+        }
         catch (...) {
-            task->promise.set_exception(std::current_exception());
+            // python 异常不能带出守护线程作用域，因为 .what() 时需要获取 GIL
+            task->promise.set_exception(std::make_exception_ptr(std::runtime_error("PythonMainInterpreterManager unknown exception")));
         }
     }
 }
@@ -253,13 +261,20 @@ void PythonInterpreterInstance::daemonThreadFunc() {
         if (!taskOpt) {
             break;
         }
-        auto task = std::move(*taskOpt);
+        const std::unique_ptr<PythonTask> task = std::move(taskOpt.value());
         try {
             task->taskFunc();
             task->promise.set_value();
         }
+        catch (const py::error_already_set& e) {
+            task->promise.set_exception(
+                std::make_exception_ptr(
+                    std::runtime_error(std::format("PythonInterpreterInstance exception: {}", e.what()))
+                )
+            );
+        }
         catch (...) {
-            task->promise.set_exception(std::current_exception());
+            task->promise.set_exception(std::make_exception_ptr(std::runtime_error("PythonInterpreterInstance unknown exception")));
         }
     }
 }
@@ -347,6 +362,7 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, const
     logger->debug("所有依赖均已安装");
 }
 
+// 最理想的情况当然是把 NLP 函数也放在子解释器里运行，但这些 NLP 模块都很娇气，不是在主解释里的导入就会崩溃。。。
 std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
 (const std::string& moduleName, const std::string& modelName, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot) {
 
