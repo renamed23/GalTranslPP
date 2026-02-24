@@ -1,5 +1,6 @@
 # 必须: 导入 C++ 绑定的模块
 import gpp_plugin_api as gpp
+
 from pathlib import Path
 
 # Sentence 的声明详见 Example/Lua/MySampleTextPlugin.lua
