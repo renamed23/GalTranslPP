@@ -80,10 +80,10 @@ export {
 
 
         // 存储json文件相对路径到各种元数据的映射
-        std::map<fs::path, JsonInfo> m_jsonToInfoMap;
+        std::unordered_map<fs::path, JsonInfo> m_jsonToInfoMap;
 
         // 每个epub完整路径对应的多个json文件相对路径以及有没有处理完毕
-        std::map<fs::path, std::map<fs::path, bool>> m_epubToJsonsMap;
+        std::unordered_map<fs::path, std::unordered_map<fs::path, bool>> m_epubToJsonsMap;
 
     public:
 
@@ -357,7 +357,7 @@ void EpubTranslator::beforeRun()
             }
             const JsonInfo& info = m_jsonToInfoMap[relProcessedFile];
             const fs::path& epubPath = info.epubPath;
-            std::map<fs::path, bool>& jsonsMap = m_epubToJsonsMap[epubPath];
+            std::unordered_map<fs::path, bool>& jsonsMap = m_epubToJsonsMap[epubPath];
             jsonsMap[relProcessedFile] = true;
             if (
                 std::ranges::any_of(jsonsMap, [](const auto& p)

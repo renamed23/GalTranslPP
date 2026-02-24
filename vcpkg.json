@@ -19,7 +19,8 @@
     "proxy",
     "pybind11",
     "bit7z",
-    "pcre2"
+    "pcre2",
+    "abseil"
   ],
   "overrides": [
     {
@@ -31,5 +32,5 @@
       "version": "5.4.8"
     }
   ],
-  "builtin-baseline": "6d7bf7ef2193e2d1c5798a5ff8811d533104c861"
+  "builtin-baseline": "a34a3811fce990f9d2809cf0356dd443143c7000"
 }

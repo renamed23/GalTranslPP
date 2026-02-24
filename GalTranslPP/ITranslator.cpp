@@ -124,6 +124,9 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, const 
     if (logLevel == spdlog::level::trace) {
         logger->flush_on(spdlog::level::trace);
     }
+    else if (logLevel == spdlog::level::debug) {
+        logger->flush_on(spdlog::level::debug);
+    }
     logger->set_pattern("[%H:%M:%S.%e %^%l%$] %v");
     logger->info("Logger initialized.");
     // 日志配置结束

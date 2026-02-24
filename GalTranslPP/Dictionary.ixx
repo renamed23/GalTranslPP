@@ -308,13 +308,15 @@ void GptDictionary::checkDictUse(Sentence* sentence, CachePart base, CachePart c
                 }
             };
 
-        WordPosVec* pWordPosVec = nullptr;
-        {
-            std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
-            if (auto it = m_tokenizeCacheMap.find(origText); it != m_tokenizeCacheMap.end()) {
-                pWordPosVec = &it->second;
-            }
-        }
+        // MSVC STL 无序容器的指针和迭代器不会失效，其它的我没有查证过
+        const WordPosVec* pWordPosVec = [&]()-> WordPosVec*
+            {
+                std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
+                if (const auto it = m_tokenizeCacheMap.find(origText); it != m_tokenizeCacheMap.end()) {
+                    return &it->second;
+                }
+                return nullptr;
+            }();
         if (pWordPosVec) {
             checkTokenFunc(*pWordPosVec);
         }

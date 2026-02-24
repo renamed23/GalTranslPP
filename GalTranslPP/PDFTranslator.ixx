@@ -29,7 +29,7 @@ export {
         bool m_bilingualOutput;
 
         // 存储json文件相对路径到其所属PDF完整路径的映射
-        std::map<fs::path, fs::path> m_jsonToPDFPathMap;
+        std::unordered_map<fs::path, fs::path> m_jsonToPDFPathMap;
 
     public:
 

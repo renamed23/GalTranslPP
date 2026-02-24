@@ -87,9 +87,9 @@ export {
         std::shared_mutex m_transCacheMutex;
         std::mutex m_outputMutex;
         // 输入分割文件相对路径到原始json相对路径的映射
-        std::map<fs::path, fs::path> m_splitFilePartsToJson;
+        std::unordered_map<fs::path, fs::path> m_splitFilePartsToJson;
         // 原始json相对路径到多个输入分割文件相对路径及其有没有完成的映射
-        std::map<fs::path, std::map<fs::path, bool>> m_jsonToSplitFileParts;
+        std::unordered_map<fs::path, std::unordered_map<fs::path, bool>> m_jsonToSplitFileParts;
 
         std::unordered_map<std::string, std::string> m_nameMap;
         toml::ordered_value m_problemOverview = toml::array{};

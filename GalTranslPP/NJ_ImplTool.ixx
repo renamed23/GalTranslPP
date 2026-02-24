@@ -26,7 +26,7 @@ export {
     void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
         std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
 
-    void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::path, bool>& splitFileParts,
+    void combineOutputFiles(const fs::path& originalRelFilePath, const std::unordered_map<fs::path, bool>& splitFileParts,
         const fs::path& outputCacheDir, const fs::path& outputDir, std::shared_ptr<spdlog::logger>& logger);
 
     bool hasRetranslKey(const std::vector<CheckSeCondFunc>& retranslKeys, const json& item, const Sentence* currentSe);
@@ -57,8 +57,9 @@ int getSplittedFileIndex(const std::wstring& path) {
 * @brief 根据句子的上下文生成唯一的缓存键，复刻 GalTransl 逻辑
 */
 std::string generateCacheKey(const Sentence* s) {
-    std::string prevText = "None", currentText, nextText = "None";
-    currentText = getNameString(s) + s->original_text + s->pre_processed_text;
+    std::string prevText = "None";
+    std::string currentText = getNameString(s) + s->original_text + s->pre_processed_text;
+	std::string nextText = "None";
     if (s->prev) {
         prevText = getNameString(s->prev) + s->prev->original_text + s->prev->pre_processed_text;
     }
@@ -70,8 +71,9 @@ std::string generateCacheKey(const Sentence* s) {
 
 std::string generateCacheKey(const json& jsonArr, size_t i) {
     const auto& item = jsonArr[i];
-    std::string prevText = "None", currentText, nextText = "None";
-    currentText = getNameString(item) + item.value("original_text", "") + item.value("pre_processed_text", "");
+    std::string prevText = "None";
+    std::string currentText = getNameString(item) + item.value("original_text", "") + item.value("pre_processed_text", "");
+    std::string nextText = "None";
     if (i > 0) {
         const auto& lastItem = jsonArr[i - 1];
         prevText = getNameString(lastItem) + lastItem.value("original_text", "") + lastItem.value("pre_processed_text", "");
@@ -430,7 +432,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
     }
 }
 
-void combineOutputFiles(const fs::path& originalRelFilePath, const std::map<fs::path, bool>& splitFileParts,
+void combineOutputFiles(const fs::path& originalRelFilePath, const std::unordered_map<fs::path, bool>& splitFileParts,
     const fs::path& outputCacheDir, const fs::path& outputDir, std::shared_ptr<spdlog::logger>& logger) {
 
     ordered_json combinedJson = ordered_json::array();

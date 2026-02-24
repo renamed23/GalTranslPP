@@ -153,19 +153,27 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 
 std::vector<std::string> TextLinebreakFix::splitIntoTokens(const std::string& text)
 {
-	{
-		std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
-		if (auto it = m_tokenizeCacheMap.find(text); it != m_tokenizeCacheMap.end()) {
-			return ::splitIntoTokens(it->second, text);
-		}
+	const WordPosVec* pWordPosVec = [&]() -> WordPosVec*
+		{
+			std::shared_lock<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
+			if (const auto it = m_tokenizeCacheMap.find(text); it != m_tokenizeCacheMap.end()) {
+				return &it->second;
+			}
+			return nullptr;
+		}();
+	if (pWordPosVec) {
+		return ::splitIntoTokens(*pWordPosVec, text);
 	}
-	const NLPResult result = m_tokenizeTargetLangFunc(text);
-	const WordPosVec& wordPosVec = std::get<0>(result);
+
+	NLPResult result = m_tokenizeTargetLangFunc(text);
+	WordPosVec& wordPosVec = std::get<0>(result);
+
+	std::vector<std::string> ret = ::splitIntoTokens(wordPosVec, text);
 	{
 		std::lock_guard<std::shared_mutex> lock(m_tokenizeCacheMapMutex);
-		m_tokenizeCacheMap.insert({ text, wordPosVec });
+		m_tokenizeCacheMap.insert({ text, std::move(wordPosVec) });
 	}
-	return ::splitIntoTokens(wordPosVec, text);
+	return ret;
 }
 
 void TextLinebreakFix::dPostRun(Sentence* se)

@@ -11,6 +11,7 @@
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
+#include <absl/container/flat_hash_map.h>
 
 module NormalJsonTranslator;
 
@@ -840,7 +841,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     // 读缓存逻辑
     {
-        std::unordered_map<std::string, json> cacheMap;
+        absl::flat_hash_map<std::string, json> cacheMap;
 
         auto insertJsonArrToCacheMap = [&](const json& jsonArr)
             {
