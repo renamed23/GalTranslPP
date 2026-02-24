@@ -2,7 +2,6 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <pybind11/embed.h>
 #include <spdlog/spdlog.h>
 
 export module PythonTranslator;
@@ -71,7 +70,7 @@ export {
 						(*(m_pythonInterpreter->functions["init"]))();
 					}
 					catch (const pybind11::error_already_set& e) {
-						throw std::runtime_error(std::format("初始化 PythonTranslator 时发生错误: {}", e.what()));
+						throw std::runtime_error(std::format("初始化 PythonTranslator 时出现异常: {}", e.what()));
 					}
 				}).get();
 			if (needRoot) {
@@ -85,16 +84,18 @@ export {
 			m_pythonInterpreter->submitTask([&]()
 				{
 					try {
-						if (auto& unloadFuncPtr = m_pythonInterpreter->functions["unload"]; unloadFuncPtr.operator bool() && py::isinstance<py::function>(*unloadFuncPtr)) {
-							(*unloadFuncPtr)();
-						}
 
 						this->m_onFileProcessed = nullptr;
 						this->m_onPerformApi = nullptr;
 						this->m_onDictProcessed = nullptr;
+
+						if (auto& unloadFuncPtr = m_pythonInterpreter->functions["unload"]; unloadFuncPtr.operator bool() && py::isinstance<py::function>(*unloadFuncPtr)) {
+							(*unloadFuncPtr)();
+						}
 					}
 					catch (const py::error_already_set& e) {
-						throw std::runtime_error(std::format("卸载 PythonTranslator 时发生错误: {}", e.what()));
+						// 析构不抛异常
+						this->m_logger->error("卸载 PythonTranslator 时出现异常: {}", e.what());
 					}
 				}).get();
 			this->m_logger->info("所有任务已完成！PythonTranslator {} 结束。", m_translatorName);

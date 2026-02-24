@@ -65,7 +65,7 @@ export {
 				(*initFunc)();
 			}
 			catch (const sol::error& e) {
-				throw std::runtime_error(std::format("初始化 LuaTranslator 失败：{}", e.what()));
+				throw std::runtime_error(std::format("初始化 LuaTranslator 时出现异常: {}", e.what()));
 			}
 
 			if (m_needReboot) {
@@ -75,8 +75,13 @@ export {
 
 		virtual ~LuaTranslator() override
 		{
-			if (auto& unloadFunc = m_luaState->functions["unload"]; unloadFunc.operator bool() && unloadFunc->valid()) {
-				(*unloadFunc)();
+			try {
+				if (auto& unloadFunc = m_luaState->functions["unload"]; unloadFunc.operator bool() && unloadFunc->valid()) {
+					(*unloadFunc)();
+				}
+			}
+			catch (const sol::error& e) {
+				this->m_logger->error("卸载 LuaTranslator 时出现异常: {}", e.what());
 			}
 			this->m_logger->info("所有任务已完成！LuaTranslator {} 结束。", m_translatorName);
 		}

@@ -234,6 +234,8 @@ void PythonMainInterpreterManager::daemonThreadFunc() {
             task->promise.set_value();
         }
         catch (const py::error_already_set& e) {
+            // python 异常不能带出守护线程作用域，因为 .what() 时需要获取 GIL
+            // 如果 taskFunc 没有捕获就在这里手动转成 runtime_error
             task->promise.set_exception(
                 std::make_exception_ptr(
                     std::runtime_error(std::format("PythonMainInterpreterManager exception: {}", e.what()))
@@ -241,8 +243,8 @@ void PythonMainInterpreterManager::daemonThreadFunc() {
             );
         }
         catch (...) {
-            // python 异常不能带出守护线程作用域，因为 .what() 时需要获取 GIL
-            task->promise.set_exception(std::make_exception_ptr(std::runtime_error("PythonMainInterpreterManager unknown exception")));
+            // 如果是我们自己抛的异常的话就直接转发
+            task->promise.set_exception(std::current_exception());
         }
     }
 }
@@ -274,7 +276,7 @@ void PythonInterpreterInstance::daemonThreadFunc() {
             );
         }
         catch (...) {
-            task->promise.set_exception(std::make_exception_ptr(std::runtime_error("PythonInterpreterInstance unknown exception")));
+            task->promise.set_exception(std::current_exception());
         }
     }
 }
@@ -290,23 +292,18 @@ PythonInterpreterInstance::PythonInterpreterInstance() {
                 cfg.gil = PyInterpreterConfig_OWN_GIL;
                 subInterpreter = std::make_unique<py::subinterpreter>(py::subinterpreter::create(cfg));
             }
-            catch (const std::exception& e) {
-                throw std::runtime_error(std::format("PythonInterpreterInstance 构造时出现异常: {}", e.what()));
-            }
+            catch (...) { }
         };
     PythonMainInterpreterManager::getInstance().submitTask(std::move(createSubInterpreterTaskFunc)).get();
-    daemonThread = std::thread(&PythonInterpreterInstance::daemonThreadFunc, this);
+    if (subInterpreter) {
+        daemonThread = std::thread(&PythonInterpreterInstance::daemonThreadFunc, this);
+    }
 }
 
 PythonInterpreterInstance::~PythonInterpreterInstance() {
     auto functionClearTaskFunc = [this]()
         {
-            try {
-                this->functions.clear();
-            }
-            catch (const std::exception& e) {
-                throw std::runtime_error(std::format("PythonInterpreterInstance::functionClearTaskFunc 出现异常: {}", e.what()));
-            }
+            this->functions.clear(); // noexcept
         };
     submitTask(std::move(functionClearTaskFunc)).get();
     m_taskQueue.stop();
@@ -315,12 +312,7 @@ PythonInterpreterInstance::~PythonInterpreterInstance() {
     }
     auto destroySubInterpreterTaskFunc = [&]()
         {
-            try {
-                subInterpreter.reset();
-            }
-            catch (const std::exception& e) {
-                throw std::runtime_error(std::format("PythonInterpreterInstance 析构时出现异常: {}", e.what()));
-            }
+            subInterpreter.reset(); // noexcept
         };
     PythonMainInterpreterManager::getInstance().submitTask(std::move(destroySubInterpreterTaskFunc)).get();
 }

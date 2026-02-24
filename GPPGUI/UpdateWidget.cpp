@@ -20,6 +20,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 		"2. TextFull2Half 新增设置项: 不转换的字符",
     	    "3. 新增清除窗口日志的快捷键及右键菜单，默认为 Ctrl+L",
     	    "4. 新增 页面切换特效 设置",
+		"5. 修复了几个调用 Python 脚本时错误的异常处理",
 
     };
 
