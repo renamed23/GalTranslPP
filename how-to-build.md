@@ -5,12 +5,9 @@
 在开始编译之前，请确保你的开发环境满足以下要求：
 
 - **操作系统**: Windows 10 或 Windows 11
-- **IDE**: [Visual Studio 2026](https://visualstudio.microsoft.com/insiders/?rwnlp=zh-hans) 和 
-
-    VS2022(会用到 2022 的 ToolChain，如果你懂的话可以只下 VS2022 的 BuildTools 而不下其 IDE，不过依然需要勾选**使用C++的桌面开发**选项)
-    ![BuildTools](img/BuildTools.png?raw=true)
+- **IDE**: [Visual Studio 2026](https://visualstudio.microsoft.com/insiders/?rwnlp=zh-hans)
   - **必需工作负载**: `使用 C++ 的桌面开发`
-  - **必需工具集**: `MSVC v143` (VS 2022) 和 `MSVC v145`
+  - **必需工具集**: `MSVC v145`
 - **Python 3.12.10**: 本仓库中的 `python-3.12.10-embed-amd64.zip`
 - **版本控制工具**: [git](https://git-scm.com/)
 
@@ -82,23 +79,11 @@ cd GalTranslPP
 
 ## 5. 编译 GalTranslPP (主项目)
 
-此步骤涉及一次临时的平台工具集切换，以解决特定依赖的兼容性问题。
-
 - 1、  使用 Visual Studio 打开根目录下的 `GalTranslPP.sln` 解决方案文件。
 
-- 2、  **步骤一：使用 v143 工具集编译依赖**
-  - 在 **解决方案资源管理器** 中，右键点击 `GalTranslPP` 模块，选择 `属性`。
-  - 在属性页中，导航至 `配置属性` → `常规`。
-  - 将 **平台工具集** 选项更改为 **`Visual Studio 2022 (v143)`** **(Debug和Release都改过来)**。
-  - 点击 `应用` 保存设置。
-  - 在菜单栏选择 `生成` → `批生成`勾选`GalTranslPP|Release|x64`并点击生成。
-    > **注意**: 此步骤专门用于编译 `mecab:x64-windows` 等依赖。
+- 2、  将 配置从默认的 Debug 切换至 Release。
 
-- 3、  **步骤二：使用 v145 工具集编译主程序**
-  - 再次打开 `GalTranslPP` 项目的属性页。
-  - 将 **平台工具集** 切换回 **`Visual Studio v18 (v145)`**。
-  - 点击 `应用` 并关闭属性窗口。
-  - 为确保所有模块都被正确编译，在`生成` → `批生成`编译目标模块时应选择`全部重新生成`(如果实在过不了编就直接开VS2022的IDE把工具集切回v143编译)。
+- 3、  在解决方案资源管理器中右键你想编译的项目，如 `GPPGUI`，点击生成，VS会自动编译其它依赖并生成最终二进制文件。
 
 ## 6. 完成与运行
 
