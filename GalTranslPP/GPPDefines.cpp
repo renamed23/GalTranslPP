@@ -1,6 +1,4 @@
-﻿module;
-
-module GPPDefines;
+﻿module GPPDefines;
 
 namespace fs = std::filesystem;
 

@@ -17,8 +17,12 @@ import PDFTranslator;
 import LuaTranslator;
 import NLPTool;
 
-namespace fs = std::filesystem;
+import ITranslator;
+import GPPDefines;
+import Tool;
+
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 class LuaJson {
 public:
@@ -231,6 +235,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 		m_logger->error("Script is not exist: {}", scriptPath);
 		return std::nullopt;
 	}
+
 	auto it = m_scriptStates.find(stdScriptPath);
 	if (it == m_scriptStates.end()) {
 		try {
@@ -254,7 +259,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 	}
 
 	if (!it->second->functions.contains(functionName)) {
-		std::unique_ptr<sol::function> pFunc = std::make_unique<sol::function>((*(it->second->lua))[functionName]);
+		auto pFunc = std::make_unique<sol::function>((*(it->second->lua))[functionName]);
 		if (!pFunc->valid()) {
 			m_logger->debug("Failed to find function {} in script {}", functionName, scriptPath);
 			return std::nullopt;
@@ -595,8 +600,8 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 	utilsTable["removeWhitespace"] = &removeWhitespace;
 	utilsTable["getMostCommonChar"] = [](const std::string& str) -> std::tuple<std::string, int>
 		{
-			auto pair = getMostCommonChar(str);
-			return std::make_tuple(pair.first, pair.second);
+			auto [charString, count] = getMostCommonChar(str);
+			return std::make_tuple(charString, count);
 		};
 	utilsTable["splitIntoTokens"] = &::splitIntoTokens;
 	utilsTable["splitIntoGraphemes"] = &splitIntoGraphemes;
@@ -632,13 +637,13 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		};
 	utilsTable["icuRegexMatch"] = [](const std::string& str, const std::string& pattern) -> bool
 		{
-			icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(pattern));
+			const icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(pattern);
 			UErrorCode status = U_ZERO_ERROR;
-			std::unique_ptr<icu::RegexPattern> regexPattern = std::unique_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
+			const auto regexPattern = std::unique_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
 			if (U_FAILURE(status)) {
 				throw std::runtime_error(std::format("Failed to compile regex pattern: {}", pattern));
 			}
-			std::unique_ptr<icu::RegexMatcher> matcher = std::unique_ptr<icu::RegexMatcher>(regexPattern->matcher(icu::UnicodeString::fromUTF8(str), status));
+			const auto matcher = std::unique_ptr<icu::RegexMatcher>(regexPattern->matcher(icu::UnicodeString::fromUTF8(str), status));
 			if (U_FAILURE(status)) {
 				throw std::runtime_error(std::format("Failed to create regex matcher: {}", pattern));
 			}
@@ -646,13 +651,13 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		};
 	utilsTable["icuRegexSearch"] = [](const std::string& str, const std::string& pattern) -> std::vector<std::vector<std::string>>
 		{
-			icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(pattern));
+			const icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(pattern));
 			UErrorCode status = U_ZERO_ERROR;
-			std::unique_ptr<icu::RegexPattern> regexPattern = std::unique_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
+			const auto regexPattern = std::unique_ptr<icu::RegexPattern>(icu::RegexPattern::compile(ustr, 0, status));
 			if (U_FAILURE(status)) {
 				throw std::runtime_error(std::format("Failed to compile regex pattern: {}", pattern));
 			}
-			std::unique_ptr<icu::RegexMatcher> matcher = std::unique_ptr<icu::RegexMatcher>(regexPattern->matcher(icu::UnicodeString::fromUTF8(str), status));
+			const auto matcher = std::unique_ptr<icu::RegexMatcher>(regexPattern->matcher(icu::UnicodeString::fromUTF8(str), status));
 			if (U_FAILURE(status)) {
 				throw std::runtime_error(std::format("Failed to create regex matcher: {}", pattern));
 			}
@@ -673,13 +678,13 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		};
 	utilsTable["icuRegexReplace"] = [](const std::string& str, const std::string& pattern, const std::string& rep) -> std::string
 		{
-			icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(str));
+			const icu::UnicodeString ustr(icu::UnicodeString::fromUTF8(str));
 			UErrorCode status = U_ZERO_ERROR;
-			std::unique_ptr<icu::RegexPattern> regexPattern = std::unique_ptr<icu::RegexPattern>(icu::RegexPattern::compile(icu::UnicodeString::fromUTF8(pattern), 0, status));
+			const auto regexPattern = std::unique_ptr<icu::RegexPattern>(icu::RegexPattern::compile(icu::UnicodeString::fromUTF8(pattern), 0, status));
 			if (U_FAILURE(status)) {
 				throw std::runtime_error(std::format("Failed to compile regex pattern: {}", pattern));
 			}
-			std::unique_ptr<icu::RegexMatcher> matcher = std::unique_ptr<icu::RegexMatcher>(regexPattern->matcher(ustr, status));
+			const auto matcher = std::unique_ptr<icu::RegexMatcher>(regexPattern->matcher(ustr, status));
 			if (U_FAILURE(status)) {
 				throw std::runtime_error(std::format("Failed to create regex matcher: {}", pattern));
 			}

@@ -1,11 +1,11 @@
 ﻿module;
 
+#include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <unicode/unistr.h>
 #include <unicode/uchar.h>
 #include <unicode/ucnv.h>
 #include <unicode/ucnv_cb.h>
-#include <unicode/ustring.h>
 #include <toml.hpp>
 
 export module CodePageChecker;
@@ -34,14 +34,14 @@ export {
 
     class CodePageChecker {
     private:
-        std::weak_ptr<spdlog::logger> m_logger;
         std::string m_codePage;
         std::string m_unmappableCharsResult;
         UConverterPtr m_u8Converter;
         UConverterPtr m_codePageConverter;
+        std::weak_ptr<spdlog::logger> m_logger;
 
     public:
-        CodePageChecker(const std::string& codePage, std::shared_ptr<spdlog::logger> logger);
+        CodePageChecker(const std::string& codePage, const std::shared_ptr<spdlog::logger>& logger);
 
         const std::string& getCodePage() const { return m_codePage; }
 
@@ -51,7 +51,7 @@ export {
 
 module :private;
 
-CodePageChecker::CodePageChecker(const std::string& codePage, std::shared_ptr<spdlog::logger> logger)
+CodePageChecker::CodePageChecker(const std::string& codePage, const std::shared_ptr<spdlog::logger>& logger)
     : m_codePage(codePage), m_logger(logger)
 {
     UErrorCode status = U_ZERO_ERROR;
@@ -93,7 +93,7 @@ void U_CALLCONV codePageFromUCallback(
         std::string* unmappableCharsStr = static_cast<std::string*>(const_cast<void*>(context));
 
         // 使用 U8_APPEND 宏直接将码点追加到 std::string 中
-        size_t currentLength = unmappableCharsStr->length();
+        const size_t currentLength = unmappableCharsStr->length();
         unmappableCharsStr->resize(currentLength + U8_MAX_LENGTH); // 预留足够空间
         char* bufferPtr = &(*unmappableCharsStr)[currentLength];
         int32_t i = 0; // U8_APPEND 需要一个索引变量

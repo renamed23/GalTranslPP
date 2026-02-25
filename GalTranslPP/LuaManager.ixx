@@ -1,12 +1,12 @@
 ﻿module;
 
-#include <toml.hpp>
+#include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 
 export module LuaManager;
 
-import Tool;
+import std;
 
 namespace fs = std::filesystem;
 
@@ -14,7 +14,7 @@ export {
 
 	struct LuaStateInstance {
 		std::unique_ptr<sol::state> lua;
-		std::map<std::string, std::unique_ptr<sol::function>> functions;
+		absl::btree_map<std::string, std::unique_ptr<sol::function>> functions;
 		std::mutex executionMutex; // 用于保护这个特定 lua 实例的执行
 		LuaStateInstance() : lua(std::make_unique<sol::state>()) {}
 	};
@@ -22,15 +22,15 @@ export {
 	class LuaManager {
 
 	public:
-		//
+
+		explicit LuaManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
+		
 		std::optional<std::shared_ptr<LuaStateInstance>> registerFunction
 		(const std::string& scriptPath, const std::string& functionName, bool& needReboot);
 
-		LuaManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
-
 	private:
 
-		std::map<fs::path, std::shared_ptr<LuaStateInstance>> m_scriptStates;
+		absl::btree_map<fs::path, std::shared_ptr<LuaStateInstance>> m_scriptStates;
 
 		std::shared_ptr<spdlog::logger> m_logger;
 

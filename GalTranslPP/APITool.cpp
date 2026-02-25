@@ -9,41 +9,9 @@
 #include <spdlog/spdlog.h>
 #include <cpr/cpr.h>
 
-export module API_Tool;
+module APITool;
 
-export import Tool;
-export import ITranslator;
-
-using json = nlohmann::json;
-
-export {
-    struct TranslationApi {
-        std::string apikey;
-        std::string apiurl;
-        std::string modelName;
-        std::optional<double> temperature;
-        std::optional<double> topP;
-        std::optional<double> frequencyPenalty;
-        std::optional<double> presencePenalty;
-        std::chrono::steady_clock::time_point lastReportTime = std::chrono::steady_clock::now();
-        int reportCount = 0;
-        bool stream;
-    };
-
-    struct ApiResponse {
-        bool success = false;
-        std::string content; // 成功时的内容 或 失败时的错误信息
-        long statusCode = 0;   // HTTP 状态码
-    };
-
-    ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi,
-        std::shared_ptr<IController>& controller, std::shared_ptr<spdlog::logger>& logger, int threadId, int apiTimeOutMs);
-
-    std::string cvt2StdApiUrl(const std::string& url);
-}
-
-
-module :private;
+import Tool;
 
 #ifdef _WIN32
 // Windows下获取系统代理的辅助函数
@@ -84,7 +52,7 @@ std::string getSystemProxyUrl() {
 #endif
 
 ApiResponse performApiRequest(json& payload, const TranslationApi& api, const std::function<std::string(std::string)>& onPerformApi,
-    std::shared_ptr<IController>& controller, std::shared_ptr<spdlog::logger>& logger, int threadId, int apiTimeOutMs) {
+    const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger, int threadId, int apiTimeOutMs) {
     ApiResponse apiResponse;
 
     payload["model"] = api.modelName;
@@ -147,7 +115,7 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
                             }
                         }
                         catch (...) {
-                            
+
                         }
                     }
                 }
@@ -230,3 +198,4 @@ std::string cvt2StdApiUrl(const std::string& url) {
     }
     return ret + "/v1/chat/completions";
 }
+

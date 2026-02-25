@@ -10,7 +10,6 @@
 module ITranslator;
 
 import Tool;
-import LuaManager;
 import NormalJsonTranslator;
 import EpubTranslator;
 import PDFTranslator;
@@ -103,7 +102,7 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, const 
     const size_t logFileMaxSize = toml::find_or(configData, "common", "logFileMaxSize", LOG_FILE_MAX_SIZE_DEFAULT);
     const size_t maxRotateFiles = toml::find_or(configData, "common", "maxRotateFiles", 1);
 
-    std::shared_ptr<ControllerSink<std::mutex>> controllerSink = std::make_shared<ControllerSink<std::mutex>>(controller);
+    auto controllerSink = std::make_shared<ControllerSink<std::mutex>>(controller);
     std::vector<spdlog::sink_ptr> sinks = { controllerSink };
     if (saveLog) {
         fs::create_directories(projectDir / L"logs");
@@ -118,7 +117,8 @@ std::unique_ptr<ITranslator> createTranslator(const fs::path& projectDir, const 
         const fs::path logFilePath = projectDir / L"logs" / (ascii2Wide(transEngine) + L"_0.log");
         sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logFilePath.wstring(), logFileMaxSize, maxRotateFiles));
     }
-    std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>(wide2Ascii(projectDir) + "-" + transEngine + "-Logger", sinks.begin(), sinks.end());
+
+    const auto logger = std::make_shared<spdlog::logger>(wide2Ascii(projectDir) + "-" + transEngine + "-Logger", sinks.begin(), sinks.end());
     //spdlog::register_logger(logger);
     logger->set_level(logLevel);
     if (logLevel == spdlog::level::trace) {

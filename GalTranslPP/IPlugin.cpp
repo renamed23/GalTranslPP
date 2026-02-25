@@ -1,9 +1,7 @@
 ﻿module;
 
-#define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
-#include <sol/sol.hpp>
 #include <toml.hpp>
 
 module IPlugin;
@@ -40,7 +38,7 @@ void registerPlugins(std::vector<pro::proxy<PPlugin>>& plugins, const std::vecto
         if (pluginName.starts_with('>')) {
             continue;
         }
-        std::string pluginNameLower = str2Lower(pluginName);
+        const std::string pluginNameLower = str2Lower(pluginName);
         if (pluginNameLower.ends_with(".lua") && preProcOnly) {
             plugins.push_back(pro::make_proxy<PPlugin, LuaTextPlugin>(projectDir, replaceStr(pluginName, "<PROJECT_DIR>", wide2Ascii(projectDir)),
                 luaManager, logger));
@@ -50,19 +48,19 @@ void registerPlugins(std::vector<pro::proxy<PPlugin>>& plugins, const std::vecto
                 pythonManager, logger));
         }
         else if (pluginName.contains("SkipTrans")) {
-            PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::Pre);
+            const PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::Pre);
             if (runTimeCheckFunc(runTime)) {
                 plugins.push_back(pro::make_proxy<PPlugin, SkipTrans>(projectDir, projectConfig, pythonManager, luaManager, logger, runTime));
             }
         }
         else if (pluginName.contains("TextFull2Half")) {
-            PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::DPost);
+            const PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::DPost);
             if (runTimeCheckFunc(runTime)) {
                 plugins.push_back(pro::make_proxy<PPlugin, TextFull2Half>(projectConfig, logger, runTime));
             }
         }
         else if (pluginName.contains("TextLinebreakFix")) {
-            PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::DPost);
+            const PluginRunTime runTime = choosePluginRunTime(pluginNameLower, PluginRunTime::DPost);
             if (runTimeCheckFunc(runTime)) {
                 plugins.push_back(pro::make_proxy<PPlugin, TextLinebreakFix>(otherCacheDir, projectConfig, logger, runTime));
             }

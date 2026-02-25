@@ -7,7 +7,7 @@
 
 export module PythonManager;
 
-import Tool;
+import std;
 
 namespace fs = std::filesystem;
 namespace py = pybind11;
@@ -47,109 +47,91 @@ export {
         bool m_stopped = false;
     };
 
+
+
     struct PythonTask {
         std::function<void()> taskFunc;
         std::promise<void> promise; // 用于返回结果
     };
 
+
+
     class PythonMainInterpreterManager {
     public:
-
-        static PythonMainInterpreterManager& getInstance() {
-            static PythonMainInterpreterManager instance;
-            return instance;
-        }
-        ~PythonMainInterpreterManager(){}
-
-        void stop() {
-            m_taskQueue.stop();
-            if (m_daemonThread.joinable()) {
-                m_daemonThread.join();
-            }
-        }
 
         PythonMainInterpreterManager(PythonMainInterpreterManager&) = delete;
         PythonMainInterpreterManager(PythonMainInterpreterManager&&) = delete;
 
-        std::future<void> submitTask(std::function<void()> taskFunc) {
-            std::unique_ptr<PythonTask> task = std::make_unique<PythonTask>();
-            task->taskFunc = std::move(taskFunc);
-            auto future = task->promise.get_future();
-            m_taskQueue.push(std::move(task));
-            return future;
-        }
-        
+        ~PythonMainInterpreterManager(){}
+
+        static PythonMainInterpreterManager& getInstance();
+
+        std::future<void> submitTask(std::function<void()> taskFunc);
+
         std::shared_ptr<py::object> registerNLPFunction
         (const std::string& moduleName, const std::string& modelName, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot);
 
+        void stop();
+
     private:
 
-        PythonMainInterpreterManager() {
-            if (Py_IsInitialized()) {
-                m_daemonThread = std::thread(&PythonMainInterpreterManager::daemonThreadFunc, this);
-            }
-            else {
-                throw std::runtime_error("Python 环境未初始化");
-            }
-        }
+        PythonMainInterpreterManager();
 
         void daemonThreadFunc();
 
         std::mutex m_mutex;
-        std::map<std::string, std::map<std::string, std::weak_ptr<py::object>>> m_nlpModuleFunctions;
+        absl::btree_map<std::string, absl::btree_map<std::string, std::weak_ptr<py::object>>> m_nlpModuleFunctions;
         std::thread m_daemonThread; // 守护线程
         SafeQueue<std::unique_ptr<PythonTask>> m_taskQueue;
     };
 
-    template <typename T>
-    void pythonMainInterpreterDeleter(T* ptr) {
-        auto deleteTaskFunc = [ptr]()
-            {
-                delete ptr;
-            };
-        PythonMainInterpreterManager::getInstance().submitTask(std::move(deleteTaskFunc));
-    }
+
 
     struct PythonInterpreterInstance {
-        std::unique_ptr<py::subinterpreter> subInterpreter;
-        std::map<std::string, std::unique_ptr<py::object>> functions;
-        std::thread daemonThread;
-        SafeQueue<std::unique_ptr<PythonTask>> m_taskQueue;
+
+        PythonInterpreterInstance();
+        ~PythonInterpreterInstance();
+
+        std::future<void> submitTask(std::function<void()> taskFunc);
+
+        bool isEffective() const;
+
+        absl::btree_map<std::string, std::unique_ptr<py::object>> functions;
+
+    private:
 
         void daemonThreadFunc();
 
-        std::future<void> submitTask(std::function<void()> taskFunc) {
-            std::unique_ptr<PythonTask> task = std::make_unique<PythonTask>();
-            task->taskFunc = std::move(taskFunc);
-            auto future = task->promise.get_future();
-            m_taskQueue.push(std::move(task));
-            return future;
-        }
-
-        PythonInterpreterInstance();
-
-        ~PythonInterpreterInstance();
+        std::thread daemonThread;
+        SafeQueue<std::unique_ptr<PythonTask>> m_taskQueue;
+        std::unique_ptr<py::subinterpreter> subInterpreter;
     };
+
+
 
     class PythonManager {
 
     public:
 
+        explicit PythonManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
+
         std::optional<std::shared_ptr<PythonInterpreterInstance>> registerFunction
         (const std::string& modulePath, const std::string& functionName, bool& needReboot);
-
-        PythonManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
 
     private:
 
         void registerCustomTypes(const std::string& moduleName, bool& needReboot);
 
-        std::map<fs::path, std::shared_ptr<PythonInterpreterInstance>> m_interpreters;
+        absl::btree_map<fs::path, std::shared_ptr<PythonInterpreterInstance>> m_interpreters;
 
         std::shared_ptr<spdlog::logger> m_logger;
     };
 
+
+
     void checkPythonDependencies(const std::vector<std::string>& dependencies, const std::shared_ptr<spdlog::logger>& logger);
+
+
 
     bool startUpPythonEnv(const fs::path& pyEnvPath, std::unique_ptr<py::gil_scoped_release>& release);
     void shutDownPythonEnv(std::unique_ptr<py::gil_scoped_release>& release);

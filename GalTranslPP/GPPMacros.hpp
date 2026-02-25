@@ -1,7 +1,6 @@
 ﻿#ifndef GPPMACROS
 #define GPPMACROS
 
-#define _CRT_SECURE_NO_WARNINGS
 #define _RANGES_
 #define SPDLOG_WCHAR_FILENAMES
 
@@ -19,6 +18,13 @@
 #ifdef PCRE2_HEADERS
 #include <jpcre2.hpp>
 using jpc = jpcre2::select<char>;
+#endif
+
+#ifdef ABSL_CONTAINERS
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
+#include <absl/container/btree_map.h>
+#include <absl/container/btree_set.h>
 #endif
 
 #define NESTED_CVT(className, memberName) sol::property([](className& self) \

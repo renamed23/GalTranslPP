@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "$note": "更新依赖时记得替换测试路径的依赖的 dll（哭哭）",
   "name": "galtranslpp",
   "version": "2.3.7",
   "dependencies": [
@@ -20,7 +21,8 @@
     "pybind11",
     "bit7z",
     "pcre2",
-    "abseil"
+    "abseil",
+    "utfcpp"
   ],
   "overrides": [
     {

@@ -147,7 +147,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;ABSL_CONTAINERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
@@ -163,12 +163,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="APIPool.cpp" />
     <ClCompile Include="APIPool.ixx" />
-    <ClCompile Include="API_Tool.ixx" />
+    <ClCompile Include="APITool.cpp" />
+    <ClCompile Include="APITool.ixx" />
     <ClCompile Include="CodePageChecker.ixx" />
     <ClCompile Include="ConditionTool.ixx" />
+    <ClCompile Include="Dictionary.cpp" />
     <ClCompile Include="Dictionary.ixx" />
+    <ClCompile Include="DictionaryGenerator.cpp" />
     <ClCompile Include="DictionaryGenerator.ixx" />
+    <ClCompile Include="EpubTranslator.cpp" />
     <ClCompile Include="EpubTranslator.ixx" />
     <ClCompile Include="GPPDefines.cpp" />
     <ClCompile Include="GPPDefines.ixx" />
@@ -179,23 +184,34 @@
     <ClCompile Include="json.ixx" />
     <ClCompile Include="LuaManager.cpp" />
     <ClCompile Include="LuaManager.ixx" />
+    <ClCompile Include="LuaTextPlugin.cpp" />
     <ClCompile Include="LuaTextPlugin.ixx" />
     <ClCompile Include="LuaTranslator.ixx" />
+    <ClCompile Include="NameTranslator.cpp" />
     <ClCompile Include="NameTranslator.ixx" />
-    <ClCompile Include="NJ_ImplTool.ixx" />
+    <ClCompile Include="NormalJsonTranslatorHelperTool.cpp" />
+    <ClCompile Include="NornalJsonTranslatorHelperTool.ixx" />
+    <ClCompile Include="NLPTool.cpp" />
     <ClCompile Include="NLPTool.ixx" />
     <ClCompile Include="NormalJsonTranslator.cpp" />
+    <ClCompile Include="PDFTool.cpp" />
     <ClCompile Include="PDFTool.ixx" />
+    <ClCompile Include="PDFTranslator.cpp" />
+    <ClCompile Include="ProblemAnalyzer.cpp" />
     <ClCompile Include="proxy.ixx" />
     <ClCompile Include="PythonManager.cpp" />
     <ClCompile Include="PythonManager.ixx" />
     <ClCompile Include="NormalJsonTranslator.ixx" />
     <ClCompile Include="PDFTranslator.ixx" />
     <ClCompile Include="ProblemAnalyzer.ixx" />
+    <ClCompile Include="PythonTextPlugin.cpp" />
     <ClCompile Include="PythonTextPlugin.ixx" />
     <ClCompile Include="PythonTranslator.ixx" />
+    <ClCompile Include="SkipTrans.cpp" />
     <ClCompile Include="SkipTrans.ixx" />
+    <ClCompile Include="TextFull2Half.cpp" />
     <ClCompile Include="TextFull2Half.ixx" />
+    <ClCompile Include="TextLinebreakFix.cpp" />
     <ClCompile Include="TextLinebreakFix.ixx" />
     <ClCompile Include="Tool.cpp" />
     <ClCompile Include="Tool.ixx" />

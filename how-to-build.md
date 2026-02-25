@@ -9,6 +9,7 @@
   - **必需工作负载**: `使用 C++ 的桌面开发`
   - **必需工具集**: `MSVC v145`
 - **Python 3.12.10**: 本仓库中的 `python-3.12.10-embed-amd64.zip`
+- **7zip**: 本仓库中的 `7z.dll`
 - **版本控制工具**: [git](https://git-scm.com/)
 
 ## 2. 安装核心依赖
@@ -96,11 +97,13 @@ cd GalTranslPP
 ### 6.1 GPPCLI
 
 - 1、  将`Example`文件夹内的`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPCLI`
+- 2、  将`3rdParty`文件夹内的`7z.dll`文件复制到`GalTranslPP\Release\GPPCLI`
 
 ### 6.2 GPPGUI
 
 - 1、  将`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPGUI`
-- 2、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
+- 2、  将`7z.dll`文件复制到`GalTranslPP\Release\GPPGUI`
+- 3、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
 
 ```cmd
 windeployqt path/to/GalTranslPP_GUI.exe

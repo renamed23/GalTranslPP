@@ -17,7 +17,7 @@
 #include "ElaDoubleText.h"
 
 import Tool;
-import NJ_ImplTool;
+import NormalJsonTranslatorHelperTool;
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 

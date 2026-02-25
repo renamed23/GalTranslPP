@@ -6,17 +6,17 @@
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
-#include <sol/sol.hpp>
 
 export module NormalJsonTranslator;
 
 import APIPool;
 import Dictionary;
 import IPlugin;
+import GPPDefines;
 import ProblemAnalyzer;
 import LuaManager;
 import PythonManager;
-export import ITranslator;
+import ITranslator;
 
 namespace fs = std::filesystem;
 
@@ -42,8 +42,8 @@ export {
         fs::path m_projectDir;
 
         // relPathString, backgroundText
-        std::mutex m_backgroundTextCacheMapMutex;
-        std::map<std::string, std::string> m_backgroundTextCacheMap;
+        std::shared_mutex m_backgroundTextCacheMapMutex;
+        absl::btree_map<std::string, std::string> m_backgroundTextCacheMap;
 
         std::string m_systemPrompt;
         std::string m_userPrompt;
@@ -83,15 +83,15 @@ export {
         std::unique_ptr<PythonManager> m_pythonManager;
         std::unique_ptr<LuaManager> m_luaManager;
 
-        bool m_needsCombining = false;
+        bool m_needsCombining = false; // 是否开启单文件分割
         std::shared_mutex m_transCacheMutex;
         std::mutex m_outputMutex;
         // 输入分割文件相对路径到原始json相对路径的映射
-        std::unordered_map<fs::path, fs::path> m_splitFilePartsToJson;
+        absl::flat_hash_map<fs::path, fs::path> m_splitFilePartsToJson;
         // 原始json相对路径到多个输入分割文件相对路径及其有没有完成的映射
-        std::unordered_map<fs::path, std::unordered_map<fs::path, bool>> m_jsonToSplitFileParts;
+        absl::flat_hash_map<fs::path, absl::flat_hash_map<fs::path, bool>> m_jsonToSplitFileParts;
 
-        std::unordered_map<std::string, std::string> m_nameMap;
+        absl::flat_hash_map<std::string, std::string> m_nameMap;
         toml::ordered_value m_problemOverview = toml::array{};
         std::function<void(fs::path)> m_onFileProcessed;
         std::function<std::string(std::string)> m_onPerformApi;

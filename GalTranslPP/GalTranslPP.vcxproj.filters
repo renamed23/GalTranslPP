@@ -25,13 +25,13 @@
     <ClCompile Include="ProblemAnalyzer.ixx">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="NJ_ImplTool.ixx">
+    <ClCompile Include="NornalJsonTranslatorHelperTool.ixx">
       <Filter>Tools\Utils\specialized</Filter>
     </ClCompile>
     <ClCompile Include="GPPDefines.ixx">
       <Filter>Tools\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="API_Tool.ixx">
+    <ClCompile Include="APITool.ixx">
       <Filter>Tools\Utils\specialized</Filter>
     </ClCompile>
     <ClCompile Include="PDFTranslator.ixx">
@@ -108,6 +108,54 @@
     </ClCompile>
     <ClCompile Include="TextFull2Half.ixx">
       <Filter>textPlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="Dictionary.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="NLPTool.cpp">
+      <Filter>Tools\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="PDFTool.cpp">
+      <Filter>Tools\Utils\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="TextLinebreakFix.cpp">
+      <Filter>textPlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalJsonTranslatorHelperTool.cpp">
+      <Filter>Tools\Utils\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="APITool.cpp">
+      <Filter>Tools\Utils\specialized</Filter>
+    </ClCompile>
+    <ClCompile Include="APIPool.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="EpubTranslator.cpp">
+      <Filter>filePlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="DictionaryGenerator.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="ProblemAnalyzer.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="PDFTranslator.cpp">
+      <Filter>filePlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaTextPlugin.cpp">
+      <Filter>textPlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="PythonTextPlugin.cpp">
+      <Filter>textPlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="SkipTrans.cpp">
+      <Filter>textPlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="TextFull2Half.cpp">
+      <Filter>textPlugins</Filter>
+    </ClCompile>
+    <ClCompile Include="NameTranslator.cpp">
+      <Filter>Tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

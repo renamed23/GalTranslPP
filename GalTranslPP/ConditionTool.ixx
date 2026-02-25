@@ -9,6 +9,7 @@
 
 export module ConditionTool;
 
+import GPPDefines;
 import Tool;
 import PythonManager;
 import LuaManager;

@@ -11,20 +11,20 @@
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
-#include <absl/container/flat_hash_map.h>
 
 module NormalJsonTranslator;
 
 import ConditionTool;
 import DictionaryGenerator;
 import NameTranslator;
-import NJ_ImplTool;
+import NormalJsonTranslatorHelperTool;
 import NLPTool;
+import Tool;
 
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
-namespace py = pybind11;
 namespace fs = std::filesystem;
+namespace py = pybind11;
 
 NormalJsonTranslator::~NormalJsonTranslator() 
 {
@@ -49,7 +49,7 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, const std
     try {
         if (fs::exists(m_backgroundTextCachePath)) {
             std::ifstream ifs(m_backgroundTextCachePath);
-            m_backgroundTextCacheMap = json::parse(ifs).get<decltype(m_backgroundTextCacheMap)>();
+            json::parse(ifs).get_to(m_backgroundTextCacheMap);
         }
         else {
             m_logger->debug("未找到背景文本缓存 {}", wide2Ascii(m_backgroundTextCachePath));
@@ -633,9 +633,9 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         }
 
         std::vector<Sentence*> batchToTransThisRound;
-        for (Sentence* pSentence : batch | std::views::filter([](const Sentence* pSentence) { return !pSentence->complete; })) {
-            batchToTransThisRound.push_back(pSentence);
-        }
+        batchToTransThisRound.insert_range(batchToTransThisRound.end(), 
+            batch | std::views::filter([](const Sentence* pSentence) { return !pSentence->complete; }));
+
         if (batchToTransThisRound.empty()) {
             return true;
         }
@@ -669,7 +669,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         }
 
         std::string inputBlock;
-        std::map<int, Sentence*> id2SentenceMap; // 用于 TSV/JSON 
+        absl::btree_map<int, Sentence*> id2SentenceMap; // 用于 TSV/JSON 
         fillBlockAndMap(batchToTransThisRound, id2SentenceMap, inputBlock, m_transEngine);
 
         std::string logBlock;
@@ -680,7 +680,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
             logBlock += "\nBackground:\n" + backgroundText + "\n";
         }
         if (m_logger->should_log(spdlog::level::trace) && !contextHistory.empty()) {
-            logBlock += "\nContext:\n" + contextHistory;
+            logBlock += "\nContext:\n" + contextHistory + "\n";
         }
         if (!glossary.empty()) {
             logBlock += "\nDict:\n" + glossary;
@@ -701,7 +701,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         }
         messages.push_back({ {"role", "user"}, {"content", promptReq} });
 
-        std::optional<TranslationApi> apiOpt = m_apiStrategy == "random" ? m_apiPool->getApi() : m_apiPool->getFirstApi();
+        const std::optional<TranslationApi> apiOpt = m_apiStrategy == "random" ? m_apiPool->getApi() : m_apiPool->getFirstApi();
         if (!apiOpt.has_value()) {
             throw std::runtime_error("没有可用的API Key了");
         }
@@ -726,7 +726,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         // --- 如果请求成功，则继续解析 ---
         int parsedCount = 0;
 
-        //void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, std::map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+        //void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
         //    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
         parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
             m_controller, backgroundText, m_completedSentences, parsedCount, m_transEngine, m_logger->should_log(spdlog::level::debug));
@@ -785,20 +785,20 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         for (const auto& [index, item] : jSentences | std::views::enumerate) {
             Sentence se;
             se.index = (int)index;
-            if (item.contains("name")) {
+            if (auto jit = item.find("name"); jit != item.end()) {
                 se.nameType = NameType::Single;
-                se.name = item["name"].get<std::string>();
+                jit->get_to(se.name);
             }
-            else if (item.contains("names")) {
+            else if (jit = item.find("names"); jit != item.end()) {
                 se.nameType = NameType::Multiple;
-                se.names = item["names"].get<std::vector<std::string>>();
+                jit->get_to(se.names);
             }
-            se.original_text = item["message"].get<std::string>();
+            item["message"].get_to(se.original_text);
             sentences.push_back(std::move(se));
         }
-        for (size_t i = 0; i < sentences.size(); ++i) {
-            if (i > 0) sentences[i].prev = &sentences[i - 1];
-            if (i + 1 < sentences.size()) sentences[i].next = &sentences[i + 1];
+        for (auto [i, se]  : sentences | std::views::enumerate) {
+            if (i > 0) se.prev = &sentences[i - 1];
+            if ((size_t)i + 1 < sentences.size()) se.next = &sentences[i + 1];
         }
         for (Sentence& se : sentences) {
             preProcess(&se);
@@ -878,7 +878,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     }
                     if (PathMatchSpecW(entry.path().filename().wstring().c_str(), cacheSpec.c_str())) {
                         if (m_needsCombining) {
-                            int diff = calculateCachePartIndexDiff(relInputPath.wstring(), entry.path().wstring());
+                            const int diff = calculateCachePartIndexDiff(relInputPath.wstring(), entry.path().wstring());
                             if (std::abs(diff) > m_cacheSearchDistance) {
                                 continue;
                             }
@@ -951,15 +951,15 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 continue;
             }
             const std::string key = generateCacheKey(&se);
-            auto it = cacheMap.find(key);
+            const auto it = cacheMap.find(key);
             if (it == cacheMap.end()) {
                 toTranslate.push_back(&se);
                 continue;
             }
             const auto& item = it->second;
             // 命中缓存了就把 problems 带上
-            if (item.contains("problems")) {
-                se.problems = item["problems"].get<std::vector<std::string>>();
+            if (auto jit = item.find("problems"); jit != item.end()) {
+                jit->get_to(se.problems);
             }
             if (m_transEngine != TransEngine::Rebuild && hasRetranslKey(m_retranslKeys, item, &se)) {
                 toTranslate.push_back(&se);
@@ -979,11 +979,10 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             sentences.size(), sentences.size() - toTranslate.size(), toTranslate.size());
 
         if (m_transEngine == TransEngine::Rebuild && !toTranslate.empty()) {
-            std::string notFoundSentences;
-            for (const auto& se : toTranslate) {
-                notFoundSentences += se->original_text + "\n";
-            }
-            m_logger->critical("[线程 {}] [文件 {}] 有 {} 句未命中缓存，这些句子是: {}", threadId, wide2Ascii(relInputPath), toTranslate.size(), notFoundSentences);
+            const std::string notFoundSentences = toTranslate | std::views::transform([](const auto& se) { return se->original_text; })
+        	        | std::views::join_with('\n') | std::ranges::to<std::string>();
+            m_logger->critical("[线程 {}] [文件 {}] 有 {} 句未命中缓存，这些句子是: {}", 
+                threadId, wide2Ascii(relInputPath), toTranslate.size(), notFoundSentences);
             std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
             saveCache(sentences, cachePath);
             return;
@@ -993,20 +992,20 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     // 翻译逻辑
     if (m_transEngine != TransEngine::Rebuild && !toTranslate.empty()) {
-        std::unique_ptr<py::gil_scoped_release> release;
-        if (m_pythonTranslator) {
-            release = std::make_unique<py::gil_scoped_release>();
-        }
+        std::unique_ptr<py::gil_scoped_release> release = m_pythonTranslator ? std::make_unique<py::gil_scoped_release>() : nullptr;
+
         int batchCount = 0;
-        std::string backgroundText;
-        std::string filePathWithHash = std::format("{}{:08X}", wide2Ascii(relInputPath), calculateFileCRC64(inputPath));
-        {
-            std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
-            if (auto it = m_backgroundTextCacheMap.find(filePathWithHash); it != m_backgroundTextCacheMap.end()) {
-                backgroundText = it->second;
-            }
-        }
-        Sentence* pLastSentence = nullptr;
+        const std::string filePathWithHash = std::format("{}{:08X}", wide2Ascii(relInputPath), calculateFileCRC64(inputPath));
+        std::string backgroundText = [&]()
+            {
+                std::shared_lock<std::shared_mutex> lock(m_backgroundTextCacheMapMutex);
+                if (const auto it = m_backgroundTextCacheMap.find(filePathWithHash); it != m_backgroundTextCacheMap.end()) {
+                    return it->second;
+                }
+                return std::string{};
+            }();
+
+        const Sentence* pLastSentence = nullptr;
         for (size_t i = 0; i < toTranslate.size(); i += m_batchSize) {
             std::vector<Sentence*> batch(toTranslate.begin() + i, toTranslate.begin() + std::min(i + m_batchSize, toTranslate.size()));
             if (i != 0 && !backgroundText.empty() && pLastSentence) {
@@ -1016,7 +1015,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
             if (m_controller->shouldStop()) {
                 if (!backgroundText.empty()) {
-                    std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
+                    std::lock_guard<std::shared_mutex> lock(m_backgroundTextCacheMapMutex);
                     m_backgroundTextCacheMap[filePathWithHash] = backgroundText;
                 }
                 m_logger->debug("[线程 {}] [文件 {}] 已停止翻译", threadId, wide2Ascii(relInputPath));
@@ -1034,7 +1033,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
         }
         {
-            std::lock_guard<std::mutex> lock(m_backgroundTextCacheMapMutex);
+            std::lock_guard<std::shared_mutex> lock(m_backgroundTextCacheMapMutex);
             m_backgroundTextCacheMap.erase(filePathWithHash);
         }
     }
@@ -1159,7 +1158,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
     const fs::path nameTablePath = m_projectDir / L"人名替换表.toml";
     // 人名表处理
     {
-        std::map<std::string, int> nameTableMap;
+        absl::flat_hash_map<std::string, int> nameTableMap;
         Sentence se;
 
         auto insertNameTable = [&](const std::string& name)
@@ -1228,9 +1227,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
         }
 
         std::vector<std::pair<std::string, int>> nameTableKeys;
-        for (const auto& nameCountPair : nameTableMap) {
-            nameTableKeys.push_back(nameCountPair);
-        }
+        nameTableKeys.insert_range(nameTableKeys.end(), nameTableMap);
         std::ranges::sort(nameTableKeys, [&](const auto& a, const auto& b)
             {
                 if (a.second == b.second) {
@@ -1407,7 +1404,7 @@ void NormalJsonTranslator::afterRun() {
         ofs.close();
         m_logger->debug("已生成 翻译问题概览.json 和 翻译问题概览.toml 文件");
 
-        std::map<std::string, std::set<std::string>> problemMap;
+        absl::flat_hash_map<std::string, absl::flat_hash_set<std::string>> problemMap;
         for (const auto& [problem, filename] : m_problemOverview.as_array()
             | std::views::transform([](const auto& tbl)
                 {
@@ -1452,8 +1449,8 @@ void NormalJsonTranslator::afterRun() {
     // 背景文本缓存
     {
         try {
-            json j = m_backgroundTextCacheMap;
             createParent(m_backgroundTextCachePath);
+            json j = m_backgroundTextCacheMap;
             std::ofstream ofs(m_backgroundTextCachePath);
             ofs << j.dump(2);
             ofs.close();

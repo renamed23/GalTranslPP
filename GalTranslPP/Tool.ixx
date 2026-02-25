@@ -1,5 +1,6 @@
 ﻿module;
 
+#include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <unicode/uscript.h>
 #include <ctpl_stl.h>
@@ -7,10 +8,8 @@
 
 export module Tool;
 
-export import std;
-export import nlohmann.json;
 export import GPPDefines;
-export import ITranslator;
+export import nlohmann.json;
 
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
@@ -72,8 +71,8 @@ export {
 
     bool isSameExtension(const fs::path& filePath, const std::wstring& ext);
 
-    std::string removePunctuation(const std::string& text);
-    std::string removeWhitespace(const std::string& text);
+    std::string removePunctuation(const std::string& sourceString);
+    std::string removeWhitespace(const std::string& sourceString);
 
     std::pair<std::string, int> getMostCommonChar(const std::string& s);
 
@@ -98,12 +97,12 @@ export {
     std::string extractHangul(const std::string& sourceString);
     std::string extractCJK(const std::string& sourceString);
 
-    std::function<std::string(const std::string&)> getTraditionalChineseExtractor(std::shared_ptr<spdlog::logger>& logger);
+    std::move_only_function<std::string(const std::string&)> getTraditionalChineseExtractor(const std::shared_ptr<spdlog::logger>& logger);
 
-    std::unordered_map<std::string, std::vector<std::vector<std::string>>> loadTokenizeCache
-    (const fs::path& cachePath, std::shared_ptr<spdlog::logger> logger);
+    void loadTokenizeCache
+    (absl::flat_hash_map<std::string, std::vector<std::vector<std::string>>>& result, const fs::path& cachePath, const std::shared_ptr<spdlog::logger>& logger);
     void saveTokenizeCache
-    (const std::unordered_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, std::shared_ptr<spdlog::logger>& logger);
+    (const absl::flat_hash_map<std::string, std::vector<std::vector<std::string>>>& cache, const fs::path& cachePath, const std::shared_ptr<spdlog::logger>& logger);
 
     void extractZip(const fs::path& zipPath, const fs::path& outputDir);
     void extractFileFromZip(const fs::path& zipPath, const fs::path& outputDir, const std::string& fileName);
