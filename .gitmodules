@@ -3,7 +3,7 @@
 	url = https://github.com/julixian/ElaWidgetTools.git
 [submodule "3rdParty/OpenCC"]
 	path = 3rdParty/OpenCC
-	url = https://github.com/julixian/OpenCC.git
+	url = https://github.com/BYVoid/OpenCC
 [submodule "3rdParty/sol2"]
 	path = 3rdParty/sol2
 	url = https://github.com/julixian/sol2.git
