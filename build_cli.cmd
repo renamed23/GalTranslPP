@@ -16,8 +16,8 @@ if %errorlevel% neq 0 (
 echo [2/4] 正在编译 OpenCC...
 if exist "3rdParty\OpenCC\" (
     pushd "3rdParty\OpenCC\"
-    cmake -S . -B out -DCMAKE_INSTALL_PREFIX:PATH="%cd%\3rdParty\OpenCC\out\install\x64-Release"
-    cmake --build out --config Release --target install
+    uv run cmake -S . -B out -DCMAKE_INSTALL_PREFIX:PATH="%cd%\3rdParty\OpenCC\out\install\x64-Release"
+    uv run cmake --build out --config Release --target install
     popd
 ) else (
     echo [错误] 找不到 OpenCC 目录。
