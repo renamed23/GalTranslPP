@@ -68,7 +68,7 @@ void APIPool::reportProblem(const TranslationApi& badAPI) {
     const auto durationInSec = std::chrono::duration_cast<std::chrono::seconds>
         (std::chrono::steady_clock::now() - it->lastReportTime).count();
     if (durationInSec < 10) {
-        it->reportCount++;
+        ++(it->reportCount);
     }
     else {
         it->reportCount = 1;
@@ -132,7 +132,7 @@ bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& 
     }
 
     // 其他无法识别的硬性错误
-    retryCount++;
+    ++retryCount;
     logger->warn("[线程 {}] [文件 {}] 遇到未知API错误，进行第 {} 次重试...", threadId, wide2Ascii(relInputPath), retryCount);
     if (apiStrategy == "fallback") {
         logger->warn("[线程 {}] 将切换到下一个 API Key(如果有多个API Key的话)", threadId);

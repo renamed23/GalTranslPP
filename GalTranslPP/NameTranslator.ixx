@@ -30,7 +30,7 @@ export {
         bool m_checkQuota;
 
         // 内部辅助函数
-        void translateBatch(const std::vector<std::string>& batchNames, absl::flat_hash_map<std::string, std::string>& resultMap);
+        void translateBatch(std::span<std::string> batchNames, absl::flat_hash_map<std::string, std::string>& resultMap);
 
     public:
         NameTranslator(

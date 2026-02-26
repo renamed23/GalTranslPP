@@ -34,7 +34,7 @@ NameTranslator::NameTranslator(
 
 }
 
-void NameTranslator::translateBatch(const std::vector<std::string>& batchNames, absl::flat_hash_map<std::string, std::string>& resultMap) {
+void NameTranslator::translateBatch(std::span<std::string> batchNames, absl::flat_hash_map<std::string, std::string>& resultMap) {
 
     // 1. 准备 Glossary
     // 为了利用 GptDictionary，我们需要构造假的 Sentence 对象
@@ -164,12 +164,12 @@ void NameTranslator::run(const fs::path& nameTablePath) {
     absl::flat_hash_map<std::string, std::string> translationResults;
 
     m_controller->addThreadNum();
-    for (size_t i = 0; i < namesToTranslate.size(); i += BATCH_SIZE) {
-        if (m_controller->shouldStop()) break;
-        const size_t end = std::min(i + BATCH_SIZE, namesToTranslate.size());
-        std::vector<std::string> currentBatch(namesToTranslate.begin() + i, namesToTranslate.begin() + end);
-        translateBatch(currentBatch, translationResults);
-        m_controller->updateBar((int)currentBatch.size());
+    for (auto batch : namesToTranslate | std::views::chunk(BATCH_SIZE)) {
+        if (m_controller->shouldStop()) {
+            break;
+        }
+        translateBatch(batch, translationResults);
+        m_controller->updateBar((int)batch.size());
     }
     m_controller->reduceThreadNum();
 
@@ -181,7 +181,7 @@ void NameTranslator::run(const fs::path& nameTablePath) {
             if (val.is_array() && val.size() > 0) {
                 // 更新译名 (index 0)
                 val.as_array()[0] = trans;
-                updatedCount++;
+                ++updatedCount;
             }
         }
     }

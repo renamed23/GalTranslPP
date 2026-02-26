@@ -201,7 +201,7 @@ void EpubTranslator::beforeRun()
         const fs::path bookRebuildPath = m_tempRebuildDir / relEpubPath.parent_path() / relEpubPath.stem(); // cache/myproject/epub_rebuild/dir1/book1
 
         // 解压 EPUB 文件
-        m_logger->debug("解压 {} 到 {}", wide2Ascii(epubPath), wide2Ascii(bookUnpackPath));
+        m_logger->info("正在解压 {} 到 {}", wide2Ascii(epubPath), wide2Ascii(bookUnpackPath));
         fs::create_directories(bookUnpackPath);
         extractZip(epubPath, bookUnpackPath);
 
@@ -312,17 +312,17 @@ void EpubTranslator::beforeRun()
                 size_t lastPos = 0;
 
                 for (auto [metadata, translatedData] : std::views::zip(metadatas, translatedDatas)) {
+                    newContent.append(originalContent.c_str() + lastPos, metadata.offset - lastPos);
                     const std::string translatedText = translatedData["message"].get<std::string>();
                     const std::string replacement = m_bilingualOutput ?
                         std::format("<br/><span style=\"color:{}; font-size:{}em;\">{}</span>", m_originalTextColor, m_originalTextScale,
                             std::string_view(originalContent.data() + metadata.offset, metadata.length))
                         : translatedText;
-                    newContent.append(originalContent.substr(lastPos, metadata.offset - lastPos));
                     newContent.append(replacement);
                     lastPos = metadata.offset + metadata.length;
                 }
                 if (lastPos < originalContent.length()) {
-                    newContent.append(originalContent.substr(lastPos));
+                    newContent.append(originalContent.c_str() + lastPos, originalContent.length() - lastPos);
                 }
 
                 // 后处理正则替换

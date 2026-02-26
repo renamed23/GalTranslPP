@@ -176,6 +176,18 @@ bool createParent(const fs::path& path) {
     return false;
 }
 
+std::optional<int> str2Int(std::string_view sv) {
+    int value = 0;
+    // 注意：from_chars 不会跳过前导空格！如果需要，得自己 trim 一下
+    auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+    // ec == std::errc() 表示解析动作成功
+    // ptr == sv.data() + sv.size() 表示整个字符串都被消耗完了（没有剩余垃圾字符）
+    if (ec == std::errc() && ptr == sv.data() + sv.size()) {
+        return value;
+    }
+    return std::nullopt;
+}
+
 std::vector<std::string> splitTsvLine(const std::string& line, const std::vector<std::string>& delimiters) {
     std::vector<std::string> parts;
     size_t currentPos = 0;
@@ -314,7 +326,7 @@ std::pair<std::string, int> getMostCommonChar(const std::string& s) {
     for (int32_t end = boundary->next(); end != icu::BreakIterator::DONE; start = end, end = boundary->next()) {
         icu::UnicodeString grapheme;
         ustr.extract(start, end - start, grapheme);
-        counts[grapheme]++;
+        ++counts[grapheme];
     }
 
     if (counts.empty()) {
@@ -480,7 +492,7 @@ std::string extractCharactersByScripts(const std::string& sourceString, const st
 
         if (U_SUCCESS(errorCode)) {
             if (std::ranges::contains(targetScripts, script)) {
-                utf8::append(c, resultString);
+                utf8::unchecked::append(c, std::back_inserter(resultString));
             }
         }
     }
@@ -517,7 +529,7 @@ std::string removePunctuation(const std::string& sourceString) {
     while (i < length) {
         U8_NEXT(s, i, length, c);
         if (!u_ispunct(c)) {
-            utf8::append(c, resultString);
+            utf8::unchecked::append(c, std::back_inserter(resultString));
         }
     }
     return resultString;
@@ -532,7 +544,7 @@ std::string removeWhitespace(const std::string& sourceString) {
     while (i < length) {
         U8_NEXT(s, i, length, c);
         if (!u_isspace(c)) {
-            utf8::append(c, resultString);
+            utf8::unchecked::append(c, std::back_inserter(resultString));
         }
     }
     return resultString;
@@ -548,10 +560,12 @@ std::move_only_function<std::string(const std::string&)> getTraditionalChineseEx
         };
         std::move_only_function<std::string(const std::string&)> result = [excludeListR = std::move(excludeList), converterR = std::move(converter)](const std::string& sourceString)
             {
+                if (const std::string simplified = converterR->Convert(sourceString); simplified == sourceString) {
+                    return std::string{};
+                }
                 std::string resultStr;
-                const std::vector<std::string> graphemes = splitIntoGraphemes(sourceString);
-                for (const auto& grapheme : graphemes 
-                    | std::views::filter([&](const std::string& g) { return !excludeListR.contains(g); })) 
+                for (const auto& grapheme : splitIntoGraphemes(sourceString)
+                    | std::views::filter([&](const std::string& g) { return !excludeListR.contains(g); }))
                 {
                     if (const std::string simplified = converterR->Convert(grapheme); simplified != grapheme)
                     {
@@ -581,10 +595,19 @@ std::move_only_function<std::string(const std::string&)> getTraditionalChineseEx
             U'著', U'乾', U'阪',
         };
         std::move_only_function<std::string(const std::string&)>result = [excludeListR = std::move(excludeList), toSimplifiedR = std::move(toSimplified),
-            toTraditionalR = std::move(toTraditional)] (const std::string& sourceString)
+            toTraditionalR = std::move(toTraditional)](const std::string& sourceString)
             {
+				{
+                    icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(sourceString);
+                    icu::UnicodeString ustrS = ustr;
+                    toSimplifiedR->transliterate(ustrS);
+                    if (ustrS == ustr) {
+                        return std::string{};
+                    }
+				}
+
                 absl::btree_set<UChar32> traditionalChars;
-                
+
                 const uint8_t* s = (uint8_t*)sourceString.c_str();
                 const int32_t length = (int32_t)sourceString.length();
                 int32_t i = 0;
@@ -636,6 +659,7 @@ std::move_only_function<std::string(const std::string&)> getTraditionalChineseEx
     }
     return {};
 }
+
 
 void loadTokenizeCache
 (absl::flat_hash_map<std::string, std::vector<std::vector<std::string>>>& result, const fs::path& cachePath, const std::shared_ptr<spdlog::logger>& logger) {
@@ -746,8 +770,8 @@ bool cmpVer(const std::string& latestVer, const std::string& currentVer, bool& i
     const size_t len = std::max(latestVerParts.size(), currentVerParts.size());
 
     for (size_t i = 0; i < len; i++) {
-        const int latestVerPart = i < latestVerParts.size() ? std::stoi(latestVerParts[i]) : 0;
-        const int currentVerPart = i < currentVerParts.size() ? std::stoi(currentVerParts[i]) : 0;
+        const int latestVerPart = i < latestVerParts.size() ? str2Int(latestVerParts[i]).value_or(0) : 0;
+        const int currentVerPart = i < currentVerParts.size() ? str2Int(currentVerParts[i]).value_or(0) : 0;
         if (i == 0) {
             isCompatible = latestVerPart <= currentVerPart;
         }

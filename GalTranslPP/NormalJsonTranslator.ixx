@@ -111,7 +111,7 @@ export {
 
         void postProcess(Sentence* se);
 
-        bool translateBatchWithRetry(const fs::path& relInputPath, std::vector<Sentence*>& batch, std::string& backgroundText, int threadId);
+        bool translateBatchWithRetry(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId);
 
         void processFile(const fs::path& relInputPath, int threadId);
 

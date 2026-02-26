@@ -1,4 +1,4 @@
-#include "TranslatorWorker.h"
+﻿#include "TranslatorWorker.h"
 #include <QThread>
 #include <QTimer>
 
@@ -56,9 +56,9 @@ public:
         _progress = 0;
     }
 
-    GUIController(std::function<void(int, int)> makeBarCallback, std::function<void(const QString&)> writeLogCallback,
-        std::function<void()> addThreadNumCallback, std::function<void()> reduceThreadNumCallback, std::function<void(int)> updateBarCallback, 
-        std::function<bool()> shouldStopCallback) :
+    GUIController(const std::function<void(int, int)>& makeBarCallback, const std::function<void(const QString&)>& writeLogCallback,
+        const std::function<void()>& addThreadNumCallback, const std::function<void()>& reduceThreadNumCallback, const std::function<void(int)>& updateBarCallback, 
+        const std::function<bool()>& shouldStopCallback) :
         _makeBarCallback{ makeBarCallback }, _writeLogCallback{ writeLogCallback }, _addThreadNumCallback{ addThreadNumCallback },
         _reduceThreadNumCallback{ reduceThreadNumCallback }, _updateBarCallback{ updateBarCallback }, _shouldStopCallback{ shouldStopCallback }
     {
@@ -127,12 +127,12 @@ void TranslatorWorker::doTranslation()
         {
             return this->_shouldStop.load();
         };
-    std::shared_ptr<GUIController> controller = std::make_shared<GUIController>(makeBarCallback, writeLogCallback,
+    const auto controller = std::make_shared<GUIController>(makeBarCallback, writeLogCallback,
         addThreadNumCallback, reduceThreadNumCallback, updateBarCallback, shouldStopCallback);
     try {
 
         {
-            std::unique_ptr<ITranslator> translator = createTranslator(_projectDir, controller);
+            const std::unique_ptr<ITranslator> translator = createTranslator(_projectDir, controller);
             if (!translator) {
                 Q_EMIT translationFinished(-1);
                 return;
