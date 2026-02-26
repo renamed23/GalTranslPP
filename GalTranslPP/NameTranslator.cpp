@@ -90,8 +90,8 @@ void NameTranslator::translateBatch(const std::vector<std::string>& batchNames, 
 
         const ApiResponse response = performApiRequest(payload, currentApi, m_onPerformApi, m_controller, m_logger, 0, m_apiTimeoutMs);
 
-        /*bool checkResponse(const ApiResponse& response, std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
-            const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, std::shared_ptr<spdlog::logger>& m_logger,
+        /*bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
+            const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, const std::shared_ptr<spdlog::logger>& m_logger,
             int& retryCount, int threadId, bool m_checkQuota);*/
         if (!checkResponse(
             response, m_apiPool, currentApi, L"人名表翻译", m_apiStrategy, m_logger, retryCount, 0, m_checkQuota
@@ -112,7 +112,7 @@ void NameTranslator::translateBatch(const std::vector<std::string>& batchNames, 
             const std::string_view& translation = parts[1];
 
             if (!original.empty() && !translation.empty()) {
-                resultMap[std::string(original)] = translation;
+                resultMap[original] = translation;
             }
         }
         return; // 成功则退出重试循环

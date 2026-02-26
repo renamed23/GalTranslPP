@@ -72,17 +72,17 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
         payload["stream"] = true;
     }
 
-    std::string payloadStr = payload.dump();
-    if (onPerformApi) {
-        payloadStr = onPerformApi(payloadStr);
-    }
+    const std::string payloadStr = onPerformApi ? onPerformApi(payload.dump()) : payload.dump();
 
-    cpr::Proxies proxies;
-    if (std::string systemProxy = getSystemProxyUrl(); !systemProxy.empty()) {
-        // 同时设置 http 和 https 代理
-        logger->trace("正在使用系统代理: [{}]", systemProxy);
-        proxies = cpr::Proxies{ {"http", systemProxy}, {"https", systemProxy} };
-    }
+    cpr::Proxies proxies = [&]()
+	    {
+            if (const std::string systemProxy = getSystemProxyUrl(); !systemProxy.empty()) {
+                // 同时设置 http 和 https 代理
+                logger->trace("正在使用系统代理: [{}]", systemProxy);
+                return cpr::Proxies{ {"http", systemProxy}, {"https", systemProxy} };
+            }
+            return cpr::Proxies{};
+        }();
 
     if (api.stream) {
         // =================================================
@@ -114,9 +114,7 @@ ApiResponse performApiRequest(json& payload, const TranslationApi& api, const st
                                 concatenatedContent += contentNode.get<std::string>();
                             }
                         }
-                        catch (...) {
-
-                        }
+                        catch (...) { }
                     }
                 }
                 // 继续接收数据

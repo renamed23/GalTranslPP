@@ -23,7 +23,7 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 			luaStateOpt = luaManager->registerFunction(m_scriptPath, funcName, m_needReboot);
 			if (luaStateOpt.has_value()) {
 				pFunc = m_luaState->functions[funcName].get();
-				m_logger->info("{} {}函数注册成功", m_scriptPath, funcName);
+				m_logger->info("{} {} 函数注册成功", m_scriptPath, funcName);
 			}
 		};
 	registerFunctionFunc("dPreRun", m_luaDPreRunFunc);
@@ -37,7 +37,7 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 		(*(m_luaState->functions["init"]))(projectDir);
 	}
 	catch (const sol::error& e) {
-		m_logger->error("{} init函数执行失败", m_scriptPath);
+		m_logger->error("{} init 函数执行失败", m_scriptPath);
 		throw std::runtime_error(e.what());
 	}
 
@@ -53,7 +53,7 @@ LuaTextPlugin::~LuaTextPlugin() {
 		(*m_luaUnloadFunc)();
 	}
 	catch (const sol::error&) {
-		m_logger->error("{} unload函数执行失败", m_scriptPath);
+		m_logger->error("{} unload 函数执行失败", m_scriptPath);
 	}
 }
 
@@ -66,7 +66,7 @@ void LuaTextPlugin::dPreRun(Sentence* se) {
 		(*m_luaDPreRunFunc)(se);
 	}
 	catch (const sol::error& e) {
-		m_logger->error("{} dPreRun函数执行失败", m_scriptPath);
+		m_logger->error("{} dPreRun 函数执行失败", m_scriptPath);
 		throw std::runtime_error(e.what());
 	}
 }
@@ -80,7 +80,7 @@ void LuaTextPlugin::preRun(Sentence* se) {
 		(*m_luaPreRunFunc)(se);
 	}
 	catch (const sol::error& e) {
-		m_logger->error("{} preRun函数执行失败", m_scriptPath);
+		m_logger->error("{} preRun 函数执行失败", m_scriptPath);
 		throw std::runtime_error(e.what());
 	}
 }
@@ -94,7 +94,7 @@ void LuaTextPlugin::postRun(Sentence* se) {
 		(*m_luaPostRunFunc)(se);
 	}
 	catch (const sol::error& e) {
-		m_logger->error("{} postRun函数执行失败", m_scriptPath);
+		m_logger->error("{} postRun 函数执行失败", m_scriptPath);
 		throw std::runtime_error(e.what());
 	}
 }

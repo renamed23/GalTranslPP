@@ -35,6 +35,6 @@ export {
     };
 
     bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
-        const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, const std::shared_ptr<spdlog::logger>& m_logger,
+        const std::filesystem::path& relInputPath, const std::string& apiStrategy, const std::shared_ptr<spdlog::logger>& logger,
         int& retryCount, int threadId, bool m_checkQuota);
 }

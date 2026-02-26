@@ -417,8 +417,7 @@ void combineOutputFiles(const fs::path& originalRelFilePath, const absl::flat_ha
     std::ifstream ifs;
     logger->debug("开始合并文件: {}", wide2Ascii(originalRelFilePath));
 
-    std::vector<fs::path> partPaths;
-    partPaths.insert_range(partPaths.end(), splitFileParts | std::views::keys);
+    std::vector<fs::path> partPaths = splitFileParts | std::views::keys | std::ranges::to<std::vector>();
 
     std::ranges::sort(partPaths, [&](const fs::path& a, const fs::path& b)
         {

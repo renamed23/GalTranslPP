@@ -51,10 +51,9 @@ void GptDictionary::sort() {
 }
 
 std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) const {
-    std::string batchText;
-    for (const auto& s : batch) {
-        batchText += s->name + ": " + s->pre_processed_text + "\n";
-    }
+
+    const std::string batchText = batch | std::views::transform([](const auto& se) { return se->name + ":::::" + se->pre_processed_text; })
+        | std::views::join_with('\n') | std::ranges::to<std::string>();
 
     std::string promptContent;
     for (const auto& entry : m_entries) {

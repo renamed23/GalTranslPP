@@ -23,7 +23,7 @@ FnCastTo FnCast(uint64_t fnToCast, FnCastTo) {
 void waitForProcessToExit(qint64 pid) {
 #ifdef Q_OS_WIN
     HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, pid);
-    if (hProcess != NULL) {
+    if (hProcess != nullptr) {
         WaitForSingleObject(hProcess, INFINITE);
         CloseHandle(hProcess);
     }
@@ -35,8 +35,7 @@ void waitForProcessToExit(qint64 pid) {
 int main(int argc, char* argv[]) {
 
 #ifdef Q_OS_WIN
-    HMODULE hUser32 = LoadLibraryW(L"User32.dll");
-    if (hUser32) {
+    if (HMODULE hUser32 = LoadLibraryW(L"User32.dll");) {
         uint64_t orgSetProcessDpiAwarenessContext = (uint64_t)(GetProcAddress(hUser32, "SetProcessDpiAwarenessContext"));
         if (orgSetProcessDpiAwarenessContext) {
             FnCast(orgSetProcessDpiAwarenessContext, SetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -69,7 +68,7 @@ int main(int argc, char* argv[]) {
 
     if (pid == 0 || sourceZip.isEmpty() || targetDir.isEmpty()) {
 #ifdef Q_OS_WIN
-        MessageBoxW(NULL, L"Invalid arguments provided.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
+        MessageBoxW(nullptr, L"Invalid arguments provided.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
         return -1;
     }
@@ -85,7 +84,7 @@ int main(int argc, char* argv[]) {
 
         if (cmpVer("2.1.1", orgGppVersion, isCompatible)) {
 #ifdef Q_OS_WIN
-            MessageBoxW(NULL, L"版本过旧，无法自动更新至最新版本，请前往 github 手动下载新版。", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
+            MessageBoxW(nullptr, L"版本过旧，无法自动更新至最新版本，请前往 github 手动下载新版。", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
             return -1;
         }
@@ -105,14 +104,14 @@ int main(int argc, char* argv[]) {
             if (cmpVer(PROMPTVERSION, orgPromptVersion, isCompatible)) {
                 if (!isCompatible) {
 #ifdef Q_OS_WIN
-                    MessageBoxW(NULL, L"由于提示词解析方式发生不兼容变更，本次更新将强制覆盖原默认提示词。\n"
+                    MessageBoxW(nullptr, L"由于提示词解析方式发生不兼容变更，本次更新将强制覆盖原默认提示词。\n"
                         L"你可以先行备份，然后点击确定以继续更新。", L"GalTransl++ Updater", MB_OK | MB_TOPMOST);
 #endif
                     excludePreFixes.erase("BaseConfig/Prompt.toml");
                 }
                 else {
 #ifdef Q_OS_WIN
-                    int ret = MessageBoxW(NULL, L"检测到新版本的 Prompt，是否更新 Prompt (会覆盖当前的默认提示词)？", L"GalTransl++ Updater", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
+                    int ret = MessageBoxW(nullptr, L"检测到新版本的 Prompt，是否更新 Prompt (会覆盖当前的默认提示词)？", L"GalTransl++ Updater", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
                     if (ret == IDYES) {
                         excludePreFixes.erase("BaseConfig/Prompt.toml");
                     }
@@ -121,7 +120,7 @@ int main(int argc, char* argv[]) {
             }
             if (cmpVer(DICTVERSION, orgDictVersion, isCompatible)) {
 #ifdef Q_OS_WIN
-                int ret = MessageBoxW(NULL, L"检测到新版本的 GPT 字典，是否更新字典（会覆盖当前的默认字典）？", L"GalTransl++ Updater", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
+                int ret = MessageBoxW(nullptr, L"检测到新版本的 GPT 字典，是否更新字典（会覆盖当前的默认字典）？", L"GalTransl++ Updater", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
                 if (ret == IDYES) {
                     excludePreFixes.erase("BaseConfig/Dict");
                 }
@@ -145,17 +144,16 @@ int main(int argc, char* argv[]) {
             }
 
             {
-                std::set<std::string> excludePreFixes2;
-                excludePreFixes2.insert_range(excludePreFixes | std::views::transform([](const auto& s)
+                const std::set<std::string> excludePreFixes2 = excludePreFixes | std::views::transform([](const auto& s)
                     {
                         return replaceStr(s, "/", "\\");
-                    }));
+                    }) | std::ranges::to<std::set>();
                 excludePreFixes.insert_range(excludePreFixes2);
             }
             extractZipExclude(sourceZip.toStdWString(), targetDir.toStdWString(), excludePreFixes);
 
 #ifdef Q_OS_WIN
-            MessageBoxW(NULL, L"GalTransl++ 更新成功", L"成功", MB_OK | MB_TOPMOST);
+            MessageBoxW(nullptr, L"GalTransl++ 更新成功", L"成功", MB_OK | MB_TOPMOST);
 #endif
             fs::remove(sourceZip.toStdWString());
             if (parser.isSet("restart")) {
@@ -166,7 +164,7 @@ int main(int argc, char* argv[]) {
         }
         catch (const std::exception&) {
 #ifdef Q_OS_WIN
-            MessageBoxW(NULL, L"Failed to extract update package.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
+            MessageBoxW(nullptr, L"Failed to extract update package.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
             return -1;
         }
@@ -199,7 +197,7 @@ int main(int argc, char* argv[]) {
     }
     catch (const std::exception&) {
 #ifdef Q_OS_WIN
-        MessageBoxW(NULL, L"Failed to extract Updater_new.exe.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
+        MessageBoxW(nullptr, L"Failed to extract Updater_new.exe.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
         return -1;
     }

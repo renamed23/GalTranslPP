@@ -35,7 +35,7 @@ export {
 					try {
 						(*m_pythonRunFunc)();
 					}
-					catch (const std::exception& e) {
+					catch (const py::error_already_set& e) {
 						throw std::runtime_error(std::format("PythonTranslator 运行时异常: {}", e.what()));
 					}
 				}).get();
@@ -69,7 +69,7 @@ export {
 						pythonTranslatorModule.attr("pythonTranslator") = (BaseTranslator*)this;
 						(*(m_pythonInterpreter->functions["init"]))();
 					}
-					catch (const pybind11::error_already_set& e) {
+					catch (const py::error_already_set& e) {
 						throw std::runtime_error(std::format("初始化 PythonTranslator 时出现异常: {}", e.what()));
 					}
 				}).get();
