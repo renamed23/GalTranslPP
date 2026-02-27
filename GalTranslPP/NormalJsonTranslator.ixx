@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
+#include <proxy/proxy.h>
 
 export module NormalJsonTranslator;
 

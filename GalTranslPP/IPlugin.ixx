@@ -3,7 +3,7 @@
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
-#include <proxy/proxy_macros.h>
+#include <proxy/proxy.h> // 直接 export import proxy.v4; 也是可以的，但 IDE 的智能提示会疯狂报红。。。
 
 export module IPlugin;
 
@@ -11,7 +11,7 @@ import std;
 import GPPDefines;
 import LuaManager;
 import PythonManager;
-export import proxy.v4;
+// export import proxy.v4;
 
 namespace fs = std::filesystem;
 

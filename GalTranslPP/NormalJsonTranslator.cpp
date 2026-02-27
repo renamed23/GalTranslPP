@@ -11,6 +11,7 @@
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
+#include <proxy/proxy.h>
 
 module NormalJsonTranslator;
 
