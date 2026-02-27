@@ -36,7 +36,7 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, const std
                                            std::optional<fs::path> inputDir, std::optional<fs::path> inputCacheDir,
                                            std::optional<fs::path> outputDir, std::optional<fs::path> outputCacheDir) 
     :
-    m_projectDir(projectDir), m_controller(controller), m_logger(logger), 
+    m_controller(controller), m_logger(logger), m_projectDir(projectDir),
     m_luaManager(std::make_unique<LuaManager>(logger)), m_pythonManager(std::make_unique<PythonManager>(logger))
 {
     m_logger->info("GalTransl++ NormalJsonTranslator 启动...");

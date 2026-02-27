@@ -81,8 +81,8 @@ export {
         using SkipProblemCondition = std::pair<jpc::Regex, std::optional<CheckSeCondFunc>>;
         std::vector<SkipProblemCondition> m_skipProblems;
 
-        std::unique_ptr<PythonManager> m_pythonManager;
         std::unique_ptr<LuaManager> m_luaManager;
+        std::unique_ptr<PythonManager> m_pythonManager;
 
         bool m_needsCombining = false; // 是否开启单文件分割
         std::shared_mutex m_transCacheMutex;
