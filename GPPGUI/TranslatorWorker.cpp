@@ -99,14 +99,12 @@ void TranslatorWorker::doTranslation()
 
     try {
 
-        {
-            const std::unique_ptr<ITranslator> translator = createTranslator(_projectDir, controller);
-            if (!translator) {
-                Q_EMIT translationFinished(-1);
-                return;
-            }
-            translator->run();
+        const std::unique_ptr<ITranslator> translator = createTranslator(_projectDir, controller);
+        if (!translator) {
+            Q_EMIT translationFinished(-1);
+            return;
         }
+        translator->run();
 
     }
     catch (const std::system_error& e) {
