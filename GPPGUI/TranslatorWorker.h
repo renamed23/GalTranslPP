@@ -1,4 +1,4 @@
-#ifndef TRANSLATORWORKER_H
+﻿#ifndef TRANSLATORWORKER_H
 #define TRANSLATORWORKER_H
 
 #include <QObject>
@@ -11,7 +11,9 @@ class TranslatorWorker : public QObject
     Q_OBJECT
 public:
     explicit TranslatorWorker(const fs::path& projectDir, QObject* parent = nullptr);
+
     void stopTranslation();
+    bool getShouldStop() const { return _shouldStop; }
 
 
 public Q_SLOTS:
@@ -29,8 +31,8 @@ Q_SIGNALS:
     void updateBarSignal(int ticks);
 
 private:
-    std::atomic<bool> _shouldStop;
     fs::path _projectDir;
+    bool _shouldStop = false;
 };
 
 #endif // TRANSLATORWORKER_H
