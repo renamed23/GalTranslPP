@@ -32,6 +32,7 @@ class StartSettingsPage : public BasePage
 public:
     explicit StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
     ~StartSettingsPage() override;
+
     virtual void apply2Config() override;
 
     void clearLog();

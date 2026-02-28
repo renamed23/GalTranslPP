@@ -2,7 +2,6 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QButtonGroup>
 #include <QFileDialog>
 #include <QScrollBar>
 #include <QSignalBlocker>
@@ -11,7 +10,6 @@
 
 #include "ElaText.h"
 #include "ElaScrollPageArea.h"
-#include "ElaToolTip.h"
 #include "ElaPlainTextEdit.h"
 #include "ElaPushButton.h"
 #include "ElaProgressRing.h"
@@ -27,8 +25,8 @@
 
 import Tool;
 
-StartSettingsPage::StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) :
-	BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)
+StartSettingsPage::StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) 
+	: BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)
 {
 	setWindowTitle(tr("启动设置"));
 	setTitleVisible(false);
@@ -160,14 +158,13 @@ void StartSettingsPage::_appendLogChunkToView(const QString& log)
 
 	if (log.contains("```\n问题概览:")) {
 		QString logCopy = log;
-		QString pre, overview, post;
 		int index = log.indexOf("```\n问题概览:");
-		pre = logCopy.left(index);
+		QString pre = logCopy.left(index);
 		logCopy = logCopy.mid(index);
 		index = logCopy.indexOf("问题概览结束\n```");
-		overview = logCopy.left(index + 10);
+		QString overview = logCopy.left(index + 10);
 		logCopy = logCopy.mid(index + 10);
-		post = std::move(logCopy);
+		QString post = std::move(logCopy);
 		processLogFunc(pre);
 		QTextCharFormat format;
 		format.setForeground(QColor(255, 0, 0));
@@ -239,7 +236,7 @@ void StartSettingsPage::_setupUI()
 
 	_logPausedHint = new ElaText(_logPausedRow);
 	_logPausedHint->setTextPixelSize(12);
-	_logPausedHint->setText(tr("日志输出已暂停，点击右侧按钮回到底部\n并补发缓存"));
+	_logPausedHint->setText(tr("日志输出已暂停，点击右侧按钮\n回到底部并补发缓存"));
 	logPausedRowLayout->addWidget(_logPausedHint);
 	logPausedRowLayout->addStretch();
 

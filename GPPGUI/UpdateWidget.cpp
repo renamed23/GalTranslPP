@@ -6,7 +6,7 @@
 import Tool;
 
 UpdateWidget::UpdateWidget(QWidget* parent)
-    : QWidget{parent}
+    : QWidget(parent)
 {
     setMinimumSize(200, 260);
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -23,7 +23,6 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 		"5. 修复了几个调用 Python 脚本时错误的异常处理",
 		"6. 提高了一些性能表现",
 		"7. 重写了 GUI 日志输出的回看逻辑",
-
 
     };
 
