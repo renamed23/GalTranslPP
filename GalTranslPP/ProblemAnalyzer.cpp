@@ -132,7 +132,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
             int origLinebreaks = countSubstring(origText, m_problems.linebreakLost.base == CachePart::OrigText ? sentence->originalLinebreak : "<br>");
             int transLinebreaks = countSubstring(transView, m_problems.linebreakLost.check == CachePart::TransPreview ? sentence->originalLinebreak : "<br>");
             if (origLinebreaks > transLinebreaks) {
-                sentence->problems.push_back(std::format("丢失换行({}/{})", origLinebreaks, transLinebreaks));
+                sentence->problems.push_back(std::format("丢失换行({}/{})", transLinebreaks, origLinebreaks));
             }
         }
     }
@@ -143,7 +143,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
             int origLinebreaks = countSubstring(origText, m_problems.linebreakLost.base == CachePart::OrigText ? sentence->originalLinebreak : "<br>");
             int transLinebreaks = countSubstring(transView, m_problems.linebreakLost.check == CachePart::TransPreview ? sentence->originalLinebreak : "<br>");
             if (origLinebreaks < transLinebreaks) {
-                sentence->problems.push_back(std::format("多加换行({}/{})", origLinebreaks, transLinebreaks));
+                sentence->problems.push_back(std::format("多加换行({}/{})", transLinebreaks, origLinebreaks));
             }
         }
     }

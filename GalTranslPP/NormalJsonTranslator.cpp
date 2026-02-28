@@ -693,7 +693,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         logBlock += "\ninputBlock:\n" + inputBlock;
         m_logger->info("[线程 {}] [文件 {}] 开始翻译:\n{}", threadId, wide2Ascii(relInputPath), logBlock);
         std::string promptReq = m_userPrompt;
-        replaceStrInplace(promptReq, "[Problem Description]", inputProblems.empty() ? "None" : inputBlock);
+        replaceStrInplace(promptReq, "[Problem Description]", inputProblems.empty() ? "None" : inputProblems);
         replaceStrInplace(promptReq, "[Background Description]", backgroundText.empty() ? "None" : backgroundText);
         replaceStrInplace(promptReq, "[Input]", inputBlock);
         replaceStrInplace(promptReq, "[TargetLang]", m_targetLang);
@@ -1414,7 +1414,7 @@ void NormalJsonTranslator::afterRun() {
         ofs.close();
         m_logger->debug("已生成 翻译问题概览.json 和 翻译问题概览.toml 文件");
 
-        absl::flat_hash_map<std::string, absl::flat_hash_set<std::string>> problemMap;
+        absl::btree_map<std::string, absl::flat_hash_set<std::string>> problemMap;
         for (const auto& [problem, filename] : m_problemOverview.as_array()
             | std::views::transform([](const auto& tbl)
                 {

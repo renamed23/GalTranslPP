@@ -285,9 +285,11 @@ void StartSettingsPage::_setupUI()
 				return;
 			}
 			if (!_isLogScrollAtBottom()) {
-				_resumeLogButton->setText(tr("回到底部并继续输出"));
-				_secondsToResumeLog = 3;
-				_setLogPaused(true);
+				if (_logPaused || !_startTranslateButton->isEnabled()) {
+					_resumeLogButton->setText(tr("回到底部并继续输出"));
+					_secondsToResumeLog = 3;
+					_setLogPaused(true);
+				}
 			}
 			else if (_logPausedRow->isVisible()) {
 				if (!_timerStarted) { // 不想用 isActive，怕又出问题
@@ -475,15 +477,14 @@ void StartSettingsPage::_setupUI()
 	connect(_worker, &TranslatorWorker::updateBarSignal, this, [=](int ticks)
 		{
 			_progressBar->setValue(_progressBar->value() + ticks);
-			std::chrono::seconds elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>
-				(std::chrono::high_resolution_clock::now() - _startTime);
+			const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - _startTime);
 			_usedTimeLabel->display(QString::fromStdString(
 				std::format("{:%T}", elapsedSeconds)
 			));
 			if (ticks <= 0) {
 				return;
 			}
-			auto etaWithSpeed = _estimator.updateAndGetSpeedWithEta(_progressBar->value(), _progressBar->maximum());
+			const auto etaWithSpeed = _estimator.updateAndGetSpeedWithEta(_progressBar->value(), _progressBar->maximum());
 			const double& speed = etaWithSpeed.first;
 			const Duration& eta = etaWithSpeed.second;
 			speedLabel->setText(QString::fromStdString(
@@ -507,8 +508,8 @@ void StartSettingsPage::_setupUI()
 				insertToml(_projectConfig, "plugins.filePlugin", _fileFormatComboBox->currentText().toStdString());
 			}
 			else {
-				const std::string& customFilePluginStr = toml::find_or(_projectConfig, "plugins", "customFilePlugin", "Lua/MySampleFilePlugin.lua");
-				fs::path customFilePluginPath = ascii2Wide(customFilePluginStr);
+				const std::string customFilePluginStr = toml::find_or(_projectConfig, "plugins", "customFilePlugin", "Lua/MySampleFilePlugin.lua");
+				const fs::path customFilePluginPath = ascii2Wide(customFilePluginStr);
 				if (
 					!isSameExtension(customFilePluginPath, L".lua") &&
 					!isSameExtension(customFilePluginPath, L".py")

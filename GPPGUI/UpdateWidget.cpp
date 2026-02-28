@@ -23,7 +23,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 		"5. 修复了几个调用 Python 脚本时错误的异常处理",
 		"6. 提高了一些性能表现",
 		"7. 重写了 GUI 日志输出的回看逻辑",
-
+		"8. 调换了丢失换行/多加换行问题中原换行/翻译后换行符数量的位置使其更符合直觉",
     };
 
     mainLayout->addWidget(updateTitle);
