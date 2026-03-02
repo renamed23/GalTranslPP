@@ -5,6 +5,7 @@
 #include <Windows.h>
 #endif
 
+#include <atomic>
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 
@@ -16,6 +17,21 @@ namespace fs = std::filesystem;
 namespace py = pybind11;
 
 #pragma comment(lib, "GalTranslPP.lib")
+
+#ifdef _WIN32
+namespace {
+    std::atomic<bool>* g_stopRequested = nullptr;
+
+    BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
+    {
+        if ((ctrlType == CTRL_C_EVENT || ctrlType == CTRL_BREAK_EVENT) && g_stopRequested) {
+            g_stopRequested->store(true, std::memory_order_relaxed);
+            return TRUE;
+        }
+        return FALSE;
+    }
+}
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -76,11 +92,23 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    auto stopRequested = std::make_shared<std::atomic<bool>>(false);
+
+#ifdef _WIN32
+    g_stopRequested = stopRequested.get();
+    if (!SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE)) {
+        spdlog::warn("注册 Ctrl+C 处理器失败，无法安全取消任务。错误码: {}", GetLastError());
+    }
+#endif
+
+    int exitCode = 0;
+
     try {
         spdlog::info("开始处理项目: {}", wide2Ascii(projectPath.wstring()));
 
         {
-            std::unique_ptr<ITranslator> translator = createTranslator(projectPath, std::make_shared<TerminalController>());
+            auto terminalController = std::make_shared<TerminalController>(stopRequested);
+            std::unique_ptr<ITranslator> translator = createTranslator(projectPath, terminalController);
             if (!translator) {
                 spdlog::error("创建翻译器实例失败，请检查项目配置。");
                 shutDownPythonEnv(release);
@@ -91,20 +119,35 @@ int main(int argc, char* argv[])
         }
 
         std::cout << std::endl;
-        spdlog::info("项目 '{}' 处理完成！", wide2Ascii(projectPath.wstring()));
+        if (stopRequested->load(std::memory_order_relaxed)) {
+            spdlog::warn("项目 '{}' 已取消。", wide2Ascii(projectPath.wstring()));
+            exitCode = 130;
+        }
+        else {
+            spdlog::info("项目 '{}' 处理完成！", wide2Ascii(projectPath.wstring()));
+        }
     }
     catch (const std::invalid_argument& e) {
         spdlog::critical("[参数错误] {}", e.what());
+        exitCode = 1;
     }
     catch (const std::runtime_error& e) {
         spdlog::critical("[运行时错误] {}", e.what());
+        exitCode = 1;
     }
     catch (const std::exception& e) {
         spdlog::critical("[标准库错误] {}", e.what());
+        exitCode = 1;
     }
     catch (...) {
         spdlog::critical("发生未知错误。");
+        exitCode = 1;
     }
+
+#ifdef _WIN32
+    SetConsoleCtrlHandler(ConsoleCtrlHandler, FALSE);
+    g_stopRequested = nullptr;
+#endif
 
     shutDownPythonEnv(release);
 
@@ -114,5 +157,5 @@ int main(int argc, char* argv[])
     catch (...) { }
 
     spdlog::info("程序退出。");
-    return 0;
+    return exitCode;
 }

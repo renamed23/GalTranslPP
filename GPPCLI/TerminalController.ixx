@@ -52,7 +52,7 @@ export {
 
         virtual bool shouldStop() override
         {
-            return false;
+            return m_stopRequested && m_stopRequested->load(std::memory_order_relaxed);
         }
 
         virtual void flush() override
@@ -74,7 +74,8 @@ export {
             }
         }
 
-        TerminalController()
+        TerminalController(const std::shared_ptr<std::atomic<bool>>& stopRequested = nullptr)
+            : m_stopRequested(stopRequested)
         {
             m_log.reserve(1024 * 1024);
             m_flushThread = std::thread([this]()
@@ -98,6 +99,7 @@ export {
         std::mutex m_mutex;
         std::unique_ptr<ProgressBar> m_bar;
         std::atomic<bool> m_controlling = true;
+        std::shared_ptr<std::atomic<bool>> m_stopRequested;
 
         std::string m_log;
         int m_progress = 0;
