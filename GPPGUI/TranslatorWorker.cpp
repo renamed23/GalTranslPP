@@ -1,4 +1,4 @@
-#include "TranslatorWorker.h"
+﻿#include "TranslatorWorker.h"
 #include <QThread>
 #include <QTimer>
 
@@ -13,7 +13,7 @@ public:
     {
         this->flush();
         std::lock_guard<std::mutex> lock(_mutex);
-        _makeBarCallback(totalSentences, totalThreads);
+        Q_EMIT _worker->makeBarSignal(totalSentences, totalThreads);
     }
 
     virtual void writeLog(const std::string& log) override
@@ -25,13 +25,13 @@ public:
     virtual void addThreadNum() override
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        _addThreadNumCallback();
+        Q_EMIT _worker->addThreadNumSignal();
     }
 
     virtual void reduceThreadNum() override
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        _reduceThreadNumCallback();
+        Q_EMIT _worker->reduceThreadNumSignal();
     }
 
     virtual void updateBar(int ticks) override
@@ -42,30 +42,27 @@ public:
 
     virtual bool shouldStop() override
     {
-        return _shouldStopCallback();
+        return _worker->getShouldStop();
     }
 
     virtual void flush() override
     {
         std::lock_guard<std::mutex> lock(_mutex);
         if (!_log.isEmpty()) {
-            _writeLogCallback(_log);
+            Q_EMIT _worker->writeLogSignal(_log);
             _log.clear();
         }
-        _updateBarCallback(_progress);
+        Q_EMIT _worker->updateBarSignal(_progress);
         _progress = 0;
     }
 
-    GUIController(std::function<void(int, int)> makeBarCallback, std::function<void(const QString&)> writeLogCallback,
-        std::function<void()> addThreadNumCallback, std::function<void()> reduceThreadNumCallback, std::function<void(int)> updateBarCallback, 
-        std::function<bool()> shouldStopCallback) :
-        _makeBarCallback{ makeBarCallback }, _writeLogCallback{ writeLogCallback }, _addThreadNumCallback{ addThreadNumCallback },
-        _reduceThreadNumCallback{ reduceThreadNumCallback }, _updateBarCallback{ updateBarCallback }, _shouldStopCallback{ shouldStopCallback }
+    explicit GUIController(TranslatorWorker* worker)
+	    : _worker(worker)
     {
         _log.reserve(1024 * 1024);
         _flushThread = std::thread([this]()
             {
-                while (_controlling.load()) {
+                while (_controlling) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(200));
                     flush();
                 }
@@ -81,21 +78,16 @@ public:
     }
 
 private:
-    std::function<void(int, int)> _makeBarCallback;
-    std::function<void(const QString&)> _writeLogCallback;
-    std::function<void()> _addThreadNumCallback;
-    std::function<void()> _reduceThreadNumCallback;
-    std::function<void(int)> _updateBarCallback;
-    std::function<bool()> _shouldStopCallback;
-    std::thread _flushThread;
-    std::atomic<bool> _controlling = true;
     std::mutex _mutex;
-    int _progress = 0;
     QString _log;
+    std::thread _flushThread;
+    TranslatorWorker* _worker;
+    bool _controlling = true;
+    int _progress = 0;
 };
 
 TranslatorWorker::TranslatorWorker(const fs::path& projectDir, QObject* parent)
-    : QObject{ parent }, _projectDir{ projectDir }
+    : QObject(parent), _projectDir(projectDir)
 {
 }
 
@@ -103,42 +95,16 @@ void TranslatorWorker::doTranslation()
 {
     _shouldStop = false;
 
-    auto makeBarCallback = [this](int totalSentences, int totalThreads)
-        {
-            Q_EMIT makeBarSignal(totalSentences, totalThreads);
-        };
-    auto writeLogCallback = [this](const QString& log)
-        {
-            Q_EMIT writeLogSignal(log);
-        };
-    auto addThreadNumCallback = [this]()
-        {
-            Q_EMIT addThreadNumSignal();
-        };
-    auto reduceThreadNumCallback = [this]()
-        {
-            Q_EMIT reduceThreadNumSignal();
-        };
-    auto updateBarCallback = [this](int ticks)
-        {
-            Q_EMIT updateBarSignal(ticks);
-        };
-    auto shouldStopCallback = [this]() -> bool
-        {
-            return this->_shouldStop.load();
-        };
-    std::shared_ptr<GUIController> controller = std::make_shared<GUIController>(makeBarCallback, writeLogCallback,
-        addThreadNumCallback, reduceThreadNumCallback, updateBarCallback, shouldStopCallback);
+    const auto controller = std::make_shared<GUIController>(this);
+
     try {
 
-        {
-            std::unique_ptr<ITranslator> translator = createTranslator(_projectDir, controller);
-            if (!translator) {
-                Q_EMIT translationFinished(-1);
-                return;
-            }
-            translator->run();
+        const std::unique_ptr<ITranslator> translator = createTranslator(_projectDir, controller);
+        if (!translator) {
+            Q_EMIT translationFinished(-1);
+            return;
         }
+        translator->run();
 
     }
     catch (const std::system_error& e) {

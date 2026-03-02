@@ -515,7 +515,7 @@ void CommonNormalDictPage::_setupUI()
 			}
 			QWidget* pageMainWidget = createNormalTab(dictPath);
 			tabWidget->addTab(pageMainWidget, QString::fromStdString(it->as_string()));
-			it++;
+			++it;
 		}
 	}
 	else {

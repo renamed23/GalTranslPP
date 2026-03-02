@@ -1,8 +1,12 @@
 ﻿#ifndef GPPMACROS
 #define GPPMACROS
 
-#define _RANGES_
-#define SPDLOG_WCHAR_FILENAMES
+#define _RANGES_ // import std; 时如果有头文件 #include <ranges> 会导致调用 std::views::zip 时出现异常定义不一致的问题。 这是 STL 的和 MSVC 的问题，不知道后续能不能修复
+
+// 已经添加至预处理器定义中
+//_CRT_SECURE_NO_WARNINGS
+//ABSL_CONTAINERS
+//SPDLOG_WCHAR_FILENAMES
 
 #ifdef PYBIND11_HEADERS 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
@@ -25,7 +29,7 @@ using jpc = jpcre2::select<char>;
 #include <absl/container/flat_hash_set.h>
 #include <absl/container/btree_map.h>
 #include <absl/container/btree_set.h>
-#endif
+#endif // absl 容器里面妙妙优化太多了，一处用就得处处包含其头文件，不然非常容易引发 ODR 违反问题导致程序崩溃
 
 #define NESTED_CVT(className, memberName) sol::property([](className& self) \
 { \

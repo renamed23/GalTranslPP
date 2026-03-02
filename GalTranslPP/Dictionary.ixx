@@ -45,7 +45,7 @@ export {
 
         void loadFromFile(const fs::path& filePath, bool& needReboot);
 
-        std::string generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) const;
+        std::string generatePrompt(std::span<Sentence*> batch, TransEngine transEngine) const;
 
         std::string doReplace(const Sentence* se, CachePart targetToModify) const;
 

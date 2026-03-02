@@ -41,7 +41,11 @@ export {
         return str2Lower(std::basic_string_view<CharT>(str));
     }
     std::wstring str2Lower(const fs::path& path) {
+#ifdef _WIN32
         return str2Lower(path.native());
+#else
+        return str2Lower(path.wstring());
+#endif
     }
     template <typename CharT, typename Traits, typename Alloc>
     auto& str2LowerInplace(std::basic_string<CharT, Traits, Alloc>& str) {
@@ -61,6 +65,8 @@ export {
     std::vector<std::string> splitString(const std::string& str, std::string_view delimiter) { return splitStringFunc(str, delimiter); }
     std::vector<std::string_view> splitStringView(std::string_view strv, char delimiter) { return splitStringFunc(strv, delimiter); }
     std::vector<std::string_view> splitStringView(std::string_view strv, std::string_view delimiter) { return splitStringFunc(strv, delimiter); }
+
+    std::optional<int> str2Int(std::string_view sv);
 
     std::vector<std::string> splitTsvLine(const std::string& line, const std::vector<std::string>& delimiters);
 
@@ -96,7 +102,6 @@ export {
     std::string extractLatin(const std::string& sourceString);
     std::string extractHangul(const std::string& sourceString);
     std::string extractCJK(const std::string& sourceString);
-
     std::move_only_function<std::string(const std::string&)> getTraditionalChineseExtractor(const std::shared_ptr<spdlog::logger>& logger);
 
     void loadTokenizeCache

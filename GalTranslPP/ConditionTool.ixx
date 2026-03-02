@@ -44,11 +44,11 @@ export {
                 GppConditionPattern pattern;
                 std::string conditionTargetStr = conditionTbl.at("conditionTarget").as_string();
                 while (conditionTargetStr.starts_with("prev_")) {
-                    pattern.sentenceOffset--;
+                    --pattern.sentenceOffset;
                     conditionTargetStr = conditionTargetStr.substr(5);
                 }
                 while (conditionTargetStr.starts_with("next_")) {
-                    pattern.sentenceOffset++;
+                    ++pattern.sentenceOffset;
                     conditionTargetStr = conditionTargetStr.substr(5);
                 }
                 pattern.conditionTarget = chooseCachePart(conditionTargetStr);
@@ -86,8 +86,8 @@ export {
 
     template<typename TC>
     ConditionType getConditionType(const toml::basic_value<TC>& tbl) {
-        if (tbl.contains("conditionTarget") && !(tbl.at("conditionTarget").as_string().empty())
-            && tbl.contains("conditionReg") && !(tbl.at("conditionReg").as_string().empty())) {
+        if (tbl.contains("conditionTarget") && !tbl.at("conditionTarget").as_string().empty()
+            && tbl.contains("conditionReg") && !tbl.at("conditionReg").as_string().empty()) {
             return ConditionType::Gpp;
         }
         if (tbl.contains("conditionScript") && !tbl.at("conditionScript").as_string().empty()
@@ -212,9 +212,9 @@ export {
                 };
         }
         else {
-            resultFunc = [=](const Sentence* se) -> bool
+            resultFunc = [funcsR = std::move(funcs)](const Sentence* se) -> bool
                 {
-                    return std::ranges::all_of(funcs, [&](const CheckSeCondFunc& func)
+                    return std::ranges::all_of(funcsR, [&](const CheckSeCondFunc& func)
                         {
                             return func(se);
                         });

@@ -88,7 +88,7 @@ def run():
     if relFilePaths is None:
         global runUnloadFunc
         runUnloadFunc = False
-        logger.info("可能是 DumpName 或 GenDict 之类无需 processFile 的 TransEngine")
+        logger.info("可能是 DumpName/NameTrans/GenDict 之类无需 processFile 的 TransEngine")
         return
 
     multi_threads_run(relFilePaths)
@@ -109,7 +109,7 @@ def unload():
             gamePath = Path(r"D:\GALGAME\linshi\姫恋＊シュクレーヌ！")
             targetTransPath = gamePath / "textproc" / "trans"
             charMapPath = pythonTranslator.m_projectDir / "charMap.json"
-            newFontPath = pythonTranslator.m_projectDir / "Himekoi_cnjp.ttf"
+            newFontPath = pythonTranslator.m_projectDir / "Himekoi_mjp.ttf"
 
             result = subprocess.run(
                 [fontChangerPath, "-j", "gt_output", 

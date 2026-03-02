@@ -58,7 +58,7 @@ public:
 						arrayLike = false;
 						break;
 					}
-					expectedKey++;
+					++expectedKey;
 				}
 				// 确保 Lua table 的 #size 和我们遍历的元素数量一致
 				arrayLike &= (luaTable.size() == expectedKey - 1);
@@ -163,7 +163,7 @@ public:
 						arrayLike = false;
 						break;
 					}
-					expectedKey++;
+					++expectedKey;
 				}
 				// 确保 Lua table 的 #size 和我们遍历的元素数量一致
 				arrayLike &= (luaTable.size() == expectedKey - 1);
