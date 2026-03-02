@@ -6,7 +6,7 @@
 import Tool;
 
 UpdateWidget::UpdateWidget(QWidget* parent)
-    : QWidget{parent}
+    : QWidget(parent)
 {
     setMinimumSize(200, 260);
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -21,7 +21,9 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     	    "3. 新增清除窗口日志的快捷键及右键菜单，默认为 Ctrl+L",
     	    "4. 新增 页面切换特效 设置",
 		"5. 修复了几个调用 Python 脚本时错误的异常处理",
-
+		"6. 提高了一些性能表现",
+		"7. 重写了 GUI 日志输出的回看逻辑",
+		"8. 调换了丢失换行/多加换行问题中原换行/翻译后换行符数量的位置使其更符合直觉",
     };
 
     mainLayout->addWidget(updateTitle);

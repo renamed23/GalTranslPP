@@ -2,15 +2,14 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QButtonGroup>
 #include <QFileDialog>
 #include <QScrollBar>
-#include <QTextBlock>
+#include <QSignalBlocker>
 #include <QDesktopServices>
+#include <QTimer>
 
 #include "ElaText.h"
 #include "ElaScrollPageArea.h"
-#include "ElaToolTip.h"
 #include "ElaPlainTextEdit.h"
 #include "ElaPushButton.h"
 #include "ElaProgressRing.h"
@@ -26,8 +25,8 @@
 
 import Tool;
 
-StartSettingsPage::StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) :
-	BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)
+StartSettingsPage::StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) 
+	: BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)
 {
 	setWindowTitle(tr("启动设置"));
 	setTitleVisible(false);
@@ -65,7 +64,147 @@ void StartSettingsPage::apply2Config()
 }
 
 void StartSettingsPage::clearLog() {
-	_logOutput->clear();
+	_resetLogBufferState(false);
+}
+
+bool StartSettingsPage::_isLogScrollAtBottom() const
+{
+	const QScrollBar* scrollBar = _logOutput->verticalScrollBar();
+	return scrollBar->value() >= scrollBar->maximum() - 4;
+}
+
+void StartSettingsPage::_setLogPaused(bool paused)
+{
+	if (_logPaused == paused) {
+		return;
+	}
+	_logPaused = paused;
+	if (_logPausedRow) {
+		_logPausedRow->setVisible(_logPaused);
+	}
+}
+
+void StartSettingsPage::_enqueuePendingLog(const QString& chunk)
+{
+	const qsizetype chunkBytes = chunk.size();
+	if (_pendingLogBytes + chunkBytes > MAX_PENDING_LOG_BYTES && !_pendingLog.contains("```\n问题概览:")) {
+		_pendingLog.clear();
+		_pendingLogBytes = 0;
+		_pendingOverflowed = true;
+	}
+	_pendingLog += chunk;
+	_pendingLogBytes += chunkBytes;
+}
+
+void StartSettingsPage::_flushPendingLogToView()
+{
+	if (!_pendingLog.isEmpty()) {
+		_appendLogChunkToView(_pendingLog);
+		_pendingLog.clear();
+	}
+	if (_pendingOverflowed) {
+		_appendLogChunkToView(tr("[GUI] 日志窗口缓存超过 5MB，有旧缓存被丢弃。完整日志请查看项目 logs/*.log。") + "\n");
+		_pendingOverflowed = false;
+	}
+	_pendingLogBytes = 0;
+}
+
+void StartSettingsPage::_appendLogChunkToView(const QString& log)
+{
+	if (log.isEmpty()) {
+		return;
+	}
+
+	_logOutput->setUpdatesEnabled(false);
+
+	QTextCursor tempCursor(_logOutput->document());
+	tempCursor.movePosition(QTextCursor::End);
+	tempCursor.setCharFormat(QTextCharFormat());
+
+	auto processLogFunc = [&](const QString& l)
+		{
+			QStringList lines = l.split('\n');
+			for (int i = 0; i < lines.size(); ++i) {
+				QString& line = lines[i];
+				line = line.trimmed();
+				if (i == lines.size() - 1 && line.isEmpty()) break;
+				QTextCharFormat fmt;
+				if (line.contains(" error]")) {
+					fmt.setForeground(Qt::red);
+				}
+				else if (line.contains(" critical]")) {
+					fmt.setForeground(Qt::darkRed);
+					fmt.setFontWeight(QFont::Bold);
+				}
+				else if (line.contains(" warning]")) {
+					fmt.setForeground(QColor(255, 140, 0));
+				}
+				else if (line.contains(" debug]")) {
+					fmt.setForeground(QColor(Qt::darkBlue));
+				}
+				else if (line.contains(" trace]")) {
+					fmt.setForeground(QColor(Qt::darkGreen));
+				}
+				else {
+					fmt.setForeground(QColor(Qt::black));
+				}
+				tempCursor.setCharFormat(fmt);
+				tempCursor.insertText(line);
+				if (i < lines.size() - 1) {
+					tempCursor.insertText("\n");
+				}
+			}
+		};
+
+	if (log.contains("```\n问题概览:")) {
+		QString logCopy = log;
+		int index = log.indexOf("```\n问题概览:");
+		QString pre = logCopy.left(index);
+		logCopy = logCopy.mid(index);
+		index = logCopy.indexOf("问题概览结束\n```");
+		QString overview = logCopy.left(index + 10);
+		logCopy = logCopy.mid(index + 10);
+		QString post = std::move(logCopy);
+		processLogFunc(pre);
+		QTextCharFormat format;
+		format.setForeground(QColor(255, 0, 0));
+		tempCursor.setCharFormat(format);
+		tempCursor.insertText(overview);
+		processLogFunc(post);
+	}
+	else {
+		if (log.length() > 512 * 3 || log.count('\n') > 30) {
+			tempCursor.insertText(log);
+		}
+		else {
+			processLogFunc(log);
+		}
+	}
+
+	int currentLineCount = _logOutput->document()->lineCount();
+	if (currentLineCount > MAX_LOG_LINE_COUNT) {
+		const int toRemoveLineCount = currentLineCount - MAX_LOG_LINE_COUNT;
+		QTextCursor deleteCursor(_logOutput->document());
+		deleteCursor.movePosition(QTextCursor::Start);
+		deleteCursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, toRemoveLineCount);
+		deleteCursor.removeSelectedText();
+	}
+
+	QScrollBar* scrollBar = _logOutput->verticalScrollBar();
+	scrollBar->setValue(scrollBar->maximum());
+	_logOutput->setUpdatesEnabled(true);
+}
+
+void StartSettingsPage::_resetLogBufferState(bool keepViewContent)
+{
+	_pendingLog.clear();
+	_pendingLogBytes = 0;
+	_pendingOverflowed = false;
+	_logResumeInProgress = false;
+	_setLogPaused(false);
+	if (!keepViewContent && _logOutput) {
+		_logOutput->clear();
+	}
 }
 
 void StartSettingsPage::_setupUI()
@@ -77,13 +216,89 @@ void StartSettingsPage::_setupUI()
 	QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
 
 	// 日志输出
-	_logOutput = new ElaPlainTextEdit(topWidget);
+	QWidget* logAreaWidget = new QWidget(topWidget);
+	QVBoxLayout* logAreaLayout = new QVBoxLayout(logAreaWidget);
+	logAreaLayout->setContentsMargins(0, 0, 0, 0);
+	logAreaLayout->setSpacing(4);
+
+	_logOutput = new ElaPlainTextEdit(logAreaWidget);
 	_logOutput->setReadOnly(true);
 	QFont font = _logOutput->font();
 	font.setPixelSize(14);
 	_logOutput->setFont(font);
 	_logOutput->setPlaceholderText(tr("日志输出"));
-	topLayout->addWidget(_logOutput);
+	logAreaLayout->addWidget(_logOutput);
+
+	_logPausedRow = new QWidget(logAreaWidget);
+	QHBoxLayout* logPausedRowLayout = new QHBoxLayout(_logPausedRow);
+	logPausedRowLayout->setContentsMargins(0, 0, 0, 0);
+	logPausedRowLayout->setSpacing(8);
+
+	_logPausedHint = new ElaText(_logPausedRow);
+	_logPausedHint->setTextPixelSize(12);
+	_logPausedHint->setText(tr("日志输出已暂停，点击右侧按钮\n回到底部并补发缓存"));
+	logPausedRowLayout->addWidget(_logPausedHint);
+	logPausedRowLayout->addStretch();
+
+	_resumeLogButton = new ElaPushButton(_logPausedRow);
+	_resumeLogButton->setText(tr("回到底部并继续输出"));
+	logPausedRowLayout->addWidget(_resumeLogButton);
+	_logPausedRow->setVisible(false);
+	logAreaLayout->addWidget(_logPausedRow);
+	topLayout->addWidget(logAreaWidget);
+
+	connect(_resumeLogButton, &ElaPushButton::clicked, this, [=]()
+		{
+			QScrollBar* scrollBar = _logOutput->verticalScrollBar();
+			_logResumeInProgress = true;
+			{
+				QSignalBlocker blocker(scrollBar);
+				scrollBar->setValue(scrollBar->maximum());
+				_flushPendingLogToView();
+				scrollBar->setValue(scrollBar->maximum());
+			}
+			_setLogPaused(false);
+			_logResumeInProgress = false;
+		});
+
+	QTimer* timer = new QTimer(this);
+	connect(timer, &QTimer::timeout, this, [=]()
+		{
+			if (!_logPausedRow->isVisible() || !_isLogScrollAtBottom()) {
+				timer->stop();
+				_timerStarted = false;
+				return;
+			}
+			if (--(_secondsToResumeLog) > 0) {
+				_resumeLogButton->setText(tr("继续输出") + "(" + QString::number(_secondsToResumeLog) + ")");
+			}
+			else {
+				timer->stop();
+				_resumeLogButton->click();
+				_timerStarted = false;
+			}
+		});
+	QScrollBar* logScrollBar = _logOutput->verticalScrollBar();
+	connect(logScrollBar, &QScrollBar::valueChanged, this, [=](int)
+		{
+			if (_logResumeInProgress) {
+				return;
+			}
+			if (!_isLogScrollAtBottom()) {
+				if (_logPaused || !_startTranslateButton->isEnabled()) {
+					_resumeLogButton->setText(tr("回到底部并继续输出"));
+					_secondsToResumeLog = 3;
+					_setLogPaused(true);
+				}
+			}
+			else if (_logPausedRow->isVisible()) {
+				if (!_timerStarted) { // 不想用 isActive，怕又出问题
+					_resumeLogButton->setText(tr("继续输出") + "(" + QString::number(_secondsToResumeLog) + ")");
+					timer->start(1000);
+					_timerStarted = true;
+				}
+			}
+		});
 
 
 	ElaScrollPageArea* buttonArea = new ElaScrollPageArea(mainWidget);
@@ -187,12 +402,14 @@ void StartSettingsPage::_setupUI()
 	connect(_startTranslateButton, &ElaPushButton::clicked, this, &StartSettingsPage::_onStartTranslatingClicked);
 	connect(_startTranslateButton, &ElaPushButton::clicked, this, [=]()
 		{
-			QScrollBar* scrollBar = _logOutput->verticalScrollBar();
-			bool scrollIsAtBottom = (scrollBar->value() == scrollBar->maximum());
-			QTextCursor tempCursor(_logOutput->document());
-			tempCursor.movePosition(QTextCursor::End);
-			tempCursor.insertText("\n\n");
-			if (scrollIsAtBottom) {
+			const bool scrollAtBottom = _isLogScrollAtBottom();
+			if (!_logOutput->toPlainText().isEmpty()) {
+				QTextCursor tempCursor(_logOutput->document());
+				tempCursor.movePosition(QTextCursor::End);
+				tempCursor.insertText("\n\n\n\n\n");
+			}
+			if (scrollAtBottom) {
+				QScrollBar* scrollBar = _logOutput->verticalScrollBar();
 				scrollBar->setValue(scrollBar->maximum());
 			}
 		});
@@ -237,138 +454,17 @@ void StartSettingsPage::_setupUI()
 			_estimator.reset();
 			
 		});
-	connect(_worker, &TranslatorWorker::writeLogSignal, this, [=](const QString& log)
+	connect(_worker, &TranslatorWorker::writeLogSignal, this, [this](const QString& log)
 		{
-			constexpr int MAX_LOG_LINE_COUNT = 10000;
-
-			// 禁用更新可以防止在进行大量操作时出现闪烁，并提高性能
-			_logOutput->setUpdatesEnabled(false);
-
-			// 1. 智能滚动判断: 记住修改前的位置
-			QScrollBar* scrollBar = _logOutput->verticalScrollBar();
-			bool scrollIsAtBottom = (scrollBar->value() >= scrollBar->maximum() - 4); // 减去一个小的容差
-
-			// 如果用户没有滚动到底部，我们就需要“锚定”他当前看到的视图
-			int firstVisibleBlockNumber = -1;
-			if (!scrollIsAtBottom) {
-				// 获取视口左上角位置的文本光标，从而得到当前可见的第一个文本块
-				QTextCursor firstVisibleCursor = _logOutput->cursorForPosition(QPoint(0, 0));
-				firstVisibleBlockNumber = firstVisibleCursor.blockNumber();
+			const bool atBottom = _isLogScrollAtBottom();
+			if (atBottom && !_logPaused && !_logResumeInProgress && _pendingLog.isEmpty() && !_pendingOverflowed) {
+				_appendLogChunkToView(log);
+				return;
 			}
-
-			// 2. 追加日志 (使用一个临时的“影子”光标在后台进行操作)
-			QTextCursor tempCursor(_logOutput->document());
-			tempCursor.movePosition(QTextCursor::End);
-			tempCursor.setCharFormat(QTextCharFormat());
-
-
-			// --- 高亮代码逻辑开始 ---
-			auto processLogFunc = [&](const QString& l)
-				{
-					QStringList lines = l.split('\n');
-					for (int i = 0; i < lines.size(); ++i) {
-						QString& line = lines[i];
-						line = line.trimmed();
-						// 如果是最后一行且为空（通常是因为 log 以 \n 结尾），则跳过，避免多余空行
-						if (i == lines.size() - 1 && line.isEmpty()) break;
-						QTextCharFormat fmt;
-						// 根据 spdlog 的格式 [timestamp level] 进行判断
-						// 使用 " level]" 包含右中括号和前置空格，防止匹配到日志内容中的单词
-						if (line.contains(" error]")) {
-							fmt.setForeground(Qt::red); // 错误：红色
-						}
-						else if (line.contains(" critical]")) {
-							fmt.setForeground(Qt::darkRed); // 严重：深红
-							fmt.setFontWeight(QFont::Bold); // 加粗
-						}
-						else if (line.contains(" warning]")) {
-							// 警告：深橙色
-							fmt.setForeground(QColor(255, 140, 0));
-						}
-						else if (line.contains(" debug]")) {
-							fmt.setForeground(QColor(Qt::darkBlue));
-						}
-						else if (line.contains(" trace]")) {
-							fmt.setForeground(QColor(Qt::darkGreen));
-						}
-						else {
-							fmt.setForeground(QColor(Qt::black)); // 显式设为黑色或保持默认
-						}
-						// 应用格式并插入文本
-						tempCursor.setCharFormat(fmt);
-						tempCursor.insertText(line);
-						// 补回换行符 (因为 split 去掉了换行符)
-						// 如果不是最后一行，则插入换行
-						if (i < lines.size() - 1) {
-							tempCursor.insertText("\n");
-						}
-					}
-				};
-			if (log.contains("```\n问题概览:")) {
-				QString logCopy = log;
-				QString pre, overview, post;
-				int index = log.indexOf("```\n问题概览:");
-				pre = logCopy.left(index);
-				logCopy = logCopy.mid(index);
-				index = logCopy.indexOf("问题概览结束\n```");
-				overview = logCopy.left(index + 10);
-				logCopy = logCopy.mid(index + 10);
-				post = std::move(logCopy);
-				processLogFunc(pre);
-				QTextCharFormat format;
-				format.setForeground(QColor(255, 0, 0));
-				tempCursor.setCharFormat(format);
-				tempCursor.insertText(overview);
-				processLogFunc(post);
+			if (!atBottom) {
+				_setLogPaused(true);
 			}
-			else {
-				if (log.length() > 512 * 3 || log.count('\n') > 30) {
-					tempCursor.insertText(log);
-				}
-				else {
-					processLogFunc(log);
-				}
-			}
-			// --- 高亮代码逻辑结束 ---
-
-
-			// 3. 清理旧日志
-			int toRemoveLineCount = 0;
-			int currentLineCount = _logOutput->document()->lineCount();
-			if (currentLineCount > MAX_LOG_LINE_COUNT) {
-				toRemoveLineCount = currentLineCount - MAX_LOG_LINE_COUNT;
-
-				QTextCursor deleteCursor(_logOutput->document());
-				deleteCursor.movePosition(QTextCursor::Start);
-				// 选中要删除的行数
-				deleteCursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, toRemoveLineCount);
-				deleteCursor.removeSelectedText();
-			}
-
-			// 4. 恢复视口: 这才是关键！
-			if (scrollIsAtBottom) {
-				// 如果原来就在底部，操作完成后依然滚动到底部
-				scrollBar->setValue(scrollBar->maximum());
-			}
-			else if (toRemoveLineCount > 0 && firstVisibleBlockNumber != -1) {
-				// 如果我们删除了旧日志，并且之前已经锚定了视口
-				// 计算出我们锚定的那个文本块现在的新行号
-				int newTargetBlockNumber = firstVisibleBlockNumber - toRemoveLineCount;
-				if (newTargetBlockNumber < 0) newTargetBlockNumber = 0;
-
-				// 找到这个新的文本块
-				QTextBlock targetBlock = _logOutput->document()->findBlockByNumber(newTargetBlockNumber);
-				if (targetBlock.isValid()) {
-					// 创建一个光标并移动到这个块的开头
-					QTextCursor newCursor(targetBlock);
-					_logOutput->setTextCursor(newCursor); // 将编辑器的光标设置到这里
-					// 这一步是可选的，但可以确保光标行完全可见
-					_logOutput->ensureCursorVisible(); 
-				}
-			}
-
-			// 所有操作完成后，重新启用更新，让界面一次性刷新
-			_logOutput->setUpdatesEnabled(true);
+			_enqueuePendingLog(log);
 		});
 	connect(_worker, &TranslatorWorker::addThreadNumSignal, this, [=]()
 		{
@@ -381,15 +477,14 @@ void StartSettingsPage::_setupUI()
 	connect(_worker, &TranslatorWorker::updateBarSignal, this, [=](int ticks)
 		{
 			_progressBar->setValue(_progressBar->value() + ticks);
-			std::chrono::seconds elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>
-				(std::chrono::high_resolution_clock::now() - _startTime);
+			const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - _startTime);
 			_usedTimeLabel->display(QString::fromStdString(
 				std::format("{:%T}", elapsedSeconds)
 			));
 			if (ticks <= 0) {
 				return;
 			}
-			auto etaWithSpeed = _estimator.updateAndGetSpeedWithEta(_progressBar->value(), _progressBar->maximum());
+			const auto etaWithSpeed = _estimator.updateAndGetSpeedWithEta(_progressBar->value(), _progressBar->maximum());
 			const double& speed = etaWithSpeed.first;
 			const Duration& eta = etaWithSpeed.second;
 			speedLabel->setText(QString::fromStdString(
@@ -413,8 +508,8 @@ void StartSettingsPage::_setupUI()
 				insertToml(_projectConfig, "plugins.filePlugin", _fileFormatComboBox->currentText().toStdString());
 			}
 			else {
-				const std::string& customFilePluginStr = toml::find_or(_projectConfig, "plugins", "customFilePlugin", "Lua/MySampleFilePlugin.lua");
-				fs::path customFilePluginPath = ascii2Wide(customFilePluginStr);
+				const std::string customFilePluginStr = toml::find_or(_projectConfig, "plugins", "customFilePlugin", "Lua/MySampleFilePlugin.lua");
+				const fs::path customFilePluginPath = ascii2Wide(customFilePluginStr);
 				if (
 					!isSameExtension(customFilePluginPath, L".lua") &&
 					!isSameExtension(customFilePluginPath, L".py")
@@ -459,6 +554,7 @@ void StartSettingsPage::_onOutputSettingClicked()
 
 void StartSettingsPage::_onStartTranslatingClicked()
 {
+	_resetLogBufferState(true);
 	Q_EMIT startTranslating();
 
 	_startTime = std::chrono::high_resolution_clock::now();

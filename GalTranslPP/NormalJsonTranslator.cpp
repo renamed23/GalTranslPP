@@ -11,6 +11,7 @@
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
+#include <proxy/proxy.h>
 
 module NormalJsonTranslator;
 
@@ -35,7 +36,7 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, const std
                                            std::optional<fs::path> inputDir, std::optional<fs::path> inputCacheDir,
                                            std::optional<fs::path> outputDir, std::optional<fs::path> outputCacheDir) 
     :
-    m_projectDir(projectDir), m_controller(controller), m_logger(logger), 
+    m_controller(controller), m_logger(logger), m_projectDir(projectDir),
     m_luaManager(std::make_unique<LuaManager>(logger)), m_pythonManager(std::make_unique<PythonManager>(logger))
 {
     m_logger->info("GalTransl++ NormalJsonTranslator 启动...");
@@ -615,7 +616,7 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
 }
 
 
-bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath, std::vector<Sentence*>& batch, std::string& backgroundText, int threadId) {
+bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId) {
 
     for (Sentence* se : batch) {
         if (se->pre_processed_text.empty()) {
@@ -645,9 +646,10 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         if (m_smartRetry && retryCount == 2 && batchToTransThisRound.size() > 1) {
             m_logger->warn("[线程 {}] [文件 {}] 开始拆分批次进行重试...", threadId, wide2Ascii(relInputPath));
 
-            size_t mid = batchToTransThisRound.size() / 2;
-            std::vector<Sentence*> firstHalf(batchToTransThisRound.begin(), batchToTransThisRound.begin() + mid);
-            std::vector<Sentence*> secondHalf(batchToTransThisRound.begin() + mid, batchToTransThisRound.end());
+            const size_t mid = batchToTransThisRound.size() / 2;
+            std::span<Sentence*> batchToTransThisRoundSpan(batchToTransThisRound);
+            std::span<Sentence*> firstHalf = batchToTransThisRoundSpan.subspan(0, mid);
+            std::span<Sentence*> secondHalf = batchToTransThisRoundSpan.subspan(mid);
 
             bool firstOk = translateBatchWithRetry(relInputPath, firstHalf, backgroundText, threadId);
             bool secondOk = translateBatchWithRetry(relInputPath, secondHalf, backgroundText, threadId);
@@ -691,7 +693,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         logBlock += "\ninputBlock:\n" + inputBlock;
         m_logger->info("[线程 {}] [文件 {}] 开始翻译:\n{}", threadId, wide2Ascii(relInputPath), logBlock);
         std::string promptReq = m_userPrompt;
-        replaceStrInplace(promptReq, "[Problem Description]", inputProblems.empty() ? "None" : inputBlock);
+        replaceStrInplace(promptReq, "[Problem Description]", inputProblems.empty() ? "None" : inputProblems);
         replaceStrInplace(promptReq, "[Background Description]", backgroundText.empty() ? "None" : backgroundText);
         replaceStrInplace(promptReq, "[Input]", inputBlock);
         replaceStrInplace(promptReq, "[TargetLang]", m_targetLang);
@@ -729,7 +731,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         // --- 如果请求成功，则继续解析 ---
         int parsedCount = 0;
 
-        //void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+        //void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
         //    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
         parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
             m_controller, backgroundText, m_completedSentences, parsedCount, m_transEngine, m_logger->should_log(spdlog::level::debug));
@@ -829,7 +831,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }
             showNormalObj["pre_processed_text"] = se.pre_processed_text;
             showNormalJson.push_back(std::move(showNormalObj));
-            m_completedSentences++;
+            ++m_completedSentences;
             m_controller->updateBar(); // ShowNormal
         }
         createParent(showNormalPath);
@@ -924,7 +926,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path(), additionalCachePath);
             }
             else {
-                std::wstring cacheSpec = relInputPath.stem().wstring() + L"_part_*.json";
+                const std::wstring cacheSpec = relInputPath.stem().wstring() + L"_part_*.json";
                 // 非分割优先读整体缓存
                 readAllPotentialPartFileCache(cacheSpec, m_transCacheDir / relInputPath.parent_path());
             }
@@ -995,7 +997,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         	        | std::views::join_with('\n') | std::ranges::to<std::string>();
             m_logger->critical("[线程 {}] [文件 {}] 有 {} 句未命中缓存，这些句子是: {}", 
                 threadId, wide2Ascii(relInputPath), toTranslate.size(), notFoundSentences);
-            //std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
+            //std::lock_guard<std::shared_mutex> lock(m_transCacheMutex); // Rebuild 时这里的 saveCache 没有竞态
             saveCache(sentences, cachePath);
             return;
         }
@@ -1004,6 +1006,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     // 翻译逻辑
     if (m_transEngine != TransEngine::Rebuild && !toTranslate.empty()) {
+
         std::unique_ptr<py::gil_scoped_release> release = m_pythonTranslator ? std::make_unique<py::gil_scoped_release>() : nullptr;
 
         int batchCount = 0;
@@ -1018,13 +1021,15 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             }();
 
         const Sentence* pLastSentence = nullptr;
-        for (size_t i = 0; i < toTranslate.size(); i += m_batchSize) {
-            std::vector<Sentence*> batch(toTranslate.begin() + i, toTranslate.begin() + std::min(i + m_batchSize, toTranslate.size()));
+        for (auto batchView : toTranslate | std::views::chunk(m_batchSize)) {
+
             if (!backgroundText.empty() && pLastSentence) {
-                if (batch.front()->index - pLastSentence->index > m_batchSize) {
+                if (batchView.front()->index - pLastSentence->index > m_batchSize) {
                     backgroundText.clear();
                 }
             }
+            pLastSentence = batchView.back();
+
             if (m_controller->shouldStop()) {
                 if (!backgroundText.empty()) {
                     std::lock_guard<std::shared_mutex> lock(m_backgroundTextCacheMapMutex);
@@ -1033,21 +1038,21 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 m_logger->debug("[线程 {}] [文件 {}] 已停止翻译", threadId, wide2Ascii(relInputPath));
                 return;
             }
-            translateBatchWithRetry(relInputPath, batch, backgroundText, threadId);
-            pLastSentence = batch.back();
-            for (Sentence* se : batch) {
+
+            translateBatchWithRetry(relInputPath, batchView, backgroundText, threadId);
+            for (Sentence* se : batchView) {
                 postProcess(se);
             }
+
             if (++batchCount % m_saveCacheInterval == 0) {
                 m_logger->debug("[线程 {}] [文件 {}] 达到保存间隔，正在更新缓存文件...", threadId, wide2Ascii(relInputPath));
                 std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
                 saveCache(sentences, cachePath);
             }
         }
-        {
-            std::lock_guard<std::shared_mutex> lock(m_backgroundTextCacheMapMutex);
-            m_backgroundTextCacheMap.erase(filePathWithHash);
-        }
+
+        std::lock_guard<std::shared_mutex> lock(m_backgroundTextCacheMapMutex);
+        m_backgroundTextCacheMap.erase(filePathWithHash);
     }
     // 翻译逻辑结束
 
@@ -1108,7 +1113,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     if (m_needsCombining) {
         const fs::path& originalRelFilePath = m_splitFilePartsToJson[relInputPath];
-        auto& splitFileParts = m_jsonToSplitFileParts[originalRelFilePath];
+        absl::flat_hash_map<fs::path, bool>& splitFileParts = m_jsonToSplitFileParts[originalRelFilePath];
         {
             std::lock_guard<std::mutex> lock(m_outputMutex);
             splitFileParts[relInputPath] = true;
@@ -1170,13 +1175,13 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
     const fs::path nameTablePath = m_projectDir / L"人名替换表.toml";
     // 人名表处理
     {
-        absl::flat_hash_map<std::string, int> nameTableMap;
+        absl::flat_hash_map<std::string, int> jsonNameTable;
         Sentence se;
 
-        auto insertNameTable = [&](const std::string& name)
+        auto insertJsonNameTable = [&](const std::string& name)
             {
                 if (!name.empty()) {
-                    nameTableMap[name]++;
+                    ++jsonNameTable[name];
                 }
             };
 
@@ -1186,36 +1191,35 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 continue;
             }
             const fs::path relInputPath = fs::relative(entry.path(), m_inputDir);
-            relJsonPaths.push_back(relInputPath);
             try {
                 ifs.open(entry.path());
                 json data = json::parse(ifs);
                 ifs.close();
 
                 for (const auto& [index, item] : data | std::views::enumerate) {
-                    m_totalSentences++;
-                    if (item.contains("name")) {
-                        se.name = item["name"].get<std::string>();
-                        if (m_usePreDictInName) {
-                            se.name = m_preDictionary->doReplace(&se, CachePart::Name);
-                        }
-                        insertNameTable(se.name);
-                    }
-                    else if (item.contains("names")) {
-                        se.names = item["names"].get<std::vector<std::string>>();
-                        for (const auto& name : item["names"]) {
-                            se.name = name.get<std::string>();
-                            if (m_usePreDictInName) {
-                                se.name = m_preDictionary->doReplace(&se, CachePart::Name);
-                            }
-                            insertNameTable(se.name);
-                        }
-                        se.names.clear();
-                    }
                     if (!item.contains("message")) {
                         throw std::runtime_error(std::format("[文件 {}] 第 {} 个对象缺少 message 字段。", wide2Ascii(relInputPath), index));
                     }
+                    ++m_totalSentences;
+                    if (auto jit = item.find("name"); jit != item.end()) {
+                        jit->get_to(se.name);
+                        if (m_usePreDictInName) {
+                            se.name = m_preDictionary->doReplace(&se, CachePart::Name);
+                        }
+                        insertJsonNameTable(se.name);
+                    }
+                    else if (jit = item.find("names"); jit != item.end()) {
+                        for (const auto& name : jit.value()) {
+                            name.get_to(se.name);
+                            if (m_usePreDictInName) {
+                                se.name = m_preDictionary->doReplace(&se, CachePart::Name);
+                            }
+                            insertJsonNameTable(se.name);
+                        }
+                    }
                 }
+
+                relJsonPaths.push_back(std::move(relInputPath));
             }
             catch (const json::exception& e) {
                 m_logger->critical("读取文件 {} 时出错", wide2Ascii(relInputPath));
@@ -1238,9 +1242,9 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             m_logger->error("解析原人名表失败");
         }
 
-        std::vector<std::pair<std::string, int>> nameTableKeys = nameTableMap 
+        std::vector<std::pair<std::string, int>> jsonNameTablePairs = jsonNameTable 
     	        | std::views::transform([](const auto& pair) { return std::pair{ pair.first, pair.second }; }) | std::ranges::to<std::vector>();
-        std::ranges::sort(nameTableKeys, [&](const auto& a, const auto& b)
+        std::ranges::sort(jsonNameTablePairs, [&](const auto& a, const auto& b)
             {
                 if (a.second == b.second) {
                     return a.first.length() > b.first.length();
@@ -1250,12 +1254,12 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
 
         toml::ordered_value newNameTable = toml::ordered_table{};
         newNameTable.comments().push_back("'原名' = [ '译名', 出现次数 ]");
-        for (const std::string& key : nameTableKeys | std::views::keys) {
+        for (const std::string& key : jsonNameTablePairs | std::views::keys) {
             try {
-                newNameTable[key] = toml::array{ toml::find_or(orgNameTable, key, 0, ""), nameTableMap[key] };
+                newNameTable[key] = toml::array{ toml::find_or(orgNameTable, key, 0, ""), jsonNameTable[key] };
             }
             catch (...) {
-                newNameTable[key] = toml::array{ "", nameTableMap[key] };
+                newNameTable[key] = toml::array{ "", jsonNameTable[key] };
             }
         }
         ofs.open(nameTablePath);
@@ -1333,18 +1337,18 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 for (const auto& relJsonPath : relJsonPaths) {
                     try {
                         ifs.open(m_inputDir / relJsonPath);
-                        ordered_json data = ordered_json::parse(ifs);
+                        const ordered_json data = ordered_json::parse(ifs);
                         ifs.close();
                         const std::vector<ordered_json> parts = splitImplFunc(data, m_splitFileNum);
                         const std::wstring relStem = relJsonPath.parent_path() / relJsonPath.stem();
-                        for (size_t i = 0; i < parts.size(); ++i) {
-                            const fs::path relPartPath = std::format(L"{}_part_{}{}", relStem, i, relJsonPath.extension().wstring());
+                        for (const auto& [index, part] : parts | std::views::enumerate) {
+                            const fs::path relPartPath = std::format(L"{}_part_{}{}", relStem, index, relJsonPath.extension().wstring());
                             m_splitFilePartsToJson[relPartPath] = relJsonPath;
                             m_jsonToSplitFileParts[relJsonPath].insert({ relPartPath, false });
                             const fs::path partPath = m_inputCacheDir / relPartPath;
                             createParent(partPath);
                             ofs.open(partPath);
-                            ofs << parts[i].dump(2);
+                            ofs << part.dump(2);
                             ofs.close();
                         }
                         m_logger->debug("文件 {} 已被分割成 {} 份，存入输入缓存。", wide2Ascii(relJsonPath), parts.size());
@@ -1371,9 +1375,6 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
     // 分发文件
     std::vector<fs::path> relFilePaths = m_needsCombining ? (m_splitFilePartsToJson | std::views::keys | std::ranges::to<std::vector>())
         : std::move(relJsonPaths);
-    if (relFilePaths.empty()) {
-        throw std::runtime_error("未找到任何待翻译文件。");
-    }
 
     if (m_sortMethod == "size") {
         std::ranges::sort(relFilePaths, [&](const fs::path& a, const fs::path& b)
@@ -1383,7 +1384,14 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             });
     }
     else if (m_sortMethod == "name") {
+#ifdef _WIN32
+        std::ranges::sort(relFilePaths, [](const fs::path& a, const fs::path& b)
+            {
+                return str2Lower(a) < str2Lower(b);
+            });
+#else
         std::ranges::sort(relFilePaths);
+#endif
     }
     else {
         throw std::invalid_argument(std::format("未知的排序模式: {}", m_sortMethod));
@@ -1406,7 +1414,7 @@ void NormalJsonTranslator::afterRun() {
         ofs.close();
         m_logger->debug("已生成 翻译问题概览.json 和 翻译问题概览.toml 文件");
 
-        absl::flat_hash_map<std::string, absl::flat_hash_set<std::string>> problemMap;
+        absl::btree_map<std::string, absl::flat_hash_set<std::string>> problemMap;
         for (const auto& [problem, filename] : m_problemOverview.as_array()
             | std::views::transform([](const auto& tbl)
                 {
@@ -1432,7 +1440,7 @@ void NormalJsonTranslator::afterRun() {
                     break;
                 }
                 fileStr += file + ", ";
-                fileCount++;
+                ++fileCount;
             }
             if (fileCount == files.size()) {
                 fileStr.pop_back();

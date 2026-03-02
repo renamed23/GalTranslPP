@@ -3,6 +3,7 @@
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
+#include <proxy/proxy.h>
 
 module IPlugin;
 

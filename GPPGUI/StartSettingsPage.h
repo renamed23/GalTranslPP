@@ -19,6 +19,7 @@ class ElaComboBox;
 class ElaPlainTextEdit;
 class ElaProgressRing;
 class ElaLCDNumber;
+class ElaText;
 class NJCfgPage;
 class EpubCfgPage;
 class PDFCfgPage;
@@ -31,6 +32,7 @@ class StartSettingsPage : public BasePage
 public:
     explicit StartSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
     ~StartSettingsPage() override;
+
     virtual void apply2Config() override;
 
     void clearLog();
@@ -40,6 +42,17 @@ Q_SIGNALS:
     void finishTranslatingSignal(const QString& transEngine, int exitCode); // 这两个向projectSettings页发送
     void startWork();
     void stopWork();  // 这两个向worker发送
+
+private:
+    static constexpr qsizetype MAX_PENDING_LOG_BYTES = 5 * 1024 * 1024;
+    static constexpr int MAX_LOG_LINE_COUNT = 10000;
+
+    bool _isLogScrollAtBottom() const;
+    void _setLogPaused(bool paused);
+    void _enqueuePendingLog(const QString& chunk);
+    void _flushPendingLogToView();
+    void _appendLogChunkToView(const QString& chunk);
+    void _resetLogBufferState(bool keepViewContent);
 
 private:
 
@@ -57,6 +70,16 @@ private:
     ElaProgressBar* _progressBar;
 
     ElaPlainTextEdit* _logOutput;
+    QWidget* _logPausedRow{nullptr};
+    ElaText* _logPausedHint{nullptr};
+    ElaPushButton* _resumeLogButton{nullptr};
+    int _secondsToResumeLog{3};
+    bool _logPaused{false};
+    bool _logResumeInProgress{false};
+    QString _pendingLog;
+    qsizetype _pendingLogBytes{0};
+    bool _pendingOverflowed{false};
+    bool _timerStarted{false};
 
     ElaComboBox* _fileFormatComboBox;
 

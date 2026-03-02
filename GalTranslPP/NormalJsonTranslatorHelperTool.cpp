@@ -51,7 +51,7 @@ std::string generateCacheKey(const json& jsonArr, size_t i) {
     return prevText + currentText + nextText;
 }
 
-std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine transEngine, int contextHistorySize, int maxChars) {
+std::string buildContextHistory(std::span<Sentence*> batch, TransEngine transEngine, int contextHistorySize, int maxChars) {
     if (batch.empty() || !batch[0]->prev) {
         return {};
     }
@@ -115,7 +115,7 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
         history = "```jsonline\n" + 
             (historyJson | std::views::reverse | std::views::transform([](const auto& item) { return item.dump(); })
             | std::views::join_with('\n') | std::ranges::to<std::string>()) 
-    		    + "```";
+    		    + "\n```";
     }
     break;
 
@@ -164,24 +164,24 @@ std::string buildContextHistory(const std::vector<Sentence*>& batch, TransEngine
     return history;
 }
 
-void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, std::string& inputBlock, TransEngine transEngine) {
+void fillBlockAndMap(std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, std::string& inputBlock, TransEngine transEngine) {
     switch (transEngine)
     {
     case TransEngine::ForGalTsv:
     {
-        for (const auto& pSentence : batchToTransThisRound) {
-            const std::string name = pSentence->nameType == NameType::None ? "null" : getNameString(pSentence);
-            inputBlock += std::format("{}\t{}\t{}\n", name, pSentence->pre_processed_text, pSentence->index);
-            id2SentenceMap[pSentence->index] = pSentence;
+        for (const auto& se : batchToTransThisRound) {
+            const std::string name = se->nameType == NameType::None ? "null" : getNameString(se);
+            inputBlock += std::format("{}\t{}\t{}\n", name, se->pre_processed_text, se->index);
+            id2SentenceMap[se->index] = se;
         }
     }
     break;
 
     case TransEngine::ForNovelTsv:
     {
-        for (const auto& pSentence : batchToTransThisRound) {
-            inputBlock += std::format("{}\t{}\n", pSentence->pre_processed_text, pSentence->index);
-            id2SentenceMap[pSentence->index] = pSentence;
+        for (const auto& se : batchToTransThisRound) {
+            inputBlock += std::format("{}\t{}\n", se->pre_processed_text, se->index);
+            id2SentenceMap[se->index] = se;
         }
     }
     break;
@@ -189,27 +189,27 @@ void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, absl::
     case TransEngine::ForGalJson:
     case TransEngine::DeepseekJson:
     {
-        for (const auto& pSentence : batchToTransThisRound) {
+        for (const auto& se : batchToTransThisRound) {
             json item;
-            item["id"] = pSentence->index;
-            if (pSentence->nameType != NameType::None) {
-                item["name"] = getNameString(pSentence);
+            item["id"] = se->index;
+            if (se->nameType != NameType::None) {
+                item["name"] = getNameString(se);
             }
-            item["src"] = pSentence->pre_processed_text;
+            item["src"] = se->pre_processed_text;
             inputBlock += item.dump() + "\n";
-            id2SentenceMap[pSentence->index] = pSentence;
+            id2SentenceMap[se->index] = se;
         }
     }
     break;
 
     case TransEngine::Sakura:
     {
-        for (const auto& pSentence : batchToTransThisRound) {
-            if (pSentence->nameType != NameType::None) {
-                inputBlock += std::format("{}:::::{}\n", getNameString(pSentence), pSentence->pre_processed_text);
+        for (const auto& se : batchToTransThisRound) {
+            if (se->nameType != NameType::None) {
+                inputBlock += std::format("{}:::::{}\n", getNameString(se), se->pre_processed_text);
             }
             else {
-                inputBlock += pSentence->pre_processed_text + "\n";
+                inputBlock += se->pre_processed_text + "\n";
             }
         }
         if (!inputBlock.empty()) {
@@ -223,8 +223,8 @@ void fillBlockAndMap(const std::vector<Sentence*>& batchToTransThisRound, absl::
     }
 }
 
-void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
-    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText) {
+void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+    const std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText) {
 
     if (size_t pos = content.find("</think>"); pos != std::string::npos) {
         content = content.substr(pos + 8);
@@ -236,27 +236,39 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
     {
         static jpc::Regex backgroundRegex{ R"(<background>\n*([\S\s]*?)\n*</background>)", defaultRegCompileModifier };
         jpc::VecNum vecNum;
+        jpcre2::VecOff vecOff;
         jpc::RegexMatch rm(&backgroundRegex);
-        rm.setSubject(&content).setNumberedSubstringVector(&vecNum);
+        rm.setSubject(&content).setNumberedSubstringVector(&vecNum).setMatchStartOffsetVector(&vecOff);
         if (rm.match() > 0 && vecNum.size() > 0 && vecNum[0].size() > 1) {
+
             backgroudText = std::move(replaceStrInplace(vecNum[0][1], "<ORIGINAL>", backgroudText));
+            if (backgroudText.contains("<ORIGINAL>")) {
+                backgroudText.clear();
+            }
+            else {
+                uint8_t* s = (uint8_t*)backgroudText.c_str();
+                int32_t length = (int32_t)backgroudText.length();
+                int32_t i = 0;
+                int32_t count = 0;
+                constexpr int32_t limit = 256;
 
-            uint8_t* s = (uint8_t*)backgroudText.c_str();
-            int32_t length = (int32_t)backgroudText.length();
-            int32_t i = 0;
-            int32_t count = 0;
-            constexpr int32_t limit = 256;
+                // 从前往后数 256 个码点
+                // U8_FWD_1 宏会自动将 i 移动到下一个字符的开始位置
+                while (i < length && count < limit) {
+                    U8_FWD_1(s, i, length);
+                    ++count;
+                }
 
-            // 从前往后数 256 个码点
-            // U8_FWD_1 宏会自动将 idx 移动到下一个字符的开始位置
-            while (i < length && count < limit) {
-                U8_FWD_1(s, i, length);
-                ++count;
+                // 如果 idx < len，说明字符串比 256 个码点长
+                if (i < length) {
+                    backgroudText.replace(i, std::string::npos, "...");
+                }
             }
 
-            // 如果 idx < len，说明字符串比 256 个码点长
-            if (i < length) {
-                backgroudText.replace(i, std::string::npos, "...");
+            if (!showBackgroundText && vecNum.size() == vecOff.size()) {
+	            for (const auto& [matchedOff, matchedVec] : std::views::zip(vecOff, vecNum) | std::views::reverse) {
+                    content.erase(matchedOff, matchedVec.front().length());
+	            }
             }
         }
         else {
@@ -273,7 +285,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             break;
         }
 
-        const auto lines = splitString(content.substr(start), '\n');
+        const auto lines = splitStringView(std::string_view(content).substr(start), '\n');
         for (const auto& line : lines) {
             if (parsedCount == batchToTransThisRound.size()) {
                 break;
@@ -281,25 +293,22 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             if (line.empty() || line.contains("```")) {
                 continue;
             }
-            const auto parts = splitString(line, '\t');
+            const auto parts = splitStringView(line, '\t');
             if (parts.size() < 3) {
                 continue;
             }
             try {
-                const int id = std::stoi(parts[2]);
-                if (id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
-                    if (parts[1].empty()) {
-                        continue;
-                    }
-                    id2SentenceMap[id]->pre_translated_text = parts[1];
-                    id2SentenceMap[id]->translated_by = modelName;
-                    id2SentenceMap[id]->complete = true;
-                    completedSentences++;
+                const int id = str2Int(parts[2]).value();
+                if (const auto it = id2SentenceMap.find(id); it != id2SentenceMap.end() && !it->second->complete) {
+                    it->second->pre_translated_text = parts[1];
+                    it->second->translated_by = modelName;
+                    it->second->complete = true;
+                    ++completedSentences;
                     controller->updateBar(); // ForGalTsv
-                    parsedCount++;
+                    ++parsedCount;
                 }
             }
-            catch (...) {}
+            catch (...) { }
         }
     }
     break;
@@ -311,7 +320,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             break;
         }
 
-        const auto lines = splitString(content.substr(start), '\n');
+        const auto lines = splitStringView(std::string_view(content).substr(start), '\n');
         for (const auto& line : lines) {
             if (parsedCount == batchToTransThisRound.size()) {
                 break;
@@ -319,25 +328,22 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             if (line.empty() || line.contains("```")) {
                 continue;
             }
-            const auto parts = splitString(line, '\t');
+            const auto parts = splitStringView(line, '\t');
             if (parts.size() < 2) {
                 continue;
             }
             try {
-                const int id = std::stoi(parts[1]);
-                if (id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
-                    if (parts[0].empty()) {
-                        continue;
-                    }
-                    id2SentenceMap[id]->pre_translated_text = parts[0];
-                    id2SentenceMap[id]->translated_by = modelName;
-                    id2SentenceMap[id]->complete = true;
-                    completedSentences++;
+                const int id = str2Int(parts[1]).value();
+                if (const auto it = id2SentenceMap.find(id); it != id2SentenceMap.end() && !it->second->complete) {
+                    it->second->pre_translated_text = parts[0];
+                    it->second->translated_by = modelName;
+                    it->second->complete = true;
+                    ++completedSentences;
                     controller->updateBar(); // ForNovelTsv
-                    parsedCount++;
+                    ++parsedCount;
                 }
             }
-            catch (...) {}
+            catch (...) { }
         }
     }
     break;
@@ -350,7 +356,7 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             break;
         }
 
-        const auto lines = splitString(content.substr(start), '\n');
+        const auto lines = splitStringView(std::string_view(content).substr(start), '\n');
         for (const auto& line : lines) {
             if (parsedCount == batchToTransThisRound.size()) {
                 break;
@@ -360,27 +366,25 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             }
             try {
                 json item = json::parse(line);
-                if (const int id = item["id"]; id2SentenceMap.contains(id) && !id2SentenceMap[id]->complete) {
-                    const std::string dst = item["dst"].get<std::string>();
-                    if (dst.empty()) {
-                        continue;
-                    }
-                    id2SentenceMap[id]->pre_translated_text = dst;
-                    id2SentenceMap[id]->translated_by = modelName;
-                    id2SentenceMap[id]->complete = true;
-                    completedSentences++;
+                const int id = item["id"];
+                const std::string dst = item["dst"].get<std::string>();
+                if (const auto it = id2SentenceMap.find(id); it != id2SentenceMap.end() && !it->second->complete) {
+                    it->second->pre_translated_text = dst;
+                    it->second->translated_by = modelName;
+                    it->second->complete = true;
+                    ++completedSentences;
                     controller->updateBar(); // ForGalJson/DeepseekJson
-                    parsedCount++;
+                    ++parsedCount;
                 }
             }
-            catch (...) {}
+            catch (...) { }
         }
     }
     break;
 
     case TransEngine::Sakura:
     {
-        auto lines = splitString(content, '\n');
+        auto lines = splitStringView(content, '\n');
         // 核心检查：行数是否匹配
         if (lines.size() != batchToTransThisRound.size()) {
             break;
@@ -397,9 +401,9 @@ void parseContent(std::string& content, std::vector<Sentence*>& batchToTransThis
             currentSentence->pre_translated_text = translatedLine;
             currentSentence->translated_by = modelName;
             currentSentence->complete = true;
-            completedSentences++;
+            ++completedSentences;
             controller->updateBar(); // Sakura
-            parsedCount++;
+            ++parsedCount;
         }
     }
     break;

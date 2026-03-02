@@ -37,20 +37,19 @@ export {
 	private:
 
         const std::unique_ptr<GptDictionary>& m_gptDictionary;
-        std::move_only_function<std::string(const std::string&)> m_traditionalChineseExtractor;
 
         Problems m_problems;
         std::vector<std::string> m_punctsToCheck;
         double m_probabilityThreshold;
         std::string m_codePage;
         std::string m_targetLang;
+        absl::btree_set<std::string_view> m_excludeTraditionalCharList;
 
         std::shared_ptr<spdlog::logger> m_logger;
 
 	public:
 
-        explicit ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, const std::shared_ptr<spdlog::logger>& logger)
-            : m_gptDictionary(gptDictionary), m_targetLang(targetLang), m_logger(logger) {}
+        explicit ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, const std::shared_ptr<spdlog::logger>& logger);
 
         ~ProblemAnalyzer();
 

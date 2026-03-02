@@ -138,36 +138,45 @@ void TextFull2Half::createConversionMap() {
 }
 
 std::string TextFull2Half::convertText(const std::string& text, bool jumpTag) {
+
     std::string result;
-    const icu::UnicodeString ustr = icu::UnicodeString::fromUTF8(text);
+    result.reserve(text.length());
 
-    for (int32_t i = 0; i < ustr.length();) {
+    const uint8_t* s = (uint8_t*)text.c_str();
+    const int32_t length = (int32_t)text.length();
+    int32_t i = 0;
+    UChar32 c;
 
-        if (jumpTag) {
-            const icu::UnicodeString tempSubString = ustr.tempSubString(i);
-            if (tempSubString.startsWith(u"<tab>")) {
+    while (i < length) {
+
+        if (jumpTag && (text[i] == '<' || text[i] == '(')) {
+            std::string_view sv = std::string_view(text).substr(i);
+            if (sv.starts_with("<tab>")) {
                 result.append("<tab>");
                 i += 5;
                 continue;
             }
-            if (tempSubString.startsWith(u"<br>")) {
+            if (sv.starts_with("<br>")) {
                 result.append("<br>");
                 i += 4;
                 continue;
             }
-            if (tempSubString.startsWith(u"(Failed to translate)")) {
+            if (sv.starts_with("(Failed to translate)")) {
                 result.append("(Failed to translate)");
                 i += 21;
                 continue;
             }
         }
 
-        const UChar32 c = ustr.char32At(i);
-        i += U16_LENGTH(c);
+        U8_NEXT(s, i, length, c);
 
-        if (auto it = m_conversionMap.find(c); it != m_conversionMap.end()) {
+        if (const auto it = m_conversionMap.find(c); it != m_conversionMap.end()) {
             if (c == U'…') {
                 result.append("...");
+            }
+            else if (c == U'.' && i + 1 < length && text[i] == '.' && text[i + 1] == '.') {
+                result.append("…");
+                i += 2;
             }
             else {
                 utf8::unchecked::append(it->second, std::back_inserter(result));
@@ -177,6 +186,7 @@ std::string TextFull2Half::convertText(const std::string& text, bool jumpTag) {
             utf8::unchecked::append(c, std::back_inserter(result));
         }
     }
+
     return result;
 }
 

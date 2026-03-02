@@ -8,6 +8,7 @@
 #pragma  warning( disable: 4267 )
 #include <cld3/nnet_language_identifier.h>
 #pragma  warning(  pop  ) 
+#include <opencc/opencc.h>
 
 module ProblemAnalyzer;
 
@@ -18,10 +19,22 @@ namespace fs = std::filesystem;
 
 static thread_local std::unique_ptr<chrome_lang_id::NNetLanguageIdentifier> langIdentifier;
 static thread_local std::unique_ptr<CodePageChecker> codePageChecker;
+static thread_local std::unique_ptr<opencc::SimpleConverter> simpleConverter;
+
 
 ProblemAnalyzer::~ProblemAnalyzer() {
     langIdentifier.reset();
     codePageChecker.reset();
+    simpleConverter.reset();
+}
+
+ProblemAnalyzer::ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictionary, const std::string& targetLang, const std::shared_ptr<spdlog::logger>& logger)
+    : m_gptDictionary(gptDictionary), m_targetLang(targetLang), m_logger(logger) 
+{
+	m_excludeTraditionalCharList =
+    {
+        "乾", "阪"
+    };
 }
 
 void ProblemAnalyzer::analyze(Sentence* sentence) {
@@ -32,7 +45,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         return;
     }
 
-    // 1. 词频过高
+    // 词频过高
     if (m_problems.highFrequency.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.highFrequency.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.highFrequency.check);
@@ -45,7 +58,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         }
     }
 
-    // 2. 标点错漏
+    // 标点错漏
     if (m_problems.punctsMiss.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.punctsMiss.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.punctsMiss.check);
@@ -58,7 +71,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         }
     }
 
-    // 3. 残留日文
+    // 残留日文
     if (m_problems.remainJp.use) {
         const std::string& transView = chooseStringRef(sentence, m_problems.remainJp.check);
         if (std::string kanas = extractKana(transView); !kanas.empty()) {
@@ -66,6 +79,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         }
     }
 
+    // 引入拉丁字母
     if (m_problems.introLatin.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.introLatin.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.introLatin.check);
@@ -74,6 +88,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         }
     }
 
+    // 引入韩文
     if (m_problems.introHangul.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.introHangul.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.introHangul.check);
@@ -82,14 +97,34 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         }
     }
 
+
+    // 引入繁体字
     if (m_problems.introTraditionalChinese.use) {
+        if (!simpleConverter) {
+            simpleConverter = std::make_unique<opencc::SimpleConverter>("BaseConfig/opencc/t2s.json");
+        }
         const std::string& transView = chooseStringRef(sentence, m_problems.introTraditionalChinese.check);
-        if (std::string traditionalChars = m_traditionalChineseExtractor(transView); !traditionalChars.empty()) {
-            sentence->problems.push_back("引入繁体字: " + traditionalChars);
+        if (const std::string simplified = simpleConverter->Convert(transView); simplified != transView) { // 这一步主要是为了初筛加速
+            std::string traditionalChars;
+            for (const auto& origChar : splitIntoGraphemes(transView)
+                | std::views::filter([&](const std::string& g) { return !m_excludeTraditionalCharList.contains(g); }))
+            {
+                // 经过初筛之后的实际检查还是分单个文字进行的，我测下来这样效果会好一点，大概是因为 opencc/icu 这些库本来搞这个的目的
+                // 是真的用来繁简转换而不是用来测有没有『繁体字』的，让 opencc 联系上下文反而会出现一些误报
+                // 这实际上是放宽了对繁体字的检测，有待观察吧
+                // 但加了不少速是真的（）
+                if (const std::string simplifiedChar = simpleConverter->Convert(origChar); simplifiedChar != origChar)
+                {
+                    traditionalChars += std::format("({} -> {})", origChar, simplifiedChar);
+                }
+            }
+            if (!traditionalChars.empty()) {
+                sentence->problems.push_back("引入繁体字: " + traditionalChars);
+            }
         }
     }
 
-    // 4. 换行符不匹配
+    // 换行符不匹配
     if (m_problems.linebreakLost.use) {
         if (!sentence->originalLinebreak.empty()) {
             const std::string& origText = chooseStringRef(sentence, m_problems.linebreakLost.base);
@@ -97,7 +132,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
             int origLinebreaks = countSubstring(origText, m_problems.linebreakLost.base == CachePart::OrigText ? sentence->originalLinebreak : "<br>");
             int transLinebreaks = countSubstring(transView, m_problems.linebreakLost.check == CachePart::TransPreview ? sentence->originalLinebreak : "<br>");
             if (origLinebreaks > transLinebreaks) {
-                sentence->problems.push_back(std::format("丢失换行({}/{})", origLinebreaks, transLinebreaks));
+                sentence->problems.push_back(std::format("丢失换行({}/{})", transLinebreaks, origLinebreaks));
             }
         }
     }
@@ -108,12 +143,12 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
             int origLinebreaks = countSubstring(origText, m_problems.linebreakLost.base == CachePart::OrigText ? sentence->originalLinebreak : "<br>");
             int transLinebreaks = countSubstring(transView, m_problems.linebreakLost.check == CachePart::TransPreview ? sentence->originalLinebreak : "<br>");
             if (origLinebreaks < transLinebreaks) {
-                sentence->problems.push_back(std::format("多加换行({}/{})", origLinebreaks, transLinebreaks));
+                sentence->problems.push_back(std::format("多加换行({}/{})", transLinebreaks, origLinebreaks));
             }
         }
     }
 
-    // 5. 译文长度异常
+    // 译文长度异常
     if (m_problems.strictlyLonger.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.strictlyLonger.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.strictlyLonger.check);
@@ -130,19 +165,19 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
         const std::string& transView = chooseStringRef(sentence, m_problems.longer.check);
         size_t origTextCharCount = countGraphemes(origText);
         size_t transViewCharCount = countGraphemes(transView);
-        if (transViewCharCount > origTextCharCount * 1.3 && origTextCharCount != 0) {
+        if (transViewCharCount > (double)origTextCharCount * 1.3 && origTextCharCount != 0) {
             sentence->problems.push_back(
                 std::format("比原文长 {:.2f} 倍({}/{}字符)", transViewCharCount / (double)origTextCharCount, transViewCharCount, origTextCharCount)
             );
         }
     }
 
-    // 6. 字典未使用
+    // 字典未使用
     if (m_problems.dictUnused.use) {
         m_gptDictionary->checkDictUse(sentence, m_problems.dictUnused.base, m_problems.dictUnused.check);
     }
 
-    // 7. 语言不通
+    // 语言不通
     if (m_problems.notTargetLang.use) {
         const std::string& origText = chooseStringRef(sentence, m_problems.notTargetLang.base);
         const std::string& transView = chooseStringRef(sentence, m_problems.notTargetLang.check);
@@ -199,7 +234,7 @@ void ProblemAnalyzer::analyze(Sentence* sentence) {
 
     }
 
-    // 8. 非法字符
+    // 非法字符
     if (m_problems.invalidChar.use) {
         if (!codePageChecker) {
             codePageChecker = std::make_unique<CodePageChecker>(m_codePage, m_logger);
@@ -238,7 +273,6 @@ void ProblemAnalyzer::loadProblems(const std::vector<std::string>& problemList, 
         }
         else if (problem == "引入繁体字") {
             m_problems.introTraditionalChinese.use = true;
-            m_traditionalChineseExtractor = getTraditionalChineseExtractor(m_logger);
         }
         else if (problem == "丢失换行") {
             m_problems.linebreakLost.use = true;

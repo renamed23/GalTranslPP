@@ -1,19 +1,22 @@
-﻿#include <toml.hpp>
-#include <QCoreApplication>
+﻿
+#include <toml.hpp>
 #include <QCommandLineParser>
 #include <QApplication>
 #include <QProcess>
 #include <QDir>
-#pragma comment(lib, "GalTranslPP.lib")
 
+
+#pragma comment(lib, "GalTranslPP.lib")
 
 #ifdef Q_OS_WIN
 #include <windows.h>
 #pragma comment(lib, "User32.lib")
 #endif
 
+
 import Tool;
 namespace fs = std::filesystem;
+
 
 template<typename FnCastTo>
 FnCastTo FnCast(uint64_t fnToCast, FnCastTo) {
@@ -32,12 +35,13 @@ void waitForProcessToExit(qint64 pid) {
 #endif
 }
 
+
+
 int main(int argc, char* argv[]) {
 
 #ifdef Q_OS_WIN
-    if (HMODULE hUser32 = LoadLibraryW(L"User32.dll");) {
-        uint64_t orgSetProcessDpiAwarenessContext = (uint64_t)(GetProcAddress(hUser32, "SetProcessDpiAwarenessContext"));
-        if (orgSetProcessDpiAwarenessContext) {
+    if (HMODULE hUser32 = LoadLibraryW(L"User32.dll")) {
+        if (uint64_t orgSetProcessDpiAwarenessContext = (uint64_t)GetProcAddress(hUser32, "SetProcessDpiAwarenessContext")) {
             FnCast(orgSetProcessDpiAwarenessContext, SetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         }
         FreeLibrary(hUser32);
@@ -195,9 +199,10 @@ int main(int argc, char* argv[]) {
         }
         QProcess::startDetached("new/Updater_new.exe", arguments, QString(targetDir.toStdWString() + L"/new"));
     }
-    catch (const std::exception&) {
+    catch (const std::exception& e) {
 #ifdef Q_OS_WIN
-        MessageBoxW(nullptr, L"Failed to extract Updater_new.exe.", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
+        MessageBoxW(nullptr, std::format(L"Failed to extract Updater_new.exe.\nError: {}", ascii2Wide(e.what())).c_str(),
+            L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
         return -1;
     }

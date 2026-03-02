@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
+#include <proxy/proxy.h>
 
 export module NormalJsonTranslator;
 
@@ -80,8 +81,8 @@ export {
         using SkipProblemCondition = std::pair<jpc::Regex, std::optional<CheckSeCondFunc>>;
         std::vector<SkipProblemCondition> m_skipProblems;
 
-        std::unique_ptr<PythonManager> m_pythonManager;
         std::unique_ptr<LuaManager> m_luaManager;
+        std::unique_ptr<PythonManager> m_pythonManager;
 
         bool m_needsCombining = false; // 是否开启单文件分割
         std::shared_mutex m_transCacheMutex;
@@ -111,7 +112,7 @@ export {
 
         void postProcess(Sentence* se);
 
-        bool translateBatchWithRetry(const fs::path& relInputPath, std::vector<Sentence*>& batch, std::string& backgroundText, int threadId);
+        bool translateBatchWithRetry(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId);
 
         void processFile(const fs::path& relInputPath, int threadId);
 

@@ -43,7 +43,7 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
         ifs.close();
 
         for (const auto& item : data) {
-            m_totalSentences++;
+            ++m_totalSentences;
             Sentence se;
             if (item.contains("name")) {
                 se.nameType = NameType::Single;
@@ -108,13 +108,16 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
         {
             for (const auto& entity : entityVec) {
                 wordsInSegment.insert(entity.front());
-                m_wordCounter[entity.front()]++;
+                ++m_wordCounter[entity.front()];
             }
             if (m_logger->should_log(spdlog::level::trace)) {
-                std::string entityStr;
-                for (const auto& entity : entityVec) {
-                    entityStr += "[" + entity.front() + ", " + entity[1] + "] ";
-                }
+                const std::string entityStr = entityVec | std::views::transform([](const auto& entity)
+	                {
+		                if (entity.size() > 1) {
+			                return "[" + entity[0] + ", " + entity[1] + "]";
+		                }
+                        return std::string{};
+                    }) | std::views::join_with(' ') | std::ranges::to<std::string>();
                 m_logger->trace("原文: {}\n分词实体结果: {}", segment, entityStr);
             }
         };
@@ -199,7 +202,7 @@ std::vector<int> DictionaryGenerator::solveSentenceSelection() {
             // 遍历候选段落中的词
             for (const auto& word : filteredSegmentWords[i]) {
                 if (!coveredWords.contains(word)) {
-                    currentNewCoverage++;
+                    ++currentNewCoverage;
                 }
             }
             if (currentNewCoverage > maxNewCoverage) {
@@ -265,7 +268,7 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
 
         std::string logBlock;
         if (!hint.empty()) {
-            logBlock += "\nHint:\n" + hint;
+            logBlock += "\nHint:\n" + hint + "\n";
         }
         logBlock += "\ninputBlock:\n" + text;
         m_logger->info("[线程 {}] 开始从段落中生成术语表:\n{}", threadId, logBlock);

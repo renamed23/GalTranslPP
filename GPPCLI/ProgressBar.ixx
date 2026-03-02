@@ -1,4 +1,4 @@
-export module ProgressBar;
+﻿export module ProgressBar;
 
 import Tool;
 
@@ -28,12 +28,12 @@ export {
         inline void update(int ticks, bool removeCurrentLine);
 
         void add_thread_num() {
-            current_thread_num++;
+            ++current_thread_num;
             update(0, true);
         }
 
         void reduce_thread_num() {
-            current_thread_num--;
+            --current_thread_num;
             update(0, true);
         }
 
@@ -115,7 +115,7 @@ inline void ProgressBar::update(int ticks, bool removeCurrentLine) {
             width += 2;
         }
         else {
-            width++;
+            ++width;
         }
         if (width > consoleWidth) {
             break;

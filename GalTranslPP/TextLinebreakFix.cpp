@@ -208,7 +208,7 @@ void TextLinebreakFix::dPostRun(Sentence* se)
 			transViewToModify += token;
 			if ((index + 1) % charCountLine == 0 && linebreakAdded < origLinebreakCount && index != totalCharCount - 1) {
 				transViewToModify += se->originalLinebreak;
-				linebreakAdded++;
+				++linebreakAdded;
 			}
 		}
 	}
@@ -238,7 +238,7 @@ void TextLinebreakFix::dPostRun(Sentence* se)
 		for (const auto& relLinebreakPos : relLinebreakPositions) {
 			while (currentPos / (double)transViewToModify.length() < relLinebreakPos) {
 				currentPos += tokens[currentTokenIndex].length();
-				currentTokenIndex++;
+				++currentTokenIndex;
 			}
 			positionsToAddLinebreak.push_back(currentPos);
 		}
@@ -323,10 +323,10 @@ void TextLinebreakFix::dPostRun(Sentence* se)
 					while (currentTokenIndex < tokens.size()) {
 						double relCur = currentPos / (double)transViewToModify.length();
 						currentPos += tokens[currentTokenIndex].length();
-						currentTokenIndex++;
+						++currentTokenIndex;
 						if (double newRelCur = currentPos / (double)transViewToModify.length(); newRelCur >= relLinebreakPos) {
 							if (newRelCur - relLinebreakPos > relLinebreakPos - relCur) {
-								currentTokenIndex--;
+								--currentTokenIndex;
 								currentPos -= tokens[currentTokenIndex].length();
 							}
 							break;
@@ -359,10 +359,10 @@ void TextLinebreakFix::dPostRun(Sentence* se)
 					while (currentTokenIndex < tokens.size()) {
 						double relCur = currentPos / (double)transViewToModify.length();
 						currentPos += tokens[currentTokenIndex].length();
-						currentTokenIndex++;
+						++currentTokenIndex;
 						if (double newRelCur = currentPos / (double)transViewToModify.length(); newRelCur >= relLinebreakPos) {
 							if (newRelCur - relLinebreakPos > relLinebreakPos - relCur) {
-								currentTokenIndex--;
+								--currentTokenIndex;
 								currentPos -= tokens[currentTokenIndex].length();
 							}
 							break;
@@ -380,10 +380,10 @@ void TextLinebreakFix::dPostRun(Sentence* se)
 				while (currentTokenIndex < tokens.size()) {
 					double relCur = currentPos / (double)transViewToModify.length();
 					currentPos += tokens[currentTokenIndex].length();
-					currentTokenIndex++;
+					++currentTokenIndex;
 					if (double newRelCur = currentPos / (double)transViewToModify.length(); newRelCur >= relLinebreakPos) {
 						if (newRelCur - relLinebreakPos > relLinebreakPos - relCur) {
-							currentTokenIndex--;
+							--currentTokenIndex;
 							currentPos -= tokens[currentTokenIndex].length();
 						}
 						break;

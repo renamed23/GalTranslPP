@@ -50,7 +50,7 @@ void GptDictionary::sort() {
     }
 }
 
-std::string GptDictionary::generatePrompt(const std::vector<Sentence*>& batch, TransEngine transEngine) const {
+std::string GptDictionary::generatePrompt(std::span<Sentence*> batch, TransEngine transEngine) const {
 
     const std::string batchText = batch | std::views::transform([](const auto& se) { return se->name + ":::::" + se->pre_processed_text; })
         | std::views::join_with('\n') | std::ranges::to<std::string>();
@@ -197,7 +197,7 @@ void GptDictionary::checkDictUse(Sentence* sentence, CachePart base, CachePart c
 
     for (auto [checkResult, entry] : std::views::zip(checkResults, m_entries | std::views::as_const)) {
         // 如果原文中不包含这个词或译文中使用了对应的词，就跳过检查
-        if (checkResult == 0 || checkResult == 1) {
+        if (checkResult != 2) {
             continue;
         }
 
@@ -337,9 +337,9 @@ std::string NormalDictionary::doReplace(const Sentence* sentence, CachePart targ
     std::string textToModify = chooseString(sentence, targetToModify);
 
     for (const NormalDictEntry& entry : m_entries
-        | std::views::filter([&](const NormalDictEntry& entry)
+        | std::views::filter([&](const NormalDictEntry& e)
             {
-                return !entry.dictCondition.operator bool() || entry.dictCondition->operator ()(sentence);
+                return !e.dictCondition.operator bool() || e.dictCondition->operator ()(sentence);
             }))
     {
         if (entry.isReg) {
