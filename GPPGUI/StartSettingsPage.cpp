@@ -116,81 +116,86 @@ void StartSettingsPage::_appendLogChunkToView(const QString& log)
 	}
 
 	_logOutput->setUpdatesEnabled(false);
+	QScrollBar* scrollBar = _logOutput->verticalScrollBar();
 
-	QTextCursor tempCursor(_logOutput->document());
-	tempCursor.movePosition(QTextCursor::End);
-	tempCursor.setCharFormat(QTextCharFormat());
+	{
+		scrollBar->blockSignals(true);
+		QTextCursor tempCursor(_logOutput->document());
+		tempCursor.movePosition(QTextCursor::End);
+		tempCursor.setCharFormat(QTextCharFormat());
 
-	auto processLogFunc = [&](const QString& l)
-		{
-			QStringList lines = l.split('\n');
-			for (int i = 0; i < lines.size(); ++i) {
-				QString& line = lines[i];
-				line = line.trimmed();
-				if (i == lines.size() - 1 && line.isEmpty()) break;
-				QTextCharFormat fmt;
-				if (line.contains(" error]")) {
-					fmt.setForeground(Qt::red);
+		auto processLogFunc = [&](const QString& l)
+			{
+				QStringList lines = l.split('\n');
+				for (int i = 0; i < lines.size(); ++i) {
+					QString& line = lines[i];
+					line = line.trimmed();
+					if (i == lines.size() - 1 && line.isEmpty()) break;
+					QTextCharFormat fmt;
+					if (line.contains(" error]")) {
+						fmt.setForeground(Qt::red);
+					}
+					else if (line.contains(" critical]")) {
+						fmt.setForeground(Qt::darkRed);
+						fmt.setFontWeight(QFont::Bold);
+					}
+					else if (line.contains(" warning]")) {
+						fmt.setForeground(QColor(255, 140, 0));
+					}
+					else if (line.contains(" debug]")) {
+						fmt.setForeground(QColor(Qt::darkBlue));
+					}
+					else if (line.contains(" trace]")) {
+						fmt.setForeground(QColor(Qt::darkGreen));
+					}
+					else {
+						fmt.setForeground(QColor(Qt::black));
+					}
+					tempCursor.setCharFormat(fmt);
+					tempCursor.insertText(line);
+					if (i < lines.size() - 1) {
+						tempCursor.insertText("\n");
+					}
 				}
-				else if (line.contains(" critical]")) {
-					fmt.setForeground(Qt::darkRed);
-					fmt.setFontWeight(QFont::Bold);
-				}
-				else if (line.contains(" warning]")) {
-					fmt.setForeground(QColor(255, 140, 0));
-				}
-				else if (line.contains(" debug]")) {
-					fmt.setForeground(QColor(Qt::darkBlue));
-				}
-				else if (line.contains(" trace]")) {
-					fmt.setForeground(QColor(Qt::darkGreen));
-				}
-				else {
-					fmt.setForeground(QColor(Qt::black));
-				}
-				tempCursor.setCharFormat(fmt);
-				tempCursor.insertText(line);
-				if (i < lines.size() - 1) {
-					tempCursor.insertText("\n");
-				}
-			}
-		};
+			};
 
-	if (log.contains("```\n问题概览:")) {
-		QString logCopy = log;
-		int index = log.indexOf("```\n问题概览:");
-		QString pre = logCopy.left(index);
-		logCopy = logCopy.mid(index);
-		index = logCopy.indexOf("问题概览结束\n```");
-		QString overview = logCopy.left(index + 10);
-		logCopy = logCopy.mid(index + 10);
-		QString post = std::move(logCopy);
-		processLogFunc(pre);
-		QTextCharFormat format;
-		format.setForeground(QColor(255, 0, 0));
-		tempCursor.setCharFormat(format);
-		tempCursor.insertText(overview);
-		processLogFunc(post);
-	}
-	else {
-		if (log.length() > 512 * 3 || log.count('\n') > 30) {
-			tempCursor.insertText(log);
+		if (log.contains("```\n问题概览:")) {
+			QString logCopy = log;
+			int index = log.indexOf("```\n问题概览:");
+			QString pre = logCopy.left(index);
+			logCopy = logCopy.mid(index);
+			index = logCopy.indexOf("问题概览结束\n```");
+			QString overview = logCopy.left(index + 10);
+			logCopy = logCopy.mid(index + 10);
+			QString post = std::move(logCopy);
+			processLogFunc(pre);
+			QTextCharFormat format;
+			format.setForeground(QColor(255, 0, 0));
+			tempCursor.setCharFormat(format);
+			tempCursor.insertText(overview);
+			processLogFunc(post);
 		}
 		else {
-			processLogFunc(log);
+			if (log.length() > 512 * 3 || log.count('\n') > 30) {
+				tempCursor.insertText(log);
+			}
+			else {
+				processLogFunc(log);
+			}
 		}
+
+		int currentLineCount = _logOutput->document()->lineCount();
+		if (currentLineCount > MAX_LOG_LINE_COUNT) {
+			const int toRemoveLineCount = currentLineCount - MAX_LOG_LINE_COUNT;
+			QTextCursor deleteCursor(_logOutput->document());
+			deleteCursor.movePosition(QTextCursor::Start);
+			deleteCursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, toRemoveLineCount);
+			deleteCursor.removeSelectedText();
+		}
+
+		scrollBar->blockSignals(false);
 	}
 
-	int currentLineCount = _logOutput->document()->lineCount();
-	if (currentLineCount > MAX_LOG_LINE_COUNT) {
-		const int toRemoveLineCount = currentLineCount - MAX_LOG_LINE_COUNT;
-		QTextCursor deleteCursor(_logOutput->document());
-		deleteCursor.movePosition(QTextCursor::Start);
-		deleteCursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor, toRemoveLineCount);
-		deleteCursor.removeSelectedText();
-	}
-
-	QScrollBar* scrollBar = _logOutput->verticalScrollBar();
 	scrollBar->setValue(scrollBar->maximum());
 	_logOutput->setUpdatesEnabled(true);
 }
@@ -278,6 +283,7 @@ void StartSettingsPage::_setupUI()
 				_timerStarted = false;
 			}
 		});
+	_logOutput->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	QScrollBar* logScrollBar = _logOutput->verticalScrollBar();
 	connect(logScrollBar, &QScrollBar::valueChanged, this, [=](int)
 		{
