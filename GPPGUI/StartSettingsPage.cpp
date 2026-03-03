@@ -456,12 +456,11 @@ void StartSettingsPage::_setupUI()
 		});
 	connect(_worker, &TranslatorWorker::writeLogSignal, this, [this](const QString& log)
 		{
-			const bool atBottom = _isLogScrollAtBottom();
-			if (atBottom && !_logPaused && !_logResumeInProgress && _pendingLog.isEmpty() && !_pendingOverflowed) {
+			if (_isLogScrollAtBottom() && !_logPaused && !_logResumeInProgress && _pendingLog.isEmpty() && !_pendingOverflowed) {
 				_appendLogChunkToView(log);
 				return;
 			}
-			if (!atBottom) {
+			if (!_isLogScrollAtBottom()) {
 				_setLogPaused(true);
 			}
 			_enqueuePendingLog(log);
