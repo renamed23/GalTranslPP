@@ -163,6 +163,7 @@ def dPostRun(se: gpp.Sentence):
     try:
         processSentence(se)
         linkLine(se)
+        se.translated_preview = se.translated_preview.replace(LINEBREAK_SYMBOL, "\n")
     except Exception as e:
         logger.error(f"Error during LineLink run(): {e}")
 
