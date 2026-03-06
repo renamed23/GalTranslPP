@@ -40,7 +40,6 @@ def clean_fullwidth_spaces(root_folder):
 
                     if removed_count == 0:
                         print("未发现仅包含全角空格的行，文件未修改。")
-                        return
 
                     # 3. 写入文件 (覆盖原文件)
                     with open(file_path, 'w', encoding=encoding_type) as f:
