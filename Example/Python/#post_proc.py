@@ -68,8 +68,8 @@ try:
                 encoding='utf-8'
             )
     print(f"返回输出: {result.stdout}")
-    input("Done.")
 
 except Exception as e:
     print(f"Error during unload(): {e}")
     
+input("Done.")
