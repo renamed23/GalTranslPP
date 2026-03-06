@@ -541,6 +541,9 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
             se->translated_preview = se->translated_preview.substr(pos + 1);
         }
     }
+    else if (se->translated_preview.contains("GPPCProblem")) {
+        se->problems.push_back("错误的 GPPCProblem 格式");
+    }
 
     for (auto& plugin : m_textPlugins) {
         plugin->postRun(se);

@@ -176,7 +176,7 @@ void StartSettingsPage::_appendLogChunkToView(const QString& log)
 			processLogFunc(post);
 		}
 		else {
-			if (log.length() > 512 * 3 || log.count('\n') > 30) {
+			if (log.length() > 4096 || log.count('\n') > 30) {
 				tempCursor.insertText(log);
 			}
 			else {
