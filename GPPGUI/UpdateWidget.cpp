@@ -16,8 +16,8 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. [GUI] 修复一些情境下日志暂停模式无故跳出的 bug",
-		"2. [GUI] 新增单行截断，避免 aiwave 报错之类的拉稀式报错刷屏",
+        "1. 取消暂停翻译时最后一轮的无用退避等待",
+		"2. 修复暂停翻译后不会显示已翻译句子问题概览的bug",
     };
 
     mainLayout->addWidget(updateTitle);
