@@ -1,5 +1,6 @@
 ﻿module;
 
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <unicode/unistr.h>
@@ -40,6 +41,18 @@ TextFull2Half::TextFull2Half(const toml::value& projectConfig, const std::shared
             m_conversionMap.erase(c);
             i += U16_LENGTH(c);
         }
+
+        const auto notConvertRegStrs = 
+            parseToml<std::vector<std::string>>(projectConfig, pluginConfig, "plugins.TextFull2Half.notConvertRegs");
+        for (const auto& regStr : notConvertRegStrs) {
+            jpc::Regex reg(regStr, defaultRegCompileModifier);
+            if (!reg) {
+                throw std::invalid_argument(std::format("TextFull2Half 正则编译错误: {}", regStr));
+            }
+            m_notConvertRegs.push_back(std::move(reg));
+        }
+
+        m_notConvertedCharsKey = std::format("TF2H-{}-notConvertedChars", pluginRunTimeNames[m_runTime]);
 
         m_logger->info("TextFull2Half-{} 已加载 - 替换标点: {}, 反向替换: {}",
             pluginRunTimeNames[m_runTime], m_replacePunctuation, m_reverseConversion);
@@ -137,7 +150,7 @@ void TextFull2Half::createConversionMap() {
     }
 }
 
-std::string TextFull2Half::convertText(const std::string& text, bool jumpTag) {
+std::string TextFull2Half::convertText(const std::string& text, Sentence* se, bool jumpTag) {
 
     std::string result;
     result.reserve(text.length());
@@ -146,6 +159,27 @@ std::string TextFull2Half::convertText(const std::string& text, bool jumpTag) {
     const int32_t length = (int32_t)text.length();
     int32_t i = 0;
     UChar32 c;
+
+    std::vector<uint8_t> notConvertFlags(text.length(), 0);
+    if (!m_notConvertRegs.empty()) {
+        jpcre2::VecOff startOffVec;
+        jpcre2::VecOff endOffVec;
+        jpc::RegexMatch rm;
+        rm.setModifier("g").setMatchStartOffsetVector(&startOffVec).setMatchEndOffsetVector(&endOffVec).setSubject(&text);
+        for (auto& reg : m_notConvertRegs) {
+            if (rm.setRegexObject(&reg).match() > 0) {
+                for (const auto& [startOff, endOff] : std::views::zip(startOffVec, endOffVec)) {
+                    std::memset(notConvertFlags.data() + startOff, 1, endOff - startOff);
+                }
+            }
+        }
+        const std::string notConvertedChars = std::views::iota(0uz, notConvertFlags.size()) 
+    	    | std::views::filter([&](const auto& index){ return notConvertFlags[index] != 0;}) 
+    	    | std::views::transform([&](const auto& index) { return text[index]; }) | std::ranges::to<std::string>();
+        if (!notConvertedChars.empty()) {
+            se->other_info[m_notConvertedCharsKey] = notConvertedChars;
+        }
+    }
 
     while (i < length) {
 
@@ -166,6 +200,12 @@ std::string TextFull2Half::convertText(const std::string& text, bool jumpTag) {
                 i += 21;
                 continue;
             }
+        }
+
+        if (notConvertFlags[i]) {
+            U8_NEXT(s, i, length, c);
+            utf8::unchecked::append(c, std::back_inserter(result));
+            continue;
         }
 
         U8_NEXT(s, i, length, c);
@@ -194,26 +234,26 @@ void TextFull2Half::dPreRun(Sentence* se) {
     if (m_runTime != PluginRunTime::DPre) {
         return;
     }
-    se->pre_processed_text = convertText(se->pre_processed_text, false);
+    se->pre_processed_text = convertText(se->pre_processed_text, se, false);
 }
 
 void TextFull2Half::preRun(Sentence* se) {
     if (m_runTime != PluginRunTime::Pre) {
         return;
     }
-    se->pre_processed_text = convertText(se->pre_processed_text, true);
+    se->pre_processed_text = convertText(se->pre_processed_text, se, true);
 }
 
 void TextFull2Half::postRun(Sentence* se) {
     if (m_runTime != PluginRunTime::Post) {
         return;
     }
-    se->translated_preview = convertText(se->translated_preview, true);
+    se->translated_preview = convertText(se->translated_preview, se, true);
 }
 
 void TextFull2Half::dPostRun(Sentence* se) {
     if (m_runTime != PluginRunTime::DPost) {
         return;
     }
-    se->translated_preview = convertText(se->translated_preview, false);
+    se->translated_preview = convertText(se->translated_preview, se, false);
 }

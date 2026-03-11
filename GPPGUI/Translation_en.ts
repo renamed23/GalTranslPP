@@ -1003,6 +1003,11 @@
         <translation>Stanza lang id, you need reboot app after downloading a new model</translation>
     </message>
     <message>
+        <location filename="CommonSettingsPage.cpp" line="434"/>
+        <source>linebreakSymbol 不符合 toml 规范</source>
+        <translation>linebreakSymbol is nonconforming</translation>
+    </message>
+    <message>
         <source>分词器词典路径</source>
         <translation type="vanished">Tokenizer dict path</translation>
     </message>
@@ -1038,9 +1043,8 @@
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="CommonSettingsPage.cpp" line="434"/>
         <source>linebreakSymbol不符合 toml 规范</source>
-        <translation>linebreakSymbol is nonconforming</translation>
+        <translation type="vanished">linebreakSymbol is nonconforming</translation>
     </message>
 </context>
 <context>
@@ -2505,12 +2509,12 @@
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="141"/>
+        <location filename="PluginSettingsPage.cpp" line="142"/>
         <source> 不符合 toml 规范</source>
         <translation> is nonconforming</translation>
     </message>
     <message>
-        <location filename="PluginSettingsPage.cpp" line="148"/>
+        <location filename="PluginSettingsPage.cpp" line="149"/>
         <source>自定义文本处理插件</source>
         <translation>Custom text plugins</translation>
     </message>
@@ -3145,30 +3149,40 @@
 <context>
     <name>TF2HCfgPage</name>
     <message>
-        <location filename="TF2HCfgPage.cpp" line="17"/>
-        <location filename="TF2HCfgPage.cpp" line="73"/>
+        <location filename="TF2HCfgPage.cpp" line="19"/>
+        <location filename="TF2HCfgPage.cpp" line="108"/>
         <source>全角半角转换设置</source>
         <translation>Convert settings</translation>
     </message>
     <message>
-        <location filename="TF2HCfgPage.cpp" line="28"/>
+        <location filename="TF2HCfgPage.cpp" line="30"/>
         <source>转换标点符号</source>
         <translation>Convert punctuations</translation>
     </message>
     <message>
-        <location filename="TF2HCfgPage.cpp" line="43"/>
+        <location filename="TF2HCfgPage.cpp" line="45"/>
         <source>反向替换</source>
         <translation>Reverse converting</translation>
     </message>
     <message>
-        <location filename="TF2HCfgPage.cpp" line="43"/>
+        <location filename="TF2HCfgPage.cpp" line="45"/>
         <source>关闭为全转半，开启为半转全</source>
         <translation>Full to half when not enabled, half to full when enabled</translation>
     </message>
     <message>
-        <location filename="TF2HCfgPage.cpp" line="55"/>
+        <location filename="TF2HCfgPage.cpp" line="57"/>
         <source>不转换的字符</source>
         <translation>Exclude chars</translation>
+    </message>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="102"/>
+        <source>解析失败</source>
+        <translation>Fail to analyze</translation>
+    </message>
+    <message>
+        <location filename="TF2HCfgPage.cpp" line="102"/>
+        <source>notConvertRegs 不符合 toml 规范</source>
+        <translation>notConvertRegs is nonconforming</translation>
     </message>
 </context>
 <context>
