@@ -71,12 +71,11 @@ cd GalTranslPP
 ### 4.4 编译 OpenCC
 
 - 1、  使用 Visual Studio 打开 `3rdParty\OpenCC` 文件夹。
-- 2、  如果编译选项没有 `x64-Release`，就先点到管理配置，点击绿色加号，选择 `x64-Release`，Ctrl + S 保存。
-- 3、  选择 `x64-Release`，生成 opencc.dll(安装) (lib\opencc.dll)。
-- 4、  **确认编译产物**
-  - 确保 `3rdParty\OpenCC\out\install\x64-Release\include` 文件夹存在，程序会用到里面的头文件
-  - 确保 `3rdParty\OpenCC\out\install\x64-Release\lib` 目录下存在文件 `marisa.lib` 和 `opencc.lib`
-  - 确保 `3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll` 文件存在
+- 2、  双击运行 `build.cmd`。
+- 3、  **确认编译产物**
+  - 确保 `3rdParty\OpenCC\build\include` 文件夹存在，程序会用到里面的头文件
+  - 确保 `3rdParty\OpenCC\build\lib` 目录下存在文件 `marisa.lib` 和 `opencc.lib`
+  - 确保 `3rdParty\OpenCC\build\bin\opencc.dll` 文件存在
 
 ## 5. 编译 GalTranslPP (主项目)
 

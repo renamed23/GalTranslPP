@@ -83,7 +83,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;..\3rdParty\OpenCC\out\install\x64-Release\lib;..\3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;..\3rdParty\OpenCC\build\lib;..\3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>del "$(TargetDir)$(TargetName).exp"
@@ -91,8 +91,8 @@ del "$(TargetDir)$(TargetName).lib"
 
 copy "$(SolutionDir)3rdParty\7z.dll" "$(TargetDir)7z.dll"
 copy "$(SolutionDir)3rdParty\pybind11\bin\python*.dll" "$(TargetDir)"
-copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
-copy "$(SolutionDir)3rdParty\ElaWidgetTools\out\build\Release\ElaWidgetTools\ElaWidgetTools.dll" "$(TargetDir)ElaWidgetTools.dll"
+copy "$(SolutionDir)3rdParty\OpenCC\build\bin\opencc.dll" "$(TargetDir)opencc.dll"
+copy "$(SolutionDir)3rdParty\ElaWidgetTools\Install\ElaWidgetTools\bin\ElaWidgetTools.dll" "$(TargetDir)ElaWidgetTools.dll"
 
 copy "$(TargetPath)" "$(TargetDir)..\GUICORE\$(TargetName)$(TargetExt)"
 if not exist "$(TargetDir)..\GUICORE\translations" mkdir "$(TargetDir)..\GUICORE\translations"
