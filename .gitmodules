@@ -7,3 +7,6 @@
 [submodule "3rdParty/OpenCC"]
 	path = 3rdParty/OpenCC
 	url = https://github.com/BYVoid/OpenCC
+[submodule "3rdParty/pybind11"]
+	path = 3rdParty/pybind11
+	url = https://github.com/pybind/pybind11.git
