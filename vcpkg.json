@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "$note": "更新依赖时记得替换测试路径的依赖的 dll（哭哭）",
   "name": "galtranslpp",
-  "version": "2.3.7",
+  "version": "2.3.8",
   "dependencies": [
     "nlohmann-json",
     "toml11",
@@ -34,5 +34,5 @@
       "version": "5.4.8"
     }
   ],
-  "builtin-baseline": "a34a3811fce990f9d2809cf0356dd443143c7000"
+  "builtin-baseline": "40c0d758e1cc99a505b039a9a7e792154119c927"
 }

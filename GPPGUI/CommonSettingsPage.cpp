@@ -431,7 +431,7 @@ void CommonSettingsPage::_setupUI()
 				}
 			}
 			catch (...) {
-				ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("linebreakSymbol不符合 toml 规范"), 3000);
+				ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("linebreakSymbol 不符合 toml 规范"), 3000);
 			}
 		};
 

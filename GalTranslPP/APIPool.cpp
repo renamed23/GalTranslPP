@@ -85,8 +85,9 @@ bool APIPool::isEmpty() {
     return m_apis.empty();
 }
 
-bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
-    const std::filesystem::path& relInputPath, const std::string& apiStrategy, const std::shared_ptr<spdlog::logger>& logger,
+bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& apiPool, const TranslationApi& currentAPI,
+    const std::filesystem::path& relInputPath, const std::string& apiStrategy, 
+    const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger,
     int& retryCount, int threadId, bool m_checkQuota)
 {
     if (response.success) {
@@ -104,14 +105,14 @@ bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& 
         )
     {
         logger->error("[线程 {}] API Key [{}] 疑似额度用尽，短期内多次报告将从池中移除。", threadId, currentAPI.apikey);
-        m_apiPool->reportProblem(currentAPI);
+        apiPool->reportProblem(currentAPI);
         // 不需要增加 retryCount
         return false;
     }
     // key 没有这个模型
     else if (lowerErrorMsg.contains("no available")) {
         logger->error("[线程 {}] API Key [{}] 没有 [{}] 模型，短期内多次报告将从池中移除。", threadId, currentAPI.apikey, currentAPI.modelName);
-        m_apiPool->reportProblem(currentAPI);
+        apiPool->reportProblem(currentAPI);
         return false;
     }
 
@@ -125,7 +126,7 @@ bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& 
         const int maxSleepSeconds = (int)std::pow(2, 6);
         const int sleepSeconds = std::rand() % maxSleepSeconds;
         logger->debug("[线程 {}] [文件 {}] 将等待 {} 秒后重试...", threadId, wide2Ascii(relInputPath), sleepSeconds);
-        if (sleepSeconds > 0) {
+        if (sleepSeconds > 0 && !controller->shouldStop()) {
             std::this_thread::sleep_for(std::chrono::seconds(sleepSeconds));
         }
         return false;
@@ -136,7 +137,7 @@ bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& 
     logger->warn("[线程 {}] [文件 {}] 遇到未知API错误，进行第 {} 次重试...", threadId, wide2Ascii(relInputPath), retryCount);
     if (apiStrategy == "fallback") {
         logger->warn("[线程 {}] 将切换到下一个 API Key(如果有多个API Key的话)", threadId);
-        m_apiPool->resortTokens();
+        apiPool->resortTokens();
     }
     std::this_thread::sleep_for(std::chrono::seconds(2)); // 简单等待
     return false;

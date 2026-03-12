@@ -6,6 +6,7 @@
 export module APIPool;
 
 import std;
+import ITranslator;
 export import APITool;
 
 export {
@@ -34,7 +35,8 @@ export {
         bool isEmpty();
     };
 
-    bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& m_apiPool, const TranslationApi& currentAPI,
-        const std::filesystem::path& relInputPath, const std::string& apiStrategy, const std::shared_ptr<spdlog::logger>& logger,
+    bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& apiPool, const TranslationApi& currentAPI,
+        const std::filesystem::path& relInputPath, const std::string& apiStrategy, 
+        const std::shared_ptr<IController>& controller, const std::shared_ptr<spdlog::logger>& logger,
         int& retryCount, int threadId, bool m_checkQuota);
 }

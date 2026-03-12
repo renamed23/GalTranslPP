@@ -1,5 +1,6 @@
 ﻿module;
 
+#define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <spdlog/spdlog.h>
 #include <toml.hpp>
@@ -14,14 +15,17 @@ export {
     class TextFull2Half {
     private:
         absl::flat_hash_map<char32_t, char32_t> m_conversionMap;
+        std::vector<jpc::Regex> m_notConvertRegs;
+        std::string m_notConvertedCharsKey;
         std::shared_ptr<spdlog::logger> m_logger;
+
         bool m_replacePunctuation;
         bool m_reverseConversion;
 
         PluginRunTime m_runTime;
 
         void createConversionMap();
-        std::string convertText(const std::string& text, bool jumpTag);
+        std::string convertText(const std::string& text, Sentence* se, bool jumpTag);
 
     public:
         TextFull2Half(const toml::value& projectConfig, const std::shared_ptr<spdlog::logger>& logger, PluginRunTime runTime);

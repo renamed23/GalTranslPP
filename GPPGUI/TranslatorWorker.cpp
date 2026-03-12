@@ -49,6 +49,14 @@ public:
     {
         std::lock_guard<std::mutex> lock(_mutex);
         if (!_log.isEmpty()) {
+            QStringList lines = _log.split('\n');
+            for (QString& line : lines) {
+                if (line.length() > 256) {
+                    line.truncate(256);
+                    line += "(... truncated)";
+                }
+            }
+            _log = lines.join('\n');
             Q_EMIT _worker->writeLogSignal(_log);
             _log.clear();
         }

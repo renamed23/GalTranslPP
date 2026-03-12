@@ -108,7 +108,7 @@ void PluginSettingsPage::_setupUI()
     _updateMoveButtonStates();
 
     auto createCustomPluginsPlainTextEditFunc = 
-        [=](const QString& title, const std::string& configKey, const toml::ordered_array& customPlugins) -> std::function<void(toml::ordered_array&)>
+        [=](const QString& title, const std::string& configKey, const toml::ordered_array& customPlugins_) -> std::function<void(toml::ordered_array&)>
         {
             ElaText* customPluginsTitle = new ElaText(title, 18, mainWidget);
             customPluginsTitle->setWordWrap(false);
@@ -120,7 +120,7 @@ void PluginSettingsPage::_setupUI()
             QFont font = customPluginsEdit->font();
             font.setPixelSize(14);
             customPluginsEdit->setFont(font);
-            customPluginsEdit->setPlainText(QString::fromStdString(toml::format(toml::ordered_value{ toml::ordered_table{{ configKey, customPlugins }} })));
+            customPluginsEdit->setPlainText(QString::fromStdString(toml::format(toml::ordered_value{ toml::ordered_table{{ configKey, customPlugins_ }} })));
             customPluginsEdit->moveCursor(QTextCursor::Start);
             mainLayout->addWidget(customPluginsEdit);
 
@@ -138,7 +138,8 @@ void PluginSettingsPage::_setupUI()
                         }
                     }
                     catch (...) {
-                        ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析错误"), QString::fromStdString(configKey) + tr(" 不符合 toml 规范"), 3000);
+                        ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析错误"), 
+                            QString::fromStdString(configKey) + tr(" 不符合 toml 规范"), 3000);
                     }
                 };
             return saveFunc;

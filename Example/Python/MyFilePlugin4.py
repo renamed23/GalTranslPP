@@ -106,15 +106,16 @@ def unload():
         if runUnloadFunc and pythonTranslator.m_transEngine != gpp.ShowNormal:
 
             fontChangerPath = pythonTranslator.m_projectDir / "DynamicFontChanger.exe"
-            gamePath = Path(r"D:\GALGAME\linshi\姫恋＊シュクレーヌ！")
+            gamePath = Path(r"D:\GALGAME\linshi\ボンボンカンパニー\貧は僕らの福の神")
             targetTransPath = gamePath / "textproc" / "trans"
             charMapPath = pythonTranslator.m_projectDir / "charMap.json"
-            newFontPath = pythonTranslator.m_projectDir / "Himekoi_mjp.ttf"
+            charsNotMapPath = pythonTranslator.m_projectDir / "charsNotMap.json"
+            newFontPath = pythonTranslator.m_projectDir / "B  I  N  B  O_mjp.ttf"
 
             result = subprocess.run(
                 [fontChangerPath, "-j", "gt_output", 
                  "-i", "julixiansimhei-Regular.ttf", 
-                 "-f", "Himekoi",
+                 "-f", "B  I  N  B  O",
                  "-e", "excludeList.json",
                  "-s"],
                 cwd=pythonTranslator.m_projectDir,
@@ -124,8 +125,9 @@ def unload():
             )
             logger.info(f"返回输出: {result.stdout}")
             
-            shutil.copy(charMapPath, gamePath)
-            shutil.copy(newFontPath, gamePath)
+            shutil.copy2(charMapPath, gamePath)
+            shutil.copy2(charsNotMapPath, gamePath)
+            shutil.copy2(newFontPath, gamePath)
             shutil.copytree(pythonTranslator.m_projectDir / "gt_output_sjis_output", targetTransPath, dirs_exist_ok=True)
 
     except Exception as e:
