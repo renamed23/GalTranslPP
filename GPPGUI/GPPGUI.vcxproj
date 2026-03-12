@@ -78,26 +78,32 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <EnableModules>true</EnableModules>
       <BuildStlModules>true</BuildStlModules>
-      <AdditionalIncludeDirectories>..\3rdParty\ElaWidgetTools\Install\ElaWidgetTools\include;ElaWidgetTools;..\vcpkg_installed\x64-windows\x64-windows\include\python3.12;..\GalTranslPP\python3.12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\3rdParty\pybind11\include;..\3rdParty\pybind11\Python\include;..\3rdParty\ElaWidgetTools\Install\ElaWidgetTools\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib;..\3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib;..\3rdParty\OpenCC\out\install\x64-Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;..\3rdParty\OpenCC\out\install\x64-Release\lib;..\3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
+      <Command>del "$(TargetDir)$(TargetName).exp"
+del "$(TargetDir)$(TargetName).lib"
+
+copy "$(SolutionDir)\3rdParty\pybind11\bin\python*.dll" "$(TargetDir)"
+copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
 copy "$(SolutionDir)3rdParty\ElaWidgetTools\out\build\Release\ElaWidgetTools\ElaWidgetTools.dll" "$(TargetDir)ElaWidgetTools.dll"
+
 copy "$(TargetPath)" "$(TargetDir)..\GUICORE\$(TargetName)$(TargetExt)"
 if not exist "$(TargetDir)..\GUICORE\translations" mkdir "$(TargetDir)..\GUICORE\translations"
 copy "$(TargetDir)translations\Translation_*.*" "$(TargetDir)..\GUICORE\translations\"
-if exist "$(TargetDir)..\GPPGUI_PRIVATE" (copy "$(TargetPath)" "$(TargetDir)..\GPPGUI_PRIVATE\$(TargetName)$(TargetExt)"
+copy "$(TargetDir)*.dll" "$(TargetDir)..\GUICORE\"
+
+if exist "$(TargetDir)..\GPPGUI_PRIVATE" (
+copy "$(TargetPath)" "$(TargetDir)..\GPPGUI_PRIVATE\$(TargetName)$(TargetExt)"
 copy "$(TargetDir)translations\Translation_*.*" "$(TargetDir)..\GPPGUI_PRIVATE\translations\"
-copy "$(TargetDir)opencc.dll" "$(TargetDir)..\GPPGUI_PRIVATE\opencc.dll"
-copy "$(TargetDir)ElaWidgetTools.dll" "$(TargetDir)..\GPPGUI_PRIVATE\ElaWidgetTools.dll"
+copy "$(TargetDir)*.dll" "$(TargetDir)..\GPPGUI_PRIVATE\"
 )
-del "$(TargetDir)$(TargetName).exp"
-del "$(TargetDir)$(TargetName).lib"</Command>
+</Command>
     </PostBuildEvent>
     <QtTranslation>
       <BuildAction>lupdate_lrelease</BuildAction>

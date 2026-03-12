@@ -19,6 +19,8 @@ import Tool;
 namespace fs = std::filesystem;
 namespace py = pybind11;
 
+static fs::path s_pythonExePath;
+
 // PythonMainInterpreterManager
 PythonMainInterpreterManager::PythonMainInterpreterManager() {
     if (Py_IsInitialized()) {
@@ -81,7 +83,7 @@ std::shared_ptr<py::object> PythonMainInterpreterManager::registerNLPFunction
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     logger->info("正在执行安装命令: {}", installCommand);
 
-                    if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand))) {
+                    if (!executeCommand(s_pythonExePath.wstring(), ascii2Wide(installCommand))) {
                         throw std::runtime_error(std::format("安装模型 {} 的命令失败", modelName));
                     }
 
@@ -378,7 +380,7 @@ void checkPythonDependencies(const std::vector<std::string>& dependencies, const
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     logger->info("正在执行安装命令: {}", installCommand);
 
-                    if (!executeCommand((fs::absolute(Py_GetPrefix()) / L"python.exe").wstring(), ascii2Wide(installCommand))) {
+                    if (!executeCommand(s_pythonExePath.wstring(), ascii2Wide(installCommand))) {
                         throw std::runtime_error(std::format("安装依赖 {} 的命令失败", dependency));
                     }
 
@@ -415,13 +417,13 @@ bool startUpPythonEnv(const fs::path& pyEnvPath, std::unique_ptr<py::gil_scoped_
             }();
 
         if (!envZipPath.empty()) {
+            s_pythonExePath = fs::canonical(pyEnvPath / L"python.exe");
             PyConfig config;
             PyConfig_InitPythonConfig(&config);
             PyConfig_SetString(&config, &config.home, fs::canonical(pyEnvPath).c_str());
             PyConfig_SetString(&config, &config.executable, fs::canonical(pyEnvPath / L"python.exe").c_str());
             PyConfig_SetString(&config, &config.pythonpath_env, envZipPath.c_str());
             py::initialize_interpreter(&config);
-            py::detail::get_num_interpreters_seen() = 1;
             {
                 py::module_::import("importlib.metadata");
                 py::module_::import("sys").attr("path").attr("append")(wide2Ascii(fs::absolute(L"BaseConfig/pyScripts")));

@@ -25,6 +25,8 @@
 #pragma comment(lib, "marisa.lib")
 #pragma comment(lib, "opencc.lib")
 
+#pragma comment(lib, "python3.lib")
+#pragma comment(lib, "python312.lib")
 
 module Tool;
 

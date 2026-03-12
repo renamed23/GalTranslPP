@@ -128,19 +128,25 @@
       <EnableModules>true</EnableModules>
       <BuildStlModules>true</BuildStlModules>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>..\vcpkg_installed\x64-windows\x64-windows\include\python3.12;..\GalTranslPP\python3.12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\3rdParty\pybind11\include;..\3rdParty\pybind11\Python\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\lib;..\3rdParty\OpenCC\out\install\x64-Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;..\3rdParty\OpenCC\out\install\x64-Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
-if exist "$(TargetDir)..\GPPCLI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GPPCLI_PRIVATE\$(TargetName)$(TargetExt)" &amp; copy "$(TargetDir)opencc.dll" "$(TargetDir)..\GPPCLI_PRIVATE\opencc.dll"
-del "$(TargetDir)$(TargetName).exp"
-del "$(TargetDir)$(TargetName).lib"</Command>
+      <Command>del "$(TargetDir)$(TargetName).exp"
+del "$(TargetDir)$(TargetName).lib"
+
+copy "$(SolutionDir)\3rdParty\pybind11\bin\python*.dll" "$(TargetDir)"
+copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
+
+if exist "$(TargetDir)..\GPPCLI_PRIVATE" (
+copy "$(TargetPath)" "$(TargetDir)..\GPPCLI_PRIVATE\$(TargetName)$(TargetExt)"
+copy "$(TargetDir)*.dll" "$(TargetDir)..\GPPCLI_PRIVATE\"
+)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
