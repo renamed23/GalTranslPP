@@ -6,7 +6,7 @@
 	url = https://github.com/julixian/sol2.git
 [submodule "3rdParty/OpenCC"]
 	path = 3rdParty/OpenCC
-	url = https://github.com/BYVoid/OpenCC
+	url = https://github.com/julixian/OpenCC.git
 [submodule "3rdParty/pybind11"]
 	path = 3rdParty/pybind11
 	url = https://github.com/julixian/pybind11.git
