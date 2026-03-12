@@ -145,7 +145,10 @@ problemList = [
 retranslKeys = [
   #[{ conditionScript='<PROJECT_DIR>/Lua/MySampleTextPlugin.lua',conditionFunc='funcName'},
   #{ conditionScript='<PROJECT_DIR>/Python/MySampleTextPlugin.py',conditionFunc='funcName'}],
-  #"残留日文",
+  # "本有",
+  # "本无",
+  "引入繁体字",
+  "残留日文",
   "翻译失败", # 等效于 [{ conditionTarget = 'problems', conditionReg = '翻译失败' }]
 ]
 

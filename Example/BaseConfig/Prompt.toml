@@ -223,6 +223,7 @@ Translate the following list of character names from the source language to [Tar
 5.  **Style**:
     *   Preserve the "flavor" of the name.
     *   If a name is written in Katakana/foreign script, transcribe it phonetically to [TargetLang] unless it has a canonical translation.
+    *   Retain the src name's Half-width and full-width usage(important!).
 
 ## Glossary (Reference)
 [Glossary]

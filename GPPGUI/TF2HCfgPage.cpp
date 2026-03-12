@@ -8,6 +8,8 @@
 #include "ElaLineEdit.h"
 #include "ElaScrollPageArea.h"
 #include "ElaDoubleText.h"
+#include "ElaPlainTextEdit.h"
+#include "ElaMessageBar.h"
 
 import Tool;
 
@@ -62,11 +64,44 @@ TF2HCfgPage::TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
     excludeLayout->addWidget(excludeEdit);
     mainLayout->addWidget(excludeArea);
 
+    mainLayout->addSpacing(10);
+    // notConvertRegs
+    toml::ordered_array notConvertRegsArr = toml::find_or_default<toml::ordered_array>(_projectConfig, "plugins", "TextFull2Half", "notConvertRegs");
+    ElaText* notConvertRegsTitle = new ElaText("Not convert regular expressions", 18, centerWidget);
+    notConvertRegsTitle->setWordWrap(false);
+    mainLayout->addWidget(notConvertRegsTitle);
+    ElaPlainTextEdit* notConvertRegsEdit = new ElaPlainTextEdit(centerWidget);
+    QFont font = notConvertRegsEdit->font();
+    font.setPixelSize(14);
+    notConvertRegsEdit->setFont(font);
+    notConvertRegsEdit->setPlainText(
+        QString::fromStdString(toml::format(toml::ordered_value{ toml::ordered_table{{ "notConvertRegs", notConvertRegsArr }} }))
+    );
+    notConvertRegsEdit->moveCursor(QTextCursor::Start);
+    mainLayout->addWidget(notConvertRegsEdit);
+
     _applyFunc = [=]
         {
             insertToml(_projectConfig, "plugins.TextFull2Half.是否替换标点", punctuationSwitch->getIsToggled());
             insertToml(_projectConfig, "plugins.TextFull2Half.是否反向替换", reverseSwitch->getIsToggled());
             insertToml(_projectConfig, "plugins.TextFull2Half.不转换的字符", excludeEdit->text().toStdString());
+
+            toml::ordered_array newNotConvertRegsArr;
+            try {
+                toml::ordered_value newTbl = toml::parse_str<toml::ordered_type_config>(notConvertRegsEdit->toPlainText().toStdString());
+                auto& newArr = newTbl["notConvertRegs"];
+                if (newArr.is_array()) {
+                    for (const auto& item : newArr.as_array()
+                        | std::views::filter([](const auto& item_) { return item_.is_string(); }))
+                    {
+                        newNotConvertRegsArr.push_back(item);
+                    }
+                }
+            }
+            catch (...) {
+                ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("解析失败"), tr("notConvertRegs 不符合 toml 规范"), 3000);
+            }
+            insertToml(_projectConfig, "plugins.TextFull2Half.notConvertRegs", newNotConvertRegsArr);
         };
 
     mainLayout->addStretch();

@@ -279,7 +279,7 @@ void DictionaryGenerator::callLLMToGenerate(int segmentIndex, int threadId) {
             const std::filesystem::path& relInputPath, const std::string& m_apiStrategy, const std::shared_ptr<spdlog::logger>& m_logger,
             int& retryCount, int threadId, bool m_checkQuota);*/
         if (!checkResponse(
-            response, m_apiPool, currentApi, L"字典生成——段落输入", m_apiStrategy, m_logger, retryCount, threadId, m_checkQuota
+            response, m_apiPool, currentApi, L"字典生成——段落输入", m_apiStrategy, m_controller, m_logger, retryCount, threadId, m_checkQuota
         )) {
             continue;
         }
