@@ -89,7 +89,8 @@
       <Command>del "$(TargetDir)$(TargetName).exp"
 del "$(TargetDir)$(TargetName).lib"
 
-copy "$(SolutionDir)\3rdParty\pybind11\bin\python*.dll" "$(TargetDir)"
+copy "$(SolutionDir)3rdParty\7z.dll" "$(TargetDir)7z.dll"
+copy "$(SolutionDir)3rdParty\pybind11\bin\python*.dll" "$(TargetDir)"
 copy "$(SolutionDir)3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll" "$(TargetDir)opencc.dll"
 copy "$(SolutionDir)3rdParty\ElaWidgetTools\out\build\Release\ElaWidgetTools\ElaWidgetTools.dll" "$(TargetDir)ElaWidgetTools.dll"
 
