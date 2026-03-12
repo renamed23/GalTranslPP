@@ -8,6 +8,7 @@
 - **IDE**: [Visual Studio 2026](https://visualstudio.microsoft.com/insiders/?rwnlp=zh-hans)
   - **必需工作负载**: `使用 C++ 的桌面开发`
   - **必需工具集**: `MSVC v145`
+- **辅助构建工具**: [CMake](https://cmake.org/download/)
 - **Python 3.12.10**: 本仓库中的 `python-3.12.10-embed-amd64.zip`
 - **7zip**: 本仓库中的 `7z.dll`
 - **版本控制工具**: [git](https://git-scm.com/)
@@ -125,6 +126,6 @@ mklink .\GPPCLI_PRIVATE "D:\GALGAME\GALGAMETOOLS\AIGC\GPPCLI"
 mklink .\GPPGUI_PRIVATE "D:\GALGAME\GALGAMETOOLS\AIGC\GPPGUI"
 ```
 
-这样每次编译都会将最核心的文件`GalTranslPP_CLI.exe`、`GalTranslPP_GUI.exe`和`Updater_new.exe`复制到相应目录。  
+这样每次编译都会将最核心的文件`GalTranslPP_CLI.exe`、`GalTranslPP_GUI.exe`、`Updater_new.exe`和`*.dll`复制到相应目录。  
 
 至此所有步骤均已完成。
