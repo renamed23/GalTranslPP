@@ -36,7 +36,9 @@ CustomFilePluginCfgPage::CustomFilePluginCfgPage(toml::ordered_value& projectCon
 	ElaPushButton* filePluginBtn = new ElaPushButton(tr("浏览"), filePluginArea);
 	connect(filePluginBtn, &ElaPushButton::clicked, this, [=]()
 		{
-			QString path = QFileDialog::getOpenFileName(this, tr("选择自定义文件处理插件"), QString::fromStdString(toml::find_or(_globalConfig, "lastPluginPath", "./")), "Lua script (*.lua);;Python script (*.py)");
+			QString path = QFileDialog::getOpenFileName(this, tr("选择自定义文件处理插件"), 
+				QString::fromStdString(toml::find_or(_globalConfig, "lastPluginPath", "./")), 
+				"custom script (*.lua *.py)");
 			if (!path.isEmpty())
 			{
 				filePluginEdit->setText(path);

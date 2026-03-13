@@ -470,7 +470,7 @@ void MainWindow::_onNewProjectTriggered()
         addCommonDictsToProjectConfig("commonGptDicts", "gptDict");
         addCommonDictsToProjectConfig("commonPostDicts", "postDict");
 
-        std::ofstream ofs(newProjectDir / L"config.toml");
+        std::ofstream ofs(newProjectDir / L"config.toml", std::ios::binary);
         ofs << configData;
         ofs.close();
     }
@@ -692,7 +692,7 @@ void MainWindow::_onCloseWindowClicked(bool restart)
     _settingPage->apply2Config();
     insertToml(_globalConfig, "clearLogShortcut", _clearLogShortcut->key().toString().toStdString());
 
-    std::ofstream ofs(L"BaseConfig/globalConfig.toml");
+    std::ofstream ofs(L"BaseConfig/globalConfig.toml", std::ios::binary);
     ofs << _globalConfig;
     ofs.close();
 

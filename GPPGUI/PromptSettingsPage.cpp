@@ -143,7 +143,7 @@ void PromptSettingsPage::_setupUI()
 			sakuraApplyFunc();
 			gendictApplyFunc();
 			nametransApplyFunc();
-			std::ofstream ofs(_projectDir / L"Prompt.toml");
+			std::ofstream ofs(_projectDir / L"Prompt.toml", std::ios::binary);
 			ofs << _promptConfig;
 			ofs.close();
 		};

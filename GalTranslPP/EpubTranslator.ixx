@@ -33,7 +33,7 @@ export {
         std::unique_ptr<jpc::Regex> org;
         std::unique_ptr<jpc::RegexReplace> rep;
 
-        std::multimap<int, CallbackPattern> callbackPatterns;
+        absl::btree_multimap<int, CallbackPattern> callbackPatterns;
         bool isCallback;
 
         RegexPattern() {

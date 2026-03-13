@@ -431,7 +431,7 @@ void combineOutputFiles(const fs::path& originalRelFilePath, const absl::flat_ha
     for (const auto& relPartPath : partPaths) {
         if (const fs::path partPath = outputCacheDir / relPartPath; fs::exists(partPath)) {
             try {
-                ifs.open(partPath);
+                ifs.open(partPath, std::ios::binary);
                 ordered_json partData = ordered_json::parse(ifs);
                 ifs.close();
                 combinedJson.insert(combinedJson.end(), partData.begin(), partData.end());
@@ -449,7 +449,7 @@ void combineOutputFiles(const fs::path& originalRelFilePath, const absl::flat_ha
 
     const fs::path finalOutputPath = outputDir / originalRelFilePath;
     createParent(finalOutputPath);
-    std::ofstream ofs(finalOutputPath);
+    std::ofstream ofs(finalOutputPath, std::ios::binary);
     ofs << combinedJson.dump(2);
     ofs.close();
     logger->info("文件 {} 合并完成，已保存到 {}", wide2Ascii(originalRelFilePath), wide2Ascii(finalOutputPath));
@@ -521,7 +521,7 @@ void saveCache(const std::vector<Sentence>& allSentences, const fs::path& cacheP
         cacheObj["translated_preview"] = se.translated_preview;
         cacheJson.push_back(std::move(cacheObj));
     }
-    std::ofstream ofs(cachePath);
+    std::ofstream ofs(cachePath, std::ios::binary);
     ofs << cacheJson.dump(2);
     ofs.close();
 }

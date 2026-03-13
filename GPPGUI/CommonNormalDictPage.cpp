@@ -224,7 +224,7 @@ void CommonNormalDictPage::_setupUI()
 					}
 
 					std::string tmpDictName = wide2Ascii(it->dictPath.stem().wstring());
-					std::ofstream ofs(it->dictPath);
+					std::ofstream ofs(it->dictPath, std::ios::binary);
 					if (!ofs.is_open()) {
 						ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("保存失败"), tr("无法打开字典: ") +
 							QString(dictPath.wstring()), 3000);
@@ -587,7 +587,7 @@ void CommonNormalDictPage::_setupUI()
 				return;
 			}
 
-			std::ofstream ofs(newDictPath);
+			std::ofstream ofs(newDictPath, std::ios::binary);
 			if (!ofs.is_open()) {
 				ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("新建失败"), tr("无法创建 ") +
 					QString(newDictPath.wstring()) + tr(" 文件"), 3000);

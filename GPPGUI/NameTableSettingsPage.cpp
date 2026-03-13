@@ -237,7 +237,7 @@ void NameTableSettingsPage::_setupUI()
 
 	_applyFunc = [=]()
 		{
-			std::ofstream ofs(_projectDir / L"人名替换表.toml");
+			std::ofstream ofs(_projectDir / L"人名替换表.toml", std::ios::binary);
 			int index = stackedWidget->currentIndex();
 			if (index == 0) {
 				ofs << plainTextEdit->toPlainText().toStdString();

@@ -187,7 +187,7 @@ void NameTranslator::run(const fs::path& nameTablePath) {
     }
 
     // 5. 保存文件
-    std::ofstream ofs(nameTablePath);
+    std::ofstream ofs(nameTablePath, std::ios::binary);
     ofs << nameTableData;
     ofs.close();
 

@@ -1051,7 +1051,7 @@
     <name>CustomFilePluginCfgPage</name>
     <message>
         <location filename="CustomFilePluginCfgPage.cpp" line="19"/>
-        <location filename="CustomFilePluginCfgPage.cpp" line="77"/>
+        <location filename="CustomFilePluginCfgPage.cpp" line="79"/>
         <source>自定义文件处理插件配置</source>
         <translation>Custom file plugin settings</translation>
     </message>
@@ -1071,7 +1071,7 @@
         <translation>Choose custom file plugin</translation>
     </message>
     <message>
-        <location filename="CustomFilePluginCfgPage.cpp" line="53"/>
+        <location filename="CustomFilePluginCfgPage.cpp" line="55"/>
         <source>基类继承</source>
         <translation>Inherit base class</translation>
     </message>
@@ -2739,38 +2739,38 @@
 <context>
     <name>ReadDicts</name>
     <message>
-        <location filename="ReadDicts.cpp" line="49"/>
-        <location filename="ReadDicts.cpp" line="60"/>
-        <location filename="ReadDicts.cpp" line="77"/>
-        <location filename="ReadDicts.cpp" line="105"/>
-        <location filename="ReadDicts.cpp" line="182"/>
-        <location filename="ReadDicts.cpp" line="193"/>
-        <location filename="ReadDicts.cpp" line="214"/>
-        <location filename="ReadDicts.cpp" line="220"/>
+        <location filename="ReadDicts.cpp" line="48"/>
+        <location filename="ReadDicts.cpp" line="59"/>
+        <location filename="ReadDicts.cpp" line="76"/>
+        <location filename="ReadDicts.cpp" line="104"/>
+        <location filename="ReadDicts.cpp" line="181"/>
+        <location filename="ReadDicts.cpp" line="192"/>
+        <location filename="ReadDicts.cpp" line="213"/>
+        <location filename="ReadDicts.cpp" line="219"/>
         <source>解析失败</source>
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="ReadDicts.cpp" line="50"/>
-        <location filename="ReadDicts.cpp" line="183"/>
+        <location filename="ReadDicts.cpp" line="49"/>
+        <location filename="ReadDicts.cpp" line="182"/>
         <source> 不符合 toml 规范</source>
         <translation> is nonconforming</translation>
     </message>
     <message>
-        <location filename="ReadDicts.cpp" line="61"/>
-        <location filename="ReadDicts.cpp" line="194"/>
+        <location filename="ReadDicts.cpp" line="60"/>
+        <location filename="ReadDicts.cpp" line="193"/>
         <source> 不是预期的 json 格式</source>
         <translation> is nonconforming</translation>
     </message>
     <message>
-        <location filename="ReadDicts.cpp" line="78"/>
-        <location filename="ReadDicts.cpp" line="215"/>
+        <location filename="ReadDicts.cpp" line="77"/>
+        <location filename="ReadDicts.cpp" line="214"/>
         <source> 不符合 json 规范</source>
         <translation> is nonconforming</translation>
     </message>
     <message>
-        <location filename="ReadDicts.cpp" line="106"/>
-        <location filename="ReadDicts.cpp" line="221"/>
+        <location filename="ReadDicts.cpp" line="105"/>
+        <location filename="ReadDicts.cpp" line="220"/>
         <source> 不是支持的格式</source>
         <translation> is not supported</translation>
     </message>

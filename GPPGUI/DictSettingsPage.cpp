@@ -158,7 +158,7 @@ void DictSettingsPage::_setupUI()
 		auto saveDictFunc = [=](bool forceSaveInTableModeToInit)
 			{
 				if constexpr (std::is_same_v<EntryType, GptDictEntry>) {
-					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"));
+					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"), std::ios::binary);
 					if (fs::exists(_projectDir / L"项目GPT字典-生成.toml")) {
 						try {
 							fs::remove(_projectDir / L"项目GPT字典-生成.toml");
@@ -193,7 +193,7 @@ void DictSettingsPage::_setupUI()
 					insertToml(_projectConfig, "GUIConfig.gptDictTableOpenMode", stackedWidget->currentIndex());
 				}
 				else {
-					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"));
+					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"), std::ios::binary);
 					if (stackedWidget->currentIndex() == 0 && !forceSaveInTableModeToInit) {
 						ofs << plainTextEdit->toPlainText().toStdString();
 						ofs.close();

@@ -431,7 +431,7 @@ bool startUpPythonEnv(const fs::path& pyEnvPath, std::unique_ptr<py::gil_scoped_
                 std::ofstream ofs(L"BaseConfig/pythonSysPaths.txt");
                 if (ofs.is_open()) {
                     for (const auto& path : sysPaths) {
-                        ofs << path.cast<std::string>() << std::endl;
+                        ofs << path.cast<std::string>() << "\n";
                     }
                 }
             }

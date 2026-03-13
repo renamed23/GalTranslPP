@@ -126,7 +126,7 @@ void DefaultPromptPage::_setupUI()
 			connect(promptSaveButton, &ElaPushButton::clicked, this, [=]()
 				{
 					result();
-					std::ofstream ofs(defaultPromptPath);
+					std::ofstream ofs(defaultPromptPath, std::ios::binary);
 					ofs << _promptConfig;
 					ofs.close();
 					ElaMessageBar::success(ElaMessageBarType::TopRight, tr("保存成功"), tr("默认 ") + promptName + tr(" 提示词配置已保存。"), 3000);
@@ -153,7 +153,7 @@ void DefaultPromptPage::_setupUI()
 			sakuraApplyFunc();
 			gendictApplyFunc();
 			nametransApplyFunc();
-			std::ofstream ofs(defaultPromptPath);
+			std::ofstream ofs(defaultPromptPath, std::ios::binary);
 			ofs << _promptConfig;
 			ofs.close();
 		};

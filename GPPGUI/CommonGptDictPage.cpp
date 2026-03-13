@@ -200,7 +200,7 @@ void CommonGptDictPage::_setupUI()
 					if (it == _gptTabEntries.end()) {
 						return false;
 					}
-					std::ofstream ofs(it->dictPath);
+					std::ofstream ofs(it->dictPath, std::ios::binary);
 					if (!ofs.is_open()) {
 						ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("保存失败"), tr("无法打开文件: ") +
 							QString(it->dictPath.wstring()), 3000);
@@ -558,7 +558,7 @@ void CommonGptDictPage::_setupUI()
 			}
 
 			fs::path newDictPath = defaultGptDictPath / (dictName.toStdWString() + L".toml");
-			std::ofstream ofs(newDictPath);
+			std::ofstream ofs(newDictPath, std::ios::binary);
 			if (!ofs.is_open()) {
 				ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("新建失败"), tr("无法创建 ") +
 					QString(newDictPath.wstring()) + tr(" 文件"), 3000);

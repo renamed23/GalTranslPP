@@ -64,8 +64,6 @@ void EpubTranslator::init()
     m_tempUnpackDir = L"cache" / m_projectDir.filename() / L"epub_unpacked";
     m_tempRebuildDir = L"cache" / m_projectDir.filename() / L"epub_rebuild";
 
-    std::ifstream ifs;
-
     try {
         const auto projectConfig = toml::uparse(m_projectDir / L"config.toml");
         const auto pluginConfig = toml::uparse(filePluginConfigPath / L"Epub.toml");
@@ -255,7 +253,7 @@ void EpubTranslator::beforeRun()
 
                 createParent(m_inputDir / relJsonPath); // cache/myproject/epub_json_input/dir1/book1/OEBPS/chapter1.json
                 std::ofstream ofs;
-                ofs.open(m_inputDir / relJsonPath);
+                ofs.open(m_inputDir / relJsonPath, std::ios::binary);
                 ofs << j.dump(2);
                 ofs.close();
 
@@ -299,7 +297,7 @@ void EpubTranslator::beforeRun()
                 std::ifstream ifs;
                 const std::string& originalContent = jsonInfo.content;
 
-                ifs.open(m_outputDir / relJsonPath);
+                ifs.open(m_outputDir / relJsonPath, std::ios::binary);
                 json translatedDatas = json::parse(ifs);
                 ifs.close();
 

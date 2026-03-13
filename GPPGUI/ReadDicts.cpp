@@ -11,9 +11,8 @@ QString ReadDicts::readDictsStr(const fs::path& dictPath)
 	if (!fs::exists(dictPath)) {
 		return {};
 	}
-	std::ifstream ifs(dictPath);
+	std::ifstream ifs(dictPath, std::ios::binary);
 	std::string result((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-	ifs.close();
 	return QString::fromStdString(result);
 }
 
@@ -53,7 +52,7 @@ QList<GptDictEntry> ReadDicts::readGptDicts(const fs::path& dictPath)
 	}
 	else if (isSameExtension(dictPath, L".json")) {
 		try {
-			std::ifstream ifs(dictPath);
+			std::ifstream ifs(dictPath, std::ios::binary);
 			json j = json::parse(ifs);
 			ifs.close();
 			if (!j.is_array()) {
@@ -80,7 +79,7 @@ QList<GptDictEntry> ReadDicts::readGptDicts(const fs::path& dictPath)
 		}
 	}
 	else if (isSameExtension(dictPath, L".txt") || isSameExtension(dictPath, L".tsv")) {
-		std::ifstream ifs(dictPath);
+		std::ifstream ifs(dictPath, std::ios::binary);
 		std::string line;
 		while (std::getline(ifs, line)) {
 			if (line.starts_with("//")) {
@@ -186,7 +185,7 @@ QList<NormalDictEntry> ReadDicts::readNormalDicts(const fs::path& dictPath)
 	}
 	else if (isSameExtension(dictPath, L".json")) {
 		try {
-			std::ifstream ifs(dictPath);
+			std::ifstream ifs(dictPath, std::ios::binary);
 			json j = json::parse(ifs);
 			ifs.close();
 			if (!j.is_array()) {

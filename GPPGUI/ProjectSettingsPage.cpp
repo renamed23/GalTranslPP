@@ -69,7 +69,7 @@ void ProjectSettingsPage::apply2Config()
 
     try {
         std::string configStr = toml::format(_projectConfig);
-        std::ofstream ofs(_projectDir / L"config.toml");
+        std::ofstream ofs(_projectDir / L"config.toml", std::ios::binary);
         ofs << configStr;
         ofs.close();
     }

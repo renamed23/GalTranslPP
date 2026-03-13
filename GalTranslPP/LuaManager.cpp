@@ -242,7 +242,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 			auto& state = m_scriptStates[stdScriptPath];
 			state = std::make_shared<LuaStateInstance>();
 			state->lua->open_libraries();
-			std::ifstream ifs(stdScriptPath);
+			std::ifstream ifs(stdScriptPath, std::ios::binary);
 			std::string script((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 			state->lua->script(script);
 			registerCustomTypes(state, scriptPath, needReboot);
@@ -380,7 +380,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		{
 			toml::value tomlValue = LuaToml::solObj2TomlValue(obj);
 			try {
-				std::ofstream ofs(path);
+				std::ofstream ofs(path, std::ios::binary);
 				if (!ofs.is_open()) {
 					return std::make_tuple(false, std::string("Failed to open file for writing"));
 				}
@@ -409,7 +409,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		{
 			sol::state_view lua = s;
 			try {
-				std::ifstream ifs(path);
+				std::ifstream ifs(path, std::ios::binary);
 				json jsonValue = json::parse(ifs);
 				return std::make_tuple(LuaJson::jsonValue2SolObject(jsonValue, lua), std::nullopt);
 			}
@@ -422,7 +422,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		{
 			json jsonValue = LuaJson::solObj2JsonValue(obj);
 			try {
-				std::ofstream ofs(path);
+				std::ofstream ofs(path, std::ios::binary);
 				if (!ofs.is_open()) {
 					return std::make_tuple(false, std::string("Failed to open file for writing"));
 				}

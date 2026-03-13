@@ -182,7 +182,7 @@ void OtherSettingsPage::_setupUI()
 				{
 					json overviewData;
 					if (importOverviewPathStr.endsWith(".json", Qt::CaseInsensitive)) {
-						ifs.open(importOverviewPathStr.toStdWString());
+						ifs.open(importOverviewPathStr.toStdWString(), std::ios::binary);
 						overviewData = json::parse(ifs);
 						ifs.close();
 					}
@@ -209,7 +209,7 @@ void OtherSettingsPage::_setupUI()
 					std::unordered_map<int, std::reference_wrapper<json>> cacheIndexMap;
 
 					try {
-						ifs.open(cachePath);
+						ifs.open(cachePath, std::ios::binary);
 						cacheData = json::parse(ifs);
 						for (auto& cacheItem : cacheData) {
 							cacheIndexMap.insert({ cacheItem["index"].get<int>(), cacheItem });
@@ -241,7 +241,7 @@ void OtherSettingsPage::_setupUI()
 						++fileImportCount;
 					}
 					if (fileImportCount != 0) {
-						ofs.open(cachePath);
+						ofs.open(cachePath, std::ios::binary);
 						if (!ofs.is_open()) {
 							problems.push_back(std::format("[文件 {}] 无法写入，跳过导入", cacheFileName));
 							continue;

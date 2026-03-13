@@ -667,7 +667,7 @@ void loadTokenizeCache
 (absl::flat_hash_map<std::string, std::vector<std::vector<std::string>>>& result, const fs::path& cachePath, const std::shared_ptr<spdlog::logger>& logger) {
     try {
         if (fs::exists(cachePath)) {
-            std::ifstream ifs(cachePath);
+            std::ifstream ifs(cachePath, std::ios::binary);
             json::parse(ifs).get_to(result);
         }
         else {
@@ -684,7 +684,7 @@ void saveTokenizeCache
     try {
         createParent(cachePath);
         const json j = cache;
-        std::ofstream ofs(cachePath);
+        std::ofstream ofs(cachePath, std::ios::binary);
         ofs << j.dump(2);
         ofs.close();
         logger->debug("分词缓存已保存到 {}", wide2Ascii(cachePath, 65001, nullptr));

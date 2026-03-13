@@ -49,7 +49,7 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, const std
     m_backgroundTextCachePath = m_otherCacheDir / L"backgroundTextCache.json";
     try {
         if (fs::exists(m_backgroundTextCachePath)) {
-            std::ifstream ifs(m_backgroundTextCachePath);
+            std::ifstream ifs(m_backgroundTextCachePath, std::ios::binary);
             json::parse(ifs).get_to(m_backgroundTextCacheMap);
         }
         else {
@@ -788,7 +788,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     // 解析输入文件
     try {
-        ifs.open(inputPath);
+        ifs.open(inputPath, std::ios::binary);
         jSentences = ordered_json::parse(ifs);
         ifs.close();
         for (const auto& [index, item] : jSentences | std::views::enumerate) {
@@ -840,7 +840,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             m_controller->updateBar(); // ShowNormal
         }
         createParent(showNormalPath);
-        std::ofstream ofs(showNormalPath);
+        std::ofstream ofs(showNormalPath, std::ios::binary);
         ofs << showNormalJson.dump(2);
         ofs.close();
         return;
@@ -901,7 +901,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     json jsonArr;
                     {
                         std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
-                        ifs.open(potentialCachePath);
+                        ifs.open(potentialCachePath, std::ios::binary);
                         jsonArr = json::parse(ifs);
                         ifs.close();
                     }
@@ -980,7 +980,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     json cacheJsonList;
                     {
                         std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
-                        ifs.open(cp);
+                        ifs.open(cp, std::ios::binary);
                         cacheJsonList = json::parse(ifs);
                         ifs.close();
                     }
@@ -1122,7 +1122,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
     }
 
-    std::ofstream ofs(outputPath);
+    std::ofstream ofs(outputPath, std::ios::binary);
     ofs << jSentences.dump(2);
     ofs.close();
 
@@ -1210,7 +1210,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             }
             const fs::path relInputPath = fs::relative(entry.path(), m_inputDir);
             try {
-                ifs.open(entry.path());
+                ifs.open(entry.path(), std::ios::binary);
                 json data = json::parse(ifs);
                 ifs.close();
 
@@ -1280,7 +1280,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 newNameTable[key] = toml::array{ "", jsonNameTable[key] };
             }
         }
-        ofs.open(nameTablePath);
+        ofs.open(nameTablePath, std::ios::binary);
         ofs << newNameTable;
         ofs.close();
         m_logger->info("已更新 人名替换表.toml 文件");
@@ -1354,7 +1354,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 m_logger->info("检测到文件分割模式 ({})，开始预处理输入文件...", m_splitFile);
                 for (const auto& relJsonPath : relJsonPaths) {
                     try {
-                        ifs.open(m_inputDir / relJsonPath);
+                        ifs.open(m_inputDir / relJsonPath, std::ios::binary);
                         const ordered_json data = ordered_json::parse(ifs);
                         ifs.close();
                         const std::vector<ordered_json> parts = splitImplFunc(data, m_splitFileNum);
@@ -1365,7 +1365,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                             m_jsonToSplitFileParts[relJsonPath].insert({ relPartPath, false });
                             const fs::path partPath = m_inputCacheDir / relPartPath;
                             createParent(partPath);
-                            ofs.open(partPath);
+                            ofs.open(partPath, std::ios::binary);
                             ofs << part.dump(2);
                             ofs.close();
                         }
@@ -1424,10 +1424,10 @@ void NormalJsonTranslator::afterRun() {
     }
     else {
         std::ofstream ofs;
-        ofs.open(m_projectDir / L"翻译问题概览.toml");
+        ofs.open(m_projectDir / L"翻译问题概览.toml", std::ios::binary);
         ofs << toml::format("problemOverview", m_problemOverview);
         ofs.close();
-        ofs.open(m_projectDir / L"翻译问题概览.json");
+        ofs.open(m_projectDir / L"翻译问题概览.json", std::ios::binary);
         ofs << toml2Json(m_problemOverview).dump(2);
         ofs.close();
         m_logger->debug("已生成 翻译问题概览.json 和 翻译问题概览.toml 文件");
@@ -1479,7 +1479,7 @@ void NormalJsonTranslator::afterRun() {
         try {
             createParent(m_backgroundTextCachePath);
             json j = m_backgroundTextCacheMap;
-            std::ofstream ofs(m_backgroundTextCachePath);
+            std::ofstream ofs(m_backgroundTextCachePath, std::ios::binary);
             ofs << j.dump(2);
             ofs.close();
             m_logger->debug("背景文本缓存已保存至 {}", wide2Ascii(m_backgroundTextCachePath));
