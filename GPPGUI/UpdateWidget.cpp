@@ -16,9 +16,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
 
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
-        "1. 取消暂停翻译时最后一轮的无用退避等待",
-		"2. 修复暂停翻译后不会显示已翻译句子问题概览的bug",
-		"3. TextFull2Half 新增 notConvertRegs, 可用于过滤例如游戏指令的子句模式",
+        "1. 解析失败或不完整时也输出解析结果",
     };
 
     mainLayout->addWidget(updateTitle);
