@@ -742,7 +742,7 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         if (parsedCount != batchToTransThisRound.size()) {
             ++retryCount;
             if (!m_controller->shouldStop()) {
-                m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试...，解析结果: \n{}", threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount, response.content);
+                m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试..., 解析结果: \n{}", threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount, response.content);
             }
             continue;
         }
