@@ -4,6 +4,9 @@
 #include "PluginItemWidget.h" // 引入自定义控件
 
 #include <QVBoxLayout>
+#include <QDesktopServices>
+#include <QFileDialog>
+
 #include "ElaText.h"
 #include "ElaPushButton.h"
 #include "ElaScrollPageArea.h"
@@ -17,8 +20,8 @@
 
 import Tool;
 
-PluginSettingsPage::PluginSettingsPage(QWidget* mainWindow, toml::ordered_value& projectConfig, QWidget* parent) :
-    BasePage(parent), _projectConfig(projectConfig), _mainWindow(mainWindow)
+PluginSettingsPage::PluginSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& projectConfig, QWidget* parent) :
+    BasePage(parent), _projectConfig(projectConfig), _projectDir(projectDir), _mainWindow(mainWindow)
 {
     setWindowTitle(tr("插件设置"));
     setTitleVisible(false);
@@ -41,6 +44,7 @@ void PluginSettingsPage::_setupUI()
 {
     QWidget* mainWidget = new QWidget(this);
     QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+    mainLayout->setContentsMargins(20, 15, 15, 0);
 
     // 文本插件列表
     ElaText* pluginArrayTitle = new ElaText(mainWidget);
@@ -51,6 +55,7 @@ void PluginSettingsPage::_setupUI()
     // 创建一个容器用于放置列表
     QWidget* listContainer = new QWidget(mainWidget);
     _pluginListLayout = new QVBoxLayout(listContainer);
+    _pluginListLayout->setContentsMargins(0, 0, 0, 0);
 
     // 插件名称列表
     QMap<QString, PluginRunTime> pluginNamesMap =
@@ -110,11 +115,20 @@ void PluginSettingsPage::_setupUI()
     auto createCustomPluginsPlainTextEditFunc = 
         [=](const QString& title, const std::string& configKey, const toml::ordered_array& customPlugins_) -> std::function<void(toml::ordered_array&)>
         {
+            QHBoxLayout* customPluginsLayout = new QHBoxLayout(mainWidget);
+            customPluginsLayout->setContentsMargins(0, 0, 0, 0);
             ElaText* customPluginsTitle = new ElaText(title, 18, mainWidget);
             customPluginsTitle->setWordWrap(false);
             ElaToolTip* customPluginsTip = new ElaToolTip(customPluginsTitle);
             customPluginsTip->setToolTip("用来加载自定义的 Lua/Python 插件");
-            mainLayout->addWidget(customPluginsTitle);
+            customPluginsLayout->addWidget(customPluginsTitle);
+            customPluginsLayout->addStretch();
+            ElaPushButton* browserButton = new ElaPushButton(tr("浏览"), mainWidget);
+            customPluginsLayout->addWidget(browserButton);
+
+            mainLayout->addLayout(customPluginsLayout);
+
+
             ElaPlainTextEdit* customPluginsEdit = new ElaPlainTextEdit(mainWidget);
             //customPluginsEdit->setMaximumHeight(100);
             QFont font = customPluginsEdit->font();
@@ -123,6 +137,24 @@ void PluginSettingsPage::_setupUI()
             customPluginsEdit->setPlainText(QString::fromStdString(toml::format(toml::ordered_value{ toml::ordered_table{{ configKey, customPlugins_ }} })));
             customPluginsEdit->moveCursor(QTextCursor::Start);
             mainLayout->addWidget(customPluginsEdit);
+
+            connect(browserButton, &ElaPushButton::clicked, this, [=]()
+                {
+                    toml::ordered_value newCustomPluginsTbl = toml::parse_str<toml::ordered_type_config>(customPluginsEdit->toPlainText().toStdString());
+                    auto& newCustomPluginsArr = newCustomPluginsTbl[configKey];
+                    if (!newCustomPluginsArr.is_array()) {
+                        ElaMessageBar::error(ElaMessageBarType::TopRight, tr("解析错误"), 
+                            tr("自定义文本处理插件不符合 toml 规范"), 3000);
+                        return;
+                    }
+
+                    QString fileName = QFileDialog::getOpenFileName(this, tr("选择自定义文本处理插件"),
+                        QString(_projectDir.wstring()), "custom script (*.lua *.py)");
+                    if (!fileName.isEmpty()) {
+                        newCustomPluginsArr.push_back(fileName.toStdString());
+                        customPluginsEdit->setPlainText(QString::fromStdString(toml::format(newCustomPluginsTbl)));
+                    }
+                });
 
             std::function<void(toml::ordered_array&)> saveFunc = [=](toml::ordered_array& arr)
                 {
@@ -147,14 +179,13 @@ void PluginSettingsPage::_setupUI()
 
     mainLayout->addSpacing(10);
     auto saveCustomPluginsFunc = createCustomPluginsPlainTextEditFunc(tr("自定义文本处理插件"), "customTextPlugins", customPlugins);
-    
     mainLayout->addStretch();
 
     addCentralWidget(mainWidget, true, true, 0);
 
     // 这里的顺序和 _onItemSettings 中的 navigation 索引对应
     _tf2hCfgPage = new TF2HCfgPage(_projectConfig, this);
-    addCentralWidget(_tf2hCfgPage);
+    addCentralWidget(_tf2hCfgPage, true, true, 0);;
     _tlfCfgPage = new TLFCfgPage(_projectConfig, this);
     addCentralWidget(_tlfCfgPage, true, true, 0);
     _skipTransCfgPage = new SkipTransCfgPage(_projectConfig, this);

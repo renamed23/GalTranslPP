@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
     }
     catch (const std::exception& e) {
 #ifdef Q_OS_WIN
-        MessageBoxW(nullptr, std::format(L"Failed to extract Updater_new.exe.\nError: {}", ascii2Wide(e.what())).c_str(),
+        MessageBoxW(nullptr, std::format(L"Failed to extract Updater_new.exe.\nError: {}", ascii2Wide(std::string_view(e.what()))).c_str(),
             L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
         return -1;

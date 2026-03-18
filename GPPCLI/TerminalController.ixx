@@ -86,7 +86,7 @@ export {
                 });
         }
 
-        virtual ~TerminalController()
+        virtual ~TerminalController() override
         {
             m_controlling = false;
             if (m_flushThread.joinable()) {

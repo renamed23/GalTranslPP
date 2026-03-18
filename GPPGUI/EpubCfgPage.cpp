@@ -19,7 +19,7 @@ import Tool;
 EpubCfgPage::EpubCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : BasePage(parent), _projectConfig(projectConfig)
 {
 	setWindowTitle(tr("Epub 输出配置"));
-	setContentsMargins(10, 0, 10, 0);
+	setContentsMargins(30, 15, 15, 0);
 
 	// 创建一个中心部件和布局
 	QWidget* centerWidget = new QWidget(this);

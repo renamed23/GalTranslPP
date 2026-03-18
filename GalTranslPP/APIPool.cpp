@@ -109,8 +109,9 @@ bool checkResponse(const ApiResponse& response, const std::unique_ptr<APIPool>& 
         // 不需要增加 retryCount
         return false;
     }
+
     // key 没有这个模型
-    else if (lowerErrorMsg.contains("no available")) {
+    if (lowerErrorMsg.contains("no available")) {
         logger->error("[线程 {}] API Key [{}] 没有 [{}] 模型，短期内多次报告将从池中移除。", threadId, currentAPI.apikey, currentAPI.modelName);
         apiPool->reportProblem(currentAPI);
         return false;

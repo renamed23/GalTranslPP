@@ -39,8 +39,7 @@ void OtherSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-	mainLayout->setSpacing(5);
+	mainLayout->setContentsMargins(20, 15, 15, 0);
 
 	// 项目路径
 	ElaScrollPageArea* pathArea = new ElaScrollPageArea(mainWidget);
@@ -52,6 +51,7 @@ void OtherSettingsPage::_setupUI()
 	pathLayout->addStretch();
 	ElaLineEdit* pathEdit = new ElaLineEdit(pathArea);
 	pathEdit->setReadOnly(true);
+	pathEdit->setClearButtonEnabled(false);
 	pathEdit->setText(QString(_projectDir.wstring()));
 	pathEdit->setFixedWidth(650);
 	pathLayout->addWidget(pathEdit);

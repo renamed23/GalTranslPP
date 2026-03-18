@@ -9,12 +9,7 @@
 #include "ElaMenu.h"
 #include "ElaMessageBar.h"
 #include "ElaNavigationRouter.h"
-#include "ElaScrollPageArea.h"
-#include "ElaPopularCard.h"
-#include "ElaScrollArea.h"
-#include "ElaText.h"
 #include "ElaTabWidget.h"
-#include "ElaToolTip.h"
 
 import Tool;
 namespace fs = std::filesystem;
@@ -45,7 +40,7 @@ void DefaultPromptPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
-	mainLayout->setContentsMargins(0, 0, 0, 0);
+	mainLayout->setContentsMargins(10, 20, 10, 0);
 
 	ElaTabWidget* tabWidget = new ElaTabWidget(mainWidget);
 	tabWidget->setTabsClosable(false);
@@ -57,24 +52,25 @@ void DefaultPromptPage::_setupUI()
 		{
 			QWidget* promptWidget = new QWidget(mainWidget);
 			QVBoxLayout* promptLayout = new QVBoxLayout(promptWidget);
-			QWidget* promptButtonWidget = new QWidget(mainWidget);
-			QHBoxLayout* promptButtonLayout = new QHBoxLayout(promptButtonWidget);
-			ElaPushButton* promptUserModeButtom = new ElaPushButton(promptButtonWidget);
+			promptLayout->setContentsMargins(0, 0, 0, 0);
+			
+			QHBoxLayout* promptButtonLayout = new QHBoxLayout(promptWidget);
+			ElaPushButton* promptUserModeButtom = new ElaPushButton(promptWidget);
 			promptUserModeButtom->setText(tr("用户提示词"));
 			promptUserModeButtom->setEnabled(false);
-			ElaPushButton* promptSystemModeButtom = new ElaPushButton(promptButtonWidget);
+			ElaPushButton* promptSystemModeButtom = new ElaPushButton(promptWidget);
 			promptSystemModeButtom->setText(tr("系统提示词"));
 			promptSystemModeButtom->setEnabled(true);
-			ElaPushButton* promptSaveAllButton = new ElaPushButton(promptButtonWidget);
+			ElaPushButton* promptSaveAllButton = new ElaPushButton(promptWidget);
 			promptSaveAllButton->setText(tr("全部保存"));
-			ElaPushButton* promptSaveButton = new ElaPushButton(promptButtonWidget);
+			ElaPushButton* promptSaveButton = new ElaPushButton(promptWidget);
 			promptSaveButton->setText(tr("保存"));
 			promptButtonLayout->addWidget(promptUserModeButtom);
 			promptButtonLayout->addWidget(promptSystemModeButtom);
 			promptButtonLayout->addStretch();
 			promptButtonLayout->addWidget(promptSaveAllButton);
 			promptButtonLayout->addWidget(promptSaveButton);
-			promptLayout->addWidget(promptButtonWidget, 0, Qt::AlignTop);
+			promptLayout->addLayout(promptButtonLayout);
 
 			QStackedWidget* promptStackedWidget = new QStackedWidget(promptWidget);
 			// 用户提示词
@@ -113,7 +109,7 @@ void DefaultPromptPage::_setupUI()
 					ElaMessageBar::success(ElaMessageBarType::TopRight, tr("保存成功"), tr("所有默认提示词配置已保存。"), 3000);
 				});
 
-			auto result = [=]()
+			auto resultApply2ConfigFunc = [=]()
 				{
 					toml::ordered_value userPromptVal = promptUserModeEdit->toPlainText().toStdString();
 					toml::ordered_value systemPromptVal = promptSystemModeEdit->toPlainText().toStdString();
@@ -125,7 +121,7 @@ void DefaultPromptPage::_setupUI()
 
 			connect(promptSaveButton, &ElaPushButton::clicked, this, [=]()
 				{
-					result();
+					resultApply2ConfigFunc();
 					std::ofstream ofs(defaultPromptPath, std::ios::binary);
 					ofs << _promptConfig;
 					ofs.close();
@@ -133,7 +129,7 @@ void DefaultPromptPage::_setupUI()
 				});
 			tabWidget->addTab(promptWidget, promptName);
 
-			return result;
+			return resultApply2ConfigFunc;
 		};
 	
 

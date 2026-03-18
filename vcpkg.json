@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "galtranslpp",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "dependencies": [
     "nlohmann-json",
     "toml11",
@@ -28,5 +28,5 @@
       "version": "5.4.8"
     }
   ],
-  "builtin-baseline": "efa4634bd526b87559684607d2cbbdeeec0f07d8"
+  "builtin-baseline": "4b77da7fed37817f124936239197833469f1b9a8"
 }

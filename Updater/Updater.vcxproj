@@ -115,7 +115,6 @@ if exist "$(TargetDir)..\GPPGUI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GP
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <QtRcc Include="Updater.qrc" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -39,7 +39,7 @@ ProblemAnalyzer::ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictio
 
 void ProblemAnalyzer::analyze(Sentence* sentence) {
     if (sentence->translated_preview.empty()) {
-        if (!sentence->pre_processed_text.empty() && !sentence->pre_translated_text.empty()) {
+        if (!sentence->pre_processed_text.empty()) {
             sentence->problems.push_back("翻译为空");
         }
         return;

@@ -29,12 +29,11 @@
 
 import Tool;
 
-ProjectSettingsPage::ProjectSettingsPage(toml::ordered_value& globalConfig, const fs::path& projectDir, QWidget* parent)
-    : BasePage(parent), _projectDir(projectDir), _globalConfig(globalConfig), _mainWindow(parent)
+ProjectSettingsPage::ProjectSettingsPage(const fs::path& projectDir, toml::ordered_value& globalConfig, QWidget* parent)
+    : BasePage(parent), _mainWindow(parent), _globalConfig(globalConfig), _projectDir(projectDir)
 {
     setWindowTitle(tr("项目设置主页"));
     setTitleVisible(false);
-    setContentsMargins(5, 10, 10, 10);
 
     try {
         _projectConfig = toml::uoparse(_projectDir / L"config.toml");
@@ -75,7 +74,7 @@ void ProjectSettingsPage::apply2Config()
     }
     catch (const toml::exception& e) {
 #ifdef Q_OS_WIN
-        MessageBoxW(nullptr, ascii2Wide(e.what()).c_str(), L"toml 格式化错误", MB_ICONERROR | MB_OK);
+        MessageBoxW(nullptr, ascii2Wide(std::string_view(e.what())).c_str(), L"toml 格式化错误", MB_ICONERROR | MB_OK);
 #endif
     }
 }
@@ -107,14 +106,12 @@ void ProjectSettingsPage::_setupUI()
 {
 
     QWidget* centralWidget = new QWidget(this);
-    centralWidget->setContentsMargins(0, 0, 0, 0);
     QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
+    mainLayout->setContentsMargins(0, 15, 0, 0);
     mainLayout->setSpacing(0);
 
-    QWidget* navigationWidget = new QWidget(this);
-    navigationWidget->setContentsMargins(0, 0, 0, 0);
-    QHBoxLayout* navigationLayout = new QHBoxLayout(navigationWidget);
-    _settingsTitle = new ElaText(tr("API设置"), navigationWidget);
+    QHBoxLayout* navigationLayout = new QHBoxLayout(centralWidget);
+    _settingsTitle = new ElaText(tr("API设置"), centralWidget);
     _settingsTitle->setContentsMargins(0, 10, 0, 0);
     _settingsTitle->setTextPixelSize(18);
     _settingsTitle->setFixedWidth(110);
@@ -122,31 +119,30 @@ void ProjectSettingsPage::_setupUI()
     navigationLayout->addWidget(_settingsTitle);
     navigationLayout->addStretch();
 
-    ElaMenu* foundamentalSettingMenu = new ElaMenu(navigationWidget);
+    ElaMenu* foundamentalSettingMenu = new ElaMenu(centralWidget);
     QAction* apiSettingAction = foundamentalSettingMenu->addElaIconAction(ElaIconType::MagnifyingGlassPlus, tr("API设置"));
     QAction* commonSettingAction = foundamentalSettingMenu->addElaIconAction(ElaIconType::BoxCheck, tr("一般设置"));
     QAction* paSettingAction = foundamentalSettingMenu->addElaIconAction(ElaIconType::Question, tr("问题分析"));
 
-    ElaToolButton* foundamentalSettingButton = new ElaToolButton(navigationWidget);
+    ElaToolButton* foundamentalSettingButton = new ElaToolButton(centralWidget);
     foundamentalSettingButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     foundamentalSettingButton->setElaIcon(ElaIconType::Broom);
     foundamentalSettingButton->setText(tr("基本设置"));
     foundamentalSettingButton->setMenu(foundamentalSettingMenu);
 
-    ElaMenu* transMenu = new ElaMenu(navigationWidget);
+    ElaMenu* transMenu = new ElaMenu(centralWidget);
     QAction* nameTableSettingAction = transMenu->addElaIconAction(ElaIconType::User, tr("人名表"));
     QAction* dictSettingAction = transMenu->addElaIconAction(ElaIconType::Book, tr("项目字典"));
     QAction* dictExSettingAction = transMenu->addElaIconAction(ElaIconType::BookQuran, tr("字典设置"));
     QAction* promptSettingAction = transMenu->addElaIconAction(ElaIconType::Bell, tr("提示词"));
 
-    ElaToolButton* transButton = new ElaToolButton(navigationWidget);
+    ElaToolButton* transButton = new ElaToolButton(centralWidget);
     transButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     transButton->setElaIcon(ElaIconType::YenSign);
     transButton->setText(tr("翻译设置"));
     transButton->setMenu(transMenu);
 
-    ElaMenuBar* menuBar = new ElaMenuBar(navigationWidget);
-    menuBar->setContentsMargins(0, 0, 0, 0);
+    ElaMenuBar* menuBar = new ElaMenuBar(centralWidget);
     QAction* pluginSettingAction = menuBar->addElaIconAction(ElaIconType::Plug, tr("插件管理"));
     QAction* startTransAction = menuBar->addElaIconAction(ElaIconType::Play, tr("开始翻译"));
     QAction* otherSettingAction = menuBar->addElaIconAction(ElaIconType::Copy, tr("其他设置"));
@@ -157,15 +153,13 @@ void ProjectSettingsPage::_setupUI()
     navigationLayout->addStretch();
     navigationLayout->addStretch();
 
-    _stackedWidget = new QStackedWidget(this);
-    _stackedWidget->setContentsMargins(0, 0, 0, 0);
+    _stackedWidget = new QStackedWidget(centralWidget);
 
     _createPages();
 
     auto pageNavigation = [=]()
         {
-            BasePage* page = qobject_cast<BasePage*>(_stackedWidget->currentWidget());
-            if (page) {
+            if (BasePage* page = qobject_cast<BasePage*>(_stackedWidget->currentWidget())) {
                 page->navigation(0);
             }
         };
@@ -227,24 +221,25 @@ void ProjectSettingsPage::_setupUI()
             _settingsTitle->setText(tr("其他设置"));
         });
 
-    mainLayout->addWidget(navigationWidget);
-    mainLayout->addWidget(_stackedWidget, 1);
+    mainLayout->addLayout(navigationLayout);
+    mainLayout->addSpacing(10);
+    mainLayout->addWidget(_stackedWidget);
     
     addCentralWidget(centralWidget, true, true, 0);
 }
 
 void ProjectSettingsPage::_createPages()
 {
-    _apiSettingsPage = new APISettingsPage(_projectConfig, this);
-    _commonSettingsPage = new CommonSettingsPage(_projectConfig, this);
-    _paSettingsPage = new PASettingsPage(_projectConfig, this);
-    _nameTableSettingsPage = new NameTableSettingsPage(_projectDir, _globalConfig, _projectConfig, this);
-    _dictSettingsPage = new DictSettingsPage(_projectDir, _globalConfig, _projectConfig, this);
-    _dictExSettingsPage = new DictExSettingsPage(_globalConfig, _projectConfig, this);
-    _promptSettingsPage = new PromptSettingsPage(_projectDir, _projectConfig, this);
-    _pluginSettingsPage = new PluginSettingsPage(_mainWindow, _projectConfig, this);
-    _startSettingsPage = new StartSettingsPage(_mainWindow, _projectDir, _globalConfig, _projectConfig, this);
-    _otherSettingsPage = new OtherSettingsPage(_mainWindow, _projectDir, _globalConfig, _projectConfig, this);
+    _apiSettingsPage = new APISettingsPage(_projectConfig, _stackedWidget);
+    _commonSettingsPage = new CommonSettingsPage(_projectConfig, _stackedWidget);
+    _paSettingsPage = new PASettingsPage(_projectConfig, _stackedWidget);
+    _nameTableSettingsPage = new NameTableSettingsPage(_projectDir, _globalConfig, _projectConfig, _stackedWidget);
+    _dictSettingsPage = new DictSettingsPage(_projectDir, _globalConfig, _projectConfig, _stackedWidget);
+    _dictExSettingsPage = new DictExSettingsPage(_globalConfig, _projectConfig, _stackedWidget);
+    _promptSettingsPage = new PromptSettingsPage(_projectDir, _projectConfig, _stackedWidget);
+    _pluginSettingsPage = new PluginSettingsPage(_mainWindow, _projectDir, _projectConfig, _stackedWidget);
+    _startSettingsPage = new StartSettingsPage(_mainWindow, _projectDir, _globalConfig, _projectConfig, _stackedWidget);
+    _otherSettingsPage = new OtherSettingsPage(_mainWindow, _projectDir, _globalConfig, _projectConfig, _stackedWidget);
 
     _stackedWidget->addWidget(_apiSettingsPage);
     _stackedWidget->addWidget(_commonSettingsPage);

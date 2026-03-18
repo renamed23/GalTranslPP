@@ -3,20 +3,17 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFileDialog>
-#include <QDesktopServices>
 
 #include "ElaScrollPageArea.h"
 #include "ElaToggleSwitch.h"
 #include "ElaText.h"
-#include "ElaLineEdit.h"
-#include "ElaPushButton.h"
 
 import Tool;
 
 PDFCfgPage::PDFCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : BasePage(parent), _projectConfig(projectConfig)
 {
 	setWindowTitle(tr("PDF 输出配置"));
-	setContentsMargins(10, 0, 10, 0);
+	setContentsMargins(30, 15, 15, 0);
 
 	// 创建一个中心部件和布局
 	QWidget* centerWidget = new QWidget(this);

@@ -501,6 +501,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		"m_apiTimeOutMs", &NormalJsonTranslator::m_apiTimeOutMs,
 		"m_checkQuota", &NormalJsonTranslator::m_checkQuota,
 		"m_smartRetry", &NormalJsonTranslator::m_smartRetry,
+		"m_retransAllWhenFail", &NormalJsonTranslator::m_retransAllWhenFail,
 		"m_usePreDictInName", &NormalJsonTranslator::m_usePreDictInName,
 		"m_usePostDictInName", &NormalJsonTranslator::m_usePostDictInName,
 		"m_usePreDictInMsg", &NormalJsonTranslator::m_usePreDictInMsg,

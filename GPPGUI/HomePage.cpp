@@ -1,8 +1,8 @@
 ﻿#include "HomePage.h"
 
-#include <QDesktopServices>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QDesktopServices>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QFileIconProvider>
@@ -12,8 +12,6 @@
 #include "ElaAcrylicUrlCard.h"
 #include "ElaFlowLayout.h"
 #include "ElaImageCard.h"
-#include "ElaMenu.h"
-#include "ElaMessageBar.h"
 #include "ElaNavigationRouter.h"
 #include "ElaPopularCard.h"
 #include "ElaScrollArea.h"
@@ -100,7 +98,7 @@ HomePage::HomePage(toml::ordered_value& globalConfig, QWidget* parent)
     ElaText* flowText = new ElaText("Useful Tools", this);
     flowText->setTextPixelSize(20);
     QHBoxLayout* flowTextLayout = new QHBoxLayout();
-    flowTextLayout->setContentsMargins(33, 0, 0, 0);
+    flowTextLayout->setContentsMargins(25, 0, 0, 0);
     flowTextLayout->addWidget(flowText);
 
     // ElaFlowLayout
@@ -272,7 +270,7 @@ HomePage::HomePage(toml::ordered_value& globalConfig, QWidget* parent)
     }
 
     ElaFlowLayout* flowLayout = new ElaFlowLayout(0, 5, 5);
-    flowLayout->setContentsMargins(30, 0, 0, 0);
+    flowLayout->setContentsMargins(18, 0, 0, 0);
     flowLayout->setIsAnimation(true);
     flowLayout->addWidget(homeCard0);
     flowLayout->addWidget(homeCard1);

@@ -17,9 +17,26 @@ namespace fs = std::filesystem;
 
 export {
 
-    std::string wide2Ascii(const std::wstring& wide, UINT CodePage = 65001, LPBOOL usedDefaultChar = nullptr);
-    std::wstring ascii2Wide(const std::string& ascii, UINT CodePage = 65001);
-    std::string ascii2Ascii(const std::string& ascii, UINT src = 65001, UINT dst = 0, LPBOOL usedDefaultChar = nullptr);
+    std::string wide2Ascii(const std::wstring& wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr);
+    std::string wide2Ascii(std::wstring_view wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr);
+    inline std::string wide2Ascii(const wchar_t* wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr) {
+        return wide2Ascii(std::wstring_view(wide), codePage, usedDefaultChar);
+    }
+    template<typename T>
+    requires(std::is_same_v<std::remove_cvref_t<T>, fs::path>)
+    inline std::string wide2Ascii(T&& path, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr) {
+#ifdef _WIN32
+        return wide2Ascii(path.native(), codePage, usedDefaultChar);
+#else
+        return wide2Ascii(path.wstring(), codePage, usedDefaultChar);
+#endif
+    }
+
+    std::wstring ascii2Wide(const std::string& ascii, UINT codePage = CP_UTF8);
+    std::wstring ascii2Wide(std::string_view ascii, UINT codePage = CP_UTF8);
+
+    std::string ascii2Ascii(const std::string& ascii, UINT src = CP_UTF8, UINT dst = CP_ACP, LPBOOL usedDefaultChar = nullptr);
+    std::string ascii2Ascii(std::string_view ascii, UINT src = CP_UTF8, UINT dst = CP_ACP, LPBOOL usedDefaultChar = nullptr);
 
     bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow = true, int timeDelayAfterCommand = 5);
 

@@ -223,8 +223,11 @@ void fillBlockAndMap(std::span<Sentence*> batchToTransThisRound, absl::btree_map
     }
 }
 
-void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
-    const std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText) {
+int parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+    const std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, 
+    TransEngine transEngine, bool showBackgroundText, bool retransAllWhenFail) 
+{
+    int parsedCount = 0;
 
     if (size_t pos = content.find("</think>"); pos != std::string::npos) {
         content = content.substr(pos + 8);
@@ -303,8 +306,6 @@ void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRou
                     it->second->pre_translated_text = parts[1];
                     it->second->translated_by = modelName;
                     it->second->complete = true;
-                    ++completedSentences;
-                    controller->updateBar(); // ForGalTsv
                     ++parsedCount;
                 }
             }
@@ -338,8 +339,6 @@ void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRou
                     it->second->pre_translated_text = parts[0];
                     it->second->translated_by = modelName;
                     it->second->complete = true;
-                    ++completedSentences;
-                    controller->updateBar(); // ForNovelTsv
                     ++parsedCount;
                 }
             }
@@ -372,8 +371,6 @@ void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRou
                     it->second->pre_translated_text = dst;
                     it->second->translated_by = modelName;
                     it->second->complete = true;
-                    ++completedSentences;
-                    controller->updateBar(); // ForGalJson/DeepseekJson
                     ++parsedCount;
                 }
             }
@@ -401,8 +398,6 @@ void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRou
             currentSentence->pre_translated_text = translatedLine;
             currentSentence->translated_by = modelName;
             currentSentence->complete = true;
-            ++completedSentences;
-            controller->updateBar(); // Sakura
             ++parsedCount;
         }
     }
@@ -411,6 +406,20 @@ void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRou
     default:
         throw std::runtime_error("不支持的 TransEngine 用于解析输出");
     }
+
+    if (retransAllWhenFail && parsedCount != batchToTransThisRound.size()) {
+        for (Sentence* se : batchToTransThisRound | std::views::filter([](const auto& s) { return s->complete; })) {
+            se->pre_translated_text.clear();
+            se->translated_by.clear();
+            se->complete = false;
+	    }
+    }
+    else if (parsedCount != 0) {
+        completedSentences += parsedCount;
+        controller->updateBar(parsedCount);
+    }
+
+    return parsedCount;
 }
 
 void combineOutputFiles(const fs::path& originalRelFilePath, const absl::flat_hash_map<fs::path, bool>& splitFileParts,

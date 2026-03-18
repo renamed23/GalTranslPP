@@ -36,6 +36,7 @@ void DictExSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	mainLayout->setContentsMargins(20, 15, 15, 0);
 
 	auto createDictSelectAreaFunc = 
 		[=](const QString& text, const QString& defaultItem, const std::string& globalConfigKey, const std::string& projectConfigKey) -> ElaMultiSelectComboBox*

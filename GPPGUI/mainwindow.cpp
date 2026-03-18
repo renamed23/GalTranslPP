@@ -133,7 +133,7 @@ MainWindow::MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget
 
 ProjectSettingsPage* MainWindow::_createProjectSettingsPage(const fs::path& projectDir)
 {
-    QSharedPointer<ProjectSettingsPage> newPage(new ProjectSettingsPage(_globalConfig, projectDir, this));
+    QSharedPointer<ProjectSettingsPage> newPage(new ProjectSettingsPage(projectDir, _globalConfig, this));
     connect(newPage.get(), &ProjectSettingsPage::finishTranslatingSignal, this, &MainWindow::_onFinishTranslating);
     connect(newPage.get(), &ProjectSettingsPage::changeProjectNameSignal, this, [=](QString nodeKey, QString newProjectName)
         {

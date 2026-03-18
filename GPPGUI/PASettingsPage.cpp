@@ -37,8 +37,7 @@ void PASettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-	mainLayout->setSpacing(5);
+	mainLayout->setContentsMargins(20, 15, 15, 0);
 
 	// 要发现的问题清单
 	QStringList problemList = { "词频过高","标点错漏","丢失换行","多加换行","比原文长","比原文长严格","字典未使用",

@@ -119,6 +119,7 @@ void NormalJsonTranslator::init()
         m_contextHistorySize = toml::find_or(configData, "common", "contextHistorySize", 10);
         m_smartRetry = toml::find_or(configData, "common", "smartRetry", false);
         m_checkQuota = toml::find_or(configData, "common", "checkQuota", true);
+        m_retransAllWhenFail = toml::find_or(configData, "common", "retransAllWhenFail", false);
 
         m_usePreDictInName = toml::find_or(configData, "dictionary", "usePreDictInName", false);
         m_usePostDictInName = toml::find_or(configData, "dictionary", "usePostDictInName", false);
@@ -619,7 +620,7 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
 }
 
 
-bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId) {
+bool NormalJsonTranslator::translateBatch(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId) {
 
     for (Sentence* se : batch) {
         if (se->pre_processed_text.empty()) {
@@ -654,8 +655,8 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
             std::span<Sentence*> firstHalf = batchToTransThisRoundSpan.subspan(0, mid);
             std::span<Sentence*> secondHalf = batchToTransThisRoundSpan.subspan(mid);
 
-            bool firstOk = translateBatchWithRetry(relInputPath, firstHalf, backgroundText, threadId);
-            bool secondOk = translateBatchWithRetry(relInputPath, secondHalf, backgroundText, threadId);
+            bool firstOk = translateBatch(relInputPath, firstHalf, backgroundText, threadId);
+            bool secondOk = translateBatch(relInputPath, secondHalf, backgroundText, threadId);
 
             return firstOk && secondOk;
         }
@@ -732,12 +733,12 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         }
 
         // --- 如果请求成功，则继续解析 ---
-        int parsedCount = 0;
-
-        //void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
-        //    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
-        parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
-            m_controller, backgroundText, m_completedSentences, parsedCount, m_transEngine, m_logger->should_log(spdlog::level::debug));
+        //int parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+        //    const std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences,
+        //    TransEngine transEngine, bool showBackgroundText, bool retransAllWhenFail);
+        int parsedCount = parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
+            m_controller, backgroundText, m_completedSentences,
+            m_transEngine, m_logger->should_log(spdlog::level::debug), m_retransAllWhenFail);
 
         if (parsedCount != batchToTransThisRound.size()) {
             ++retryCount;
@@ -1081,7 +1082,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 return;
             }
 
-            translateBatchWithRetry(relInputPath, batchView, backgroundText, threadId);
+            translateBatch(relInputPath, batchView, backgroundText, threadId);
             for (Sentence* se : batchView) {
                 postProcess(se);
             }

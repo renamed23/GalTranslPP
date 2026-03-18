@@ -36,25 +36,47 @@ namespace fs = std::filesystem;
 
 
 #ifdef _WIN32
-std::string wide2Ascii(const std::wstring& wide, UINT CodePage, LPBOOL usedDefaultChar) {
-    int len = WideCharToMultiByte
-    (CodePage, 0, wide.c_str(), (int)wide.length(), nullptr, 0, nullptr, usedDefaultChar);
+std::string wide2Ascii(const std::wstring& wide, UINT codePage, LPBOOL usedDefaultChar) {
+    int len = WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(), 
+        nullptr, 0, nullptr, usedDefaultChar);
     if (len == 0) return {};
     std::string ascii(len, '\0');
-    WideCharToMultiByte
-    (CodePage, 0, wide.c_str(), (int)wide.length(), ascii.data(), len, nullptr, nullptr);
+    WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(), 
+        ascii.data(), len, nullptr, nullptr);
     return ascii;
 }
 
-std::wstring ascii2Wide(const std::string& ascii, UINT CodePage) {
-    int len = MultiByteToWideChar(CodePage, 0, ascii.c_str(), (int)ascii.length(), nullptr, 0);
+std::string wide2Ascii(std::wstring_view wide, UINT codePage, LPBOOL usedDefaultChar) {
+    int len = WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(),
+        nullptr, 0, nullptr, usedDefaultChar);
+    if (len == 0) return {};
+    std::string ascii(len, '\0');
+    WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(),
+        ascii.data(), len, nullptr, nullptr);
+    return ascii;
+}
+
+std::wstring ascii2Wide(const std::string& ascii, UINT codePage) {
+    int len = MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), nullptr, 0);
     if (len == 0) return {};
     std::wstring wide(len, L'\0');
-    MultiByteToWideChar(CodePage, 0, ascii.c_str(), (int)ascii.length(), wide.data(), len);
+    MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), wide.data(), len);
+    return wide;
+}
+
+std::wstring ascii2Wide(std::string_view ascii, UINT codePage) {
+    int len = MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), nullptr, 0);
+    if (len == 0) return {};
+    std::wstring wide(len, L'\0');
+    MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), wide.data(), len);
     return wide;
 }
 
 std::string ascii2Ascii(const std::string& ascii, UINT src, UINT dst, LPBOOL usedDefaultChar) {
+    return wide2Ascii(ascii2Wide(ascii, src), dst, usedDefaultChar);
+}
+
+std::string ascii2Ascii(std::string_view ascii, UINT src, UINT dst, LPBOOL usedDefaultChar) {
     return wide2Ascii(ascii2Wide(ascii, src), dst, usedDefaultChar);
 }
 

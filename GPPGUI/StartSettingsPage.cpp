@@ -216,6 +216,7 @@ void StartSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	mainLayout->setContentsMargins(20, 15, 15, 0);
 
 	QWidget* topWidget = new QWidget(mainWidget);
 	QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
@@ -533,7 +534,7 @@ void StartSettingsPage::_setupUI()
 	addCentralWidget(_epubCfgPage, true, true, 0);
 	_pdfCfgPage = new PDFCfgPage(_projectConfig, this);
 	addCentralWidget(_pdfCfgPage, true, true, 0);
-	_customFilePluginCfgPage = new CustomFilePluginCfgPage(_projectConfig, _globalConfig, this);
+	_customFilePluginCfgPage = new CustomFilePluginCfgPage(_projectDir, _globalConfig, _projectConfig, this);
 	addCentralWidget(_customFilePluginCfgPage, true, true, 0);
 }
 

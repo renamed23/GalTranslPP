@@ -16,7 +16,6 @@
 #include "ElaSpinBox.h"
 #include "ElaToggleSwitch.h"
 #include "ElaToolTip.h"
-#include "ElaIcon.h"
 #include "ElaDoubleText.h"
 #include "ElaCheckBox.h"
 #include "ValueSliderWidget.h"
@@ -51,12 +50,11 @@ void APISettingsPage::apply2Config()
 
 void APISettingsPage::_setupUI()
 {
-
     QWidget* centerWidget = new QWidget(this);
     centerWidget->setWindowTitle(tr("API 设置"));
     _mainLayout = new QVBoxLayout(centerWidget);
-    _mainLayout->setContentsMargins(5, 5, 5, 5);
-    _mainLayout->setSpacing(15);
+    _mainLayout->setContentsMargins(20, 15, 15, 0);
+    _mainLayout->setSpacing(5);
 
     const auto& apis = toml::find_or_default<toml::array>(_projectConfig, "backendSpecific", "OpenAI-Compatible", "apis");
     for (const auto& api : apis) {
@@ -121,7 +119,7 @@ void APISettingsPage::_setupUI()
     _mainLayout->addWidget(apiStrategyArea);
     _mainLayout->addWidget(apiTimeoutArea);
     _mainLayout->addWidget(addApiButton);
-    _mainLayout->addStretch(); // 弹簧，将内容向上推
+    _mainLayout->addStretch();
     addCentralWidget(centerWidget, true, true, 0);
 }
 
@@ -163,24 +161,24 @@ ElaScrollPageArea* APISettingsPage::_createApiInputRowWidget(const toml::value& 
 
     // 1. 创建带边框的容器 ElaScrollPageArea
     ElaScrollPageArea* container = new ElaScrollPageArea(this);
-    container->setFixedHeight(200);
+    container->setFixedHeight(150);
 
     // 2. 创建水平主布局
     QHBoxLayout* containerLayout = new QHBoxLayout(container);
+    containerLayout->setContentsMargins(10, 0, 10, 0);
 
     // 3. 创建左侧的表单布局
-    QWidget* formContainer = new QWidget(container);
-    formContainer->setFixedWidth(650);
-    QVBoxLayout* formLayout = new QVBoxLayout(formContainer);
-    formLayout->setContentsMargins(0, 0, 0, 0);
+    QWidget* formWidget = new QWidget(container);
+    formWidget->setFixedWidth(650);
+    QVBoxLayout* formLayout = new QVBoxLayout(formWidget);
+    formLayout->setContentsMargins(0, 10, 0, 10);
 
-    QWidget* apiKeyContainer = new QWidget(formContainer);
-    QHBoxLayout* apiKeyLayout = new QHBoxLayout(apiKeyContainer);
-    ElaText* apiKeyLabel = new ElaText("API Key", apiKeyContainer);
+    QHBoxLayout* apiKeyLayout = new QHBoxLayout(formWidget);
+    ElaText* apiKeyLabel = new ElaText("API Key", formWidget);
     apiKeyLabel->setTextPixelSize(13);
     apiKeyLabel->setFixedWidth(100);
     apiKeyLayout->addWidget(apiKeyLabel);
-    ElaLineEdit* keyEdit = new ElaLineEdit(apiKeyContainer);
+    ElaLineEdit* keyEdit = new ElaLineEdit(formWidget);
     if (!key.empty()) {
         keyEdit->setText(QString::fromStdString(key));
     }
@@ -188,15 +186,14 @@ ElaScrollPageArea* APISettingsPage::_createApiInputRowWidget(const toml::value& 
         keyEdit->setPlaceholderText(tr("请输入 API Key(Sakura引擎或有Extra Keys时可不填)"));
     }
     apiKeyLayout->addWidget(keyEdit);
-    formLayout->addWidget(apiKeyContainer);
+    formLayout->addLayout(apiKeyLayout);
 
-    QWidget* apiUrlContainer = new QWidget(formContainer);
-    QHBoxLayout* apiSecretLayout = new QHBoxLayout(apiUrlContainer);
-    ElaText* apiUrlLabel = new ElaText("API Url", apiUrlContainer);
+    QHBoxLayout* apiSecretLayout = new QHBoxLayout(formWidget);
+    ElaText* apiUrlLabel = new ElaText("API Url", formWidget);
     apiUrlLabel->setTextPixelSize(13);
     apiUrlLabel->setFixedWidth(100);
     apiSecretLayout->addWidget(apiUrlLabel);
-    ElaLineEdit* urlEdit = new ElaLineEdit(apiUrlContainer);
+    ElaLineEdit* urlEdit = new ElaLineEdit(formWidget);
     if (!url.empty()) {
         urlEdit->setText(QString::fromStdString(url));
     }
@@ -204,16 +201,15 @@ ElaScrollPageArea* APISettingsPage::_createApiInputRowWidget(const toml::value& 
         urlEdit->setPlaceholderText(tr("请输入 API Url"));
     }
     apiSecretLayout->addWidget(urlEdit);
-    formLayout->addWidget(apiUrlContainer);
+    formLayout->addLayout(apiSecretLayout);
 
-    QWidget* modelContainer = new QWidget(formContainer);
-    QHBoxLayout* modelLayout = new QHBoxLayout(modelContainer);
-    ElaText* modelLabel = new ElaText(tr("模型名称"), modelContainer);
+    QHBoxLayout* modelLayout = new QHBoxLayout(formWidget);
+    ElaText* modelLabel = new ElaText(tr("模型名称"), formWidget);
     modelLabel->setWordWrap(false);
     modelLabel->setTextPixelSize(13);
     modelLabel->setFixedWidth(100);
     modelLayout->addWidget(modelLabel);
-    ElaLineEdit* modelEdit = new ElaLineEdit(modelContainer);
+    ElaLineEdit* modelEdit = new ElaLineEdit(formWidget);
     if (!model.empty()) {
         modelEdit->setText(QString::fromStdString(model));
     }
@@ -221,39 +217,35 @@ ElaScrollPageArea* APISettingsPage::_createApiInputRowWidget(const toml::value& 
         modelEdit->setPlaceholderText(tr("请输入模型名称(Sakura引擎可不填)"));
     }
     modelLayout->addWidget(modelEdit);
-    formLayout->addWidget(modelContainer);
+    formLayout->addLayout(modelLayout);
 
     // 4. 创建右侧的删除按钮
-    QWidget* rightContainer = new QWidget(container);
-    QVBoxLayout* rightLayout = new QVBoxLayout(rightContainer);
+    QVBoxLayout* rightLayout = new QVBoxLayout(container);
     rightLayout->addStretch();
 
     ElaIconButton* deleteButton = new ElaIconButton(ElaIconType::Trash, this);
     // 使用 QObject::setProperty 来给按钮附加它所属容器的指针
     deleteButton->setProperty("containerWidget", QVariant::fromValue<QWidget*>(container));
-    rightLayout->addWidget(deleteButton);
+    rightLayout->addWidget(deleteButton, 0, Qt::AlignCenter);
     connect(deleteButton, &ElaIconButton::clicked, this, &APISettingsPage::_onDeleteApiRow);
 
-    QWidget* enableContainer = new QWidget(rightContainer);
-    QHBoxLayout* enableLayout = new QHBoxLayout(enableContainer);
-    enableLayout->addStretch();
-    ElaText* enableLabel = new ElaText(tr("启用"), 13, enableContainer);
-    enableLayout->addWidget(enableLabel);
-    ElaToggleSwitch* enableSwitch = new ElaToggleSwitch(enableContainer);
+    QHBoxLayout* enableLayout = new QHBoxLayout(container);
+    ElaText* enableLabel = new ElaText(tr("启用"), 13, container);
+    enableLayout->addWidget(enableLabel, 0, Qt::AlignCenter);
+    ElaToggleSwitch* enableSwitch = new ElaToggleSwitch(container);
     enableSwitch->setIsToggled(enable);
-    enableLayout->addWidget(enableSwitch);
-    enableLayout->addStretch();
-    rightLayout->addWidget(enableContainer);
+    enableLayout->addWidget(enableSwitch, 0, Qt::AlignCenter);
+    rightLayout->addLayout(enableLayout);
 
-    ElaPushButton* configButton = new ElaPushButton(tr("高级配置"), rightContainer);
+    ElaPushButton* configButton = new ElaPushButton(tr("高级配置"), container);
     ElaWidget* configWidget = new ElaWidget();
-    configWidget->setContentsMargins(5, 25, 5, 0);
     configWidget->setFixedWidth(950);
     configWidget->setFixedHeight(650);
     configWidget->setWindowTitle(tr("API 高级配置"));
     configWidget->setWindowModality(Qt::ApplicationModal);
     configWidget->setWindowButtonFlags(ElaAppBarType::CloseButtonHint);
     QVBoxLayout* configLayout = new QVBoxLayout(configWidget);
+    configLayout->setContentsMargins(5, 25, 5, 0);
 
     ElaScrollPageArea* streamConfigArea = new ElaScrollPageArea(configWidget);
     QHBoxLayout* streamConfigLayout = new QHBoxLayout(streamConfigArea);
@@ -370,18 +362,19 @@ ElaScrollPageArea* APISettingsPage::_createApiInputRowWidget(const toml::value& 
 
     configLayout->addStretch();
     configWidget->hide();
-    connect(configButton, &ElaPushButton::clicked, this, [=](bool checked)
+    connect(configButton, &ElaPushButton::clicked, this, [=]()
         {
             configWidget->moveToCenter();
             configWidget->resize(950, 650);
             configWidget->show();
         });
-    rightLayout->addWidget(configButton);
+    rightLayout->addWidget(configButton, 0, Qt::AlignCenter);
     rightLayout->addStretch();
 
     // 5. 组合布局
-    containerLayout->addWidget(formContainer);
-    containerLayout->addWidget(rightContainer, 0, Qt::AlignRight);
+    containerLayout->addWidget(formWidget);
+    containerLayout->addStretch();
+    containerLayout->addLayout(rightLayout);
 
     // 6. 存储这组控件的引用
     ApiRowControls newRowControls;
