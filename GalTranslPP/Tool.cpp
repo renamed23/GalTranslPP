@@ -7,6 +7,7 @@
 #pragma comment(lib, "winhttp.lib")
 #endif
 
+#include <boost/algorithm/string.hpp>
 #define BIT7Z_AUTO_FORMAT
 #include <bit7z/bitarchivereader.hpp>
 #include <bit7z/bitfileextractor.hpp>
@@ -488,13 +489,12 @@ std::vector<double> getSubstringPositions(const std::string& text, std::string_v
 }
 
 std::string& replaceStrInplace(std::string& str, std::string_view org, std::string_view rep) {
-    str = str | std::views::split(org) | std::views::join_with(rep) | std::ranges::to<std::string>();
+    boost::replace_all(str, org, rep);
     return str;
 }
 
 std::string replaceStr(const std::string& str, std::string_view org, std::string_view rep) {
-    std::string result = str | std::views::split(org) | std::views::join_with(rep) | std::ranges::to<std::string>();
-    return result;
+    return boost::replace_all_copy(str, org, rep);
 }
 
 // 核心辅助函数

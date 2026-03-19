@@ -1,14 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "galtranslpp",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "dependencies": [
+    "boost-algorithm",
+    "boost-crc",
     "nlohmann-json",
     "toml11",
     "spdlog",
     "cpr",
     "vit-vit-ctpl",
-    "boost-crc",
     "mecab",
     "cld3",
     "icu",
