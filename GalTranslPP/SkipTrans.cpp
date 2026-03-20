@@ -60,7 +60,7 @@ SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfi
                 m_skipKeys.push_back(std::move(checkFunc));
             }
             else if (elem.is_array() || elem.is_table()) {
-                CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, projectDir, pythonManager, luaManager, m_logger, m_needReboot);
+                CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, projectDir, pythonManager, luaManager, m_logger);
                 m_skipKeys.push_back(std::move(checkFunc));
             }
             else {

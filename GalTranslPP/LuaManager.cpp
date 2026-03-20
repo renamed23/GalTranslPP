@@ -229,7 +229,7 @@ public:
 	}
 };
 
-std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(const std::string& scriptPath, const std::string& functionName, bool& needReboot) {
+std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(const std::string& scriptPath, const std::string& functionName) {
 	const fs::path stdScriptPath = fs::weakly_canonical(ascii2Wide(scriptPath));
 	if (!fs::exists(stdScriptPath)) {
 		m_logger->error("Script is not exist: {}", scriptPath);
@@ -245,7 +245,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 			std::ifstream ifs(stdScriptPath, std::ios::binary);
 			std::string script((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 			state->lua->script(script);
-			registerCustomTypes(state, scriptPath, needReboot);
+			registerCustomTypes(state, scriptPath);
 			it = m_scriptStates.find(stdScriptPath);
 		}
 		catch (const sol::error& e) {
@@ -270,7 +270,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 	return it->second;
 }
 
-void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath, bool& needReboot) {
+void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath) {
 	sol::state& lua = *(luaStateInstance->lua);
 	// 绑定 NameType 枚举
 	lua.new_enum("NameType",
@@ -726,26 +726,22 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 				const std::string tokenizerBackend = lua[mode + "tokenizerBackend"].get<std::string>();
 				if (tokenizerBackend == "MeCab") {
 					const std::string mecabDictDir = lua[mode + "mecabDictDir"].get<std::string>();
-					m_logger->info("{} 正在检查 MeCab 环境...", scriptPath);
+					m_logger->info("{} 已配置 MeCab 分词器，首次使用时加载。", scriptPath);
 					utilsTable[mode + "tokenizeFunc"] = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-					m_logger->info("{} MeCab 环境检查完毕。", scriptPath);
 				}
 				else if (tokenizerBackend == "spaCy") {
 					const std::string spaCyModelName = lua[mode + "spaCyModelName"].get<std::string>();
-					m_logger->info("{} 正在检查 spaCy 环境...", scriptPath);
-					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
-					m_logger->info("{} spaCy 环境检查完毕。", scriptPath);
+					m_logger->info("{} 已配置 spaCy 分词器，首次使用时加载。", scriptPath);
+					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger);
 				}
 				else if (tokenizerBackend == "Stanza") {
 					const std::string stanzaLang = lua[mode + "stanzaLang"].get<std::string>();
-					m_logger->info("{} 正在检查 Stanza 环境...", scriptPath);
-					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
-					m_logger->info("{} Stanza 环境检查完毕。", scriptPath);
+					m_logger->info("{} 已配置 Stanza 分词器，首次使用时加载。", scriptPath);
+					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger);
 				}
 				else if (tokenizerBackend == "pkuseg") {
-					m_logger->info("{} 正在检查 pkuseg 环境...", scriptPath);
-					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger, needReboot);
-					m_logger->info("{} pkuseg 环境检查完毕。", scriptPath);
+					m_logger->info("{} 已配置 pkuseg 分词器，首次使用时加载。", scriptPath);
+					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger);
 				}
 				else {
 					throw std::invalid_argument(std::format("{} 中注册了无效的 tokenizerBackend: {}", scriptPath, tokenizerBackend));

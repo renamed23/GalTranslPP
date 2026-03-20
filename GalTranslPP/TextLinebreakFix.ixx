@@ -37,17 +37,12 @@ export {
 		bool m_forceFix;
 		bool m_useTokenizer;
 
-		bool m_needReboot = false;
-
 		std::vector<std::string> splitIntoTokens(const std::string& text);
 
 	public:
 
 		TextLinebreakFix(const fs::path& otherCacheDir, const toml::value& projectConfig, const std::shared_ptr<spdlog::logger>& logger, PluginRunTime runTime);
-
 		~TextLinebreakFix();
-
-		bool needReboot() const { return m_needReboot; }
 
 		void dPostRun(Sentence* se);
 	};

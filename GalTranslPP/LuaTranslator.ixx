@@ -24,7 +24,6 @@ export {
 		sol::function* m_luaRunFunc;
 		std::string m_scriptPath;
 		std::string m_translatorName;
-		bool m_needReboot = false;
 
 	public:
 		virtual void run() override
@@ -45,17 +44,17 @@ export {
 			m_translatorName = wide2Ascii(fs::path(ascii2Wide(m_scriptPath)).filename());
 			// m_inputDir = L"cache" / projectDir.filename() / (ascii2Wide(m_translatorName) + L"_json_input");
 			// m_outputDir = L"cache" / projectDir.filename() / (ascii2Wide(m_translatorName) + L"_json_output");
-			std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = this->m_luaManager->registerFunction(m_scriptPath, "init", m_needReboot);
+			std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = this->m_luaManager->registerFunction(m_scriptPath, "init");
 			if (!luaStateOpt.has_value()) {
 				throw std::runtime_error("LuaTranslator 获取 init 函数失败。");
 			}
-			luaStateOpt = this->m_luaManager->registerFunction(m_scriptPath, "run", m_needReboot);
+			luaStateOpt = this->m_luaManager->registerFunction(m_scriptPath, "run");
 			if (!luaStateOpt.has_value()) {
 				throw std::runtime_error("LuaTranslator 获取 run 函数失败。");
 			}
 			m_luaState = luaStateOpt.value();
 			m_luaRunFunc = m_luaState->functions["run"].get();
-			this->m_luaManager->registerFunction(m_scriptPath, "unload", m_needReboot);
+			this->m_luaManager->registerFunction(m_scriptPath, "unload");
 
 			sol::state& luaState = *(m_luaState->lua);
 			luaState["luaTranslator"] = (BaseTranslator*)this;
@@ -66,10 +65,6 @@ export {
 			}
 			catch (const sol::error& e) {
 				throw std::runtime_error(std::format("初始化 LuaTranslator 时出现异常: {}", e.what()));
-			}
-
-			if (m_needReboot) {
-				throw std::runtime_error("LuaTranslator 需要重启程序");
 			}
 		}
 

@@ -20,7 +20,6 @@ extern "C++" {
 	PRO_DEF_MEM_DISPATCH(MemPreRun, preRun);
 	PRO_DEF_MEM_DISPATCH(MemPostRun, postRun);
 	PRO_DEF_MEM_DISPATCH(MemDPostRun, dPostRun);
-	PRO_DEF_MEM_DISPATCH(MemNeedReboot, needReboot);
 }
 
 export {
@@ -61,23 +60,11 @@ export {
 		{ }
 	};
 
-	template <>
-	struct pro::weak_dispatch<MemNeedReboot> : MemNeedReboot {
-		using MemNeedReboot::operator();
-		template <class... Args>
-		bool operator()(Args&&...) const
-			requires(!std::is_invocable_v<MemNeedReboot, Args...>)
-		{
-			return false;
-		}
-	};
-
 	struct PPlugin : pro::facade_builder
 		::add_convention<pro::weak_dispatch<MemDPreRun>, void(Sentence*)>
 		::add_convention<pro::weak_dispatch<MemPreRun>, void(Sentence*)>
 		::add_convention<pro::weak_dispatch<MemPostRun>, void(Sentence*)>
-		::add_convention<pro::weak_dispatch<MemDPostRun>, void(Sentence*)>
-		::add_convention<pro::weak_dispatch<MemNeedReboot>, bool() const> // 弱 proxy 约束的实现不是必须的，如果没有实现则默认返回 false
+		::add_convention<pro::weak_dispatch<MemDPostRun>, void(Sentence*)> // 弱 proxy 约束的实现不是必须的，如果没有实现则默认返回 false
 		::build { };
 
 	void registerPlugins(std::vector<pro::proxy<PPlugin>>& plugins, const std::vector<std::string>& pluginNames, const fs::path& projectDir, const fs::path& otherCacheDir,

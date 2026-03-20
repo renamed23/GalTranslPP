@@ -25,7 +25,6 @@ export {
 
         std::shared_ptr<spdlog::logger> m_logger;
         std::string m_modulePath;
-        bool m_needReboot = false;
 
     public:
 
@@ -33,8 +32,6 @@ export {
             const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger);
 
         ~PythonTextPlugin();
-
-        bool needReboot() const { return m_needReboot; }
 
         void dPreRun(Sentence* se);
         void preRun(Sentence* se);

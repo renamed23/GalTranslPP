@@ -26,7 +26,7 @@ export {
 		explicit LuaManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
 		
 		std::optional<std::shared_ptr<LuaStateInstance>> registerFunction
-		(const std::string& scriptPath, const std::string& functionName, bool& needReboot);
+		(const std::string& scriptPath, const std::string& functionName);
 
 	private:
 
@@ -34,7 +34,7 @@ export {
 
 		std::shared_ptr<spdlog::logger> m_logger;
 
-		void registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath, bool& needReboot);
+		void registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath);
 	};
 }
 

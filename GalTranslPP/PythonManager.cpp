@@ -243,7 +243,7 @@ void PythonInterpreterInstance::daemonThreadFunc() {
 
 // PythonManager
 std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registerFunction
-(const std::string& modulePath, const std::string& functionName, bool& needReboot) {
+(const std::string& modulePath, const std::string& functionName) {
 
     const fs::path stdModulePath = fs::weakly_canonical(ascii2Wide(modulePath));
     if (!fs::exists(stdModulePath)) {
@@ -269,7 +269,7 @@ std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registe
                             py::module_::import("sys").attr("path").attr("append")(wide2Ascii(stdModulePath.parent_path()));
                         }
                     }
-                    registerCustomTypes(moduleName, needReboot);
+                    registerCustomTypes(moduleName);
                 }
                 catch (const py::error_already_set& e) {
                     throw std::runtime_error(std::format("为模块 {} 加载自定义类型时出现异常: {}", moduleName, e.what()));
@@ -315,7 +315,7 @@ std::optional<std::shared_ptr<PythonInterpreterInstance>> PythonManager::registe
 }
 
 // 这个函数是在子解释器的守护线程里执行的
-void PythonManager::registerCustomTypes(const std::string& moduleName, bool& needReboot) {
+void PythonManager::registerCustomTypes(const std::string& moduleName) {
     const py::module_ pythonModule = py::module_::import(moduleName.c_str());
     auto setupTokenizer = [&](const std::string& mode)
         {
@@ -324,26 +324,22 @@ void PythonManager::registerCustomTypes(const std::string& moduleName, bool& nee
                 const std::string tokenizerBackend = pythonModule.attr((mode + "tokenizerBackend").c_str()).cast<std::string>();
                 if (tokenizerBackend == "MeCab") {
                     const std::string mecabDictDir = pythonModule.attr((mode + "mecabDictDir").c_str()).cast<std::string>();
-                    m_logger->info("{} 正在检查 MeCab 环境...", moduleName);
+                    m_logger->info("{} 已配置 MeCab 分词器，首次使用时加载。", moduleName);
                     pythonModule.attr((mode + "tokenizeFunc").c_str()) = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-                    m_logger->info("{} MeCab 环境检查完毕。", moduleName);
                 }
                 else if (tokenizerBackend == "spaCy") {
                     const std::string spaCyModelName = pythonModule.attr((mode + "spaCyModelName").c_str()).cast<std::string>();
-                    m_logger->info("{} 正在检查 spaCy 环境...", moduleName);
-                    pythonModule.attr((mode + "tokenizeFunc").c_str()) = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
-                    m_logger->info("{} spaCy 环境检查完毕。", moduleName);
+                    m_logger->info("{} 已配置 spaCy 分词器，首次使用时加载。", moduleName);
+                    pythonModule.attr((mode + "tokenizeFunc").c_str()) = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger);
                 }
                 else if (tokenizerBackend == "Stanza") {
                     const std::string stanzaLang = pythonModule.attr((mode + "stanzaLang").c_str()).cast<std::string>();
-                    m_logger->info("{} 正在检查 Stanza 环境...", moduleName);
-                    pythonModule.attr((mode + "tokenizeFunc").c_str()) = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
-                    m_logger->info("{} Stanza 环境检查完毕。", moduleName);
+                    m_logger->info("{} 已配置 Stanza 分词器，首次使用时加载。", moduleName);
+                    pythonModule.attr((mode + "tokenizeFunc").c_str()) = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger);
                 }
                 else if (tokenizerBackend == "pkuseg") {
-                    m_logger->info("{} 正在检查 pkuseg 环境...", moduleName);
-                    pythonModule.attr((mode + "tokenizeFunc").c_str()) = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger, needReboot);
-                    m_logger->info("{} pkuseg 环境检查完毕。", moduleName);
+                    m_logger->info("{} 已配置 pkuseg 分词器，首次使用时加载。", moduleName);
+                    pythonModule.attr((mode + "tokenizeFunc").c_str()) = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger);
                 }
                 else {
                     throw std::invalid_argument(std::format("{} 中注册了无效的 tokenizerBackend: {}", moduleName, tokenizerBackend));

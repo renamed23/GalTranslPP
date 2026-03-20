@@ -120,7 +120,7 @@ std::string GptDictionary::generatePrompt(std::span<Sentence*> batch, TransEngin
     return {};
 }
 
-void GptDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
+void GptDictionary::loadFromFile(const fs::path& filePath) {
     if (!fs::exists(filePath)) {
         m_logger->error("GPT 字典文件不存在: {}", wide2Ascii(filePath));
         return;
@@ -259,7 +259,7 @@ void GptDictionary::checkDictUse(Sentence* sentence, CachePart base, CachePart c
 
 
 // Normal
-void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) {
+void NormalDictionary::loadFromFile(const fs::path& filePath) {
     if (!fs::exists(filePath)) {
         m_logger->warn("字典文件不存在: {}", wide2Ascii(filePath));
         return;
@@ -303,7 +303,7 @@ void NormalDictionary::loadFromFile(const fs::path& filePath, bool& needReboot) 
             entry.priority = toml::find_or(el, "priority", 0);
 
             if (getConditionType(el) != ConditionType::None) {
-                entry.dictCondition = std::make_unique<CheckSeCondFunc>(getCheckSeCondFunc(el, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot));
+                entry.dictCondition = std::make_unique<CheckSeCondFunc>(getCheckSeCondFunc(el, m_projectDir, m_pythonManager, m_luaManager, m_logger));
             }
             m_entries.push_back(std::move(entry));
             ++count;
