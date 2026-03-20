@@ -106,7 +106,7 @@ void NormalJsonTranslator::init()
         const auto pluginConfigData = toml::uparse(filePluginConfigPath / L"NormalJson.toml");
         m_outputWithSrc = parseToml<bool>(configData, pluginConfigData, "plugins.NormalJson.output_with_src");
 
-        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 10);
+        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 14);
         m_threadsNum = toml::find_or(configData, "common", "threadsNum", 1);
         m_sortMethod = toml::find_or(configData, "common", "sortMethod", "name");
         m_targetLang = toml::find_or(configData, "common", "targetLang", "zh-cn");
@@ -738,7 +738,8 @@ bool NormalJsonTranslator::translateBatch(const fs::path& relInputPath, std::spa
         if (parsedCount != batchToTransThisRound.size()) {
             ++retryCount;
             if (!m_controller->shouldStop()) {
-                m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试..., 解析结果: \n{}", threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount, response.content);
+                m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试..., 解析结果: \n{}", 
+                    threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount, response.content);
             }
             continue;
         }
@@ -1073,6 +1074,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 }
                 m_logger->debug("[线程 {}] [文件 {}] 已停止翻译", threadId, wide2Ascii(relInputPath));
                 std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
+                saveCache(sentences, cachePath);
                 saveProblemOverviewFunc();
                 return;
             }
@@ -1142,9 +1144,9 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
         combineOutputFiles(originalRelFilePath, splitFileParts, m_outputCacheDir, m_outputDir, m_logger);
         if (m_onFileProcessed) {
-            std::unique_lock<std::mutex> lock(m_outputMutex, std::defer_lock);
+            std::unique_lock<std::mutex> lock(m_outputMutex, std::defer_lock); // 非常神奇,总之如果 m_onFileProcessed 是 python 侧赋值的闭包的话，这里的不 unlock 就会死锁
             if (!m_pythonTranslator) {
-                lock.lock(); // 非常神奇,总之如果 m_onFileProcessed 是 python 侧赋值的闭包的话，这里的不 unlock 就会死锁
+                lock.lock();
             }
             m_onFileProcessed(originalRelFilePath);
         }
@@ -1306,7 +1308,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 this->preProcess(se);
             };
         DictionaryGenerator generator(m_controller, m_logger, m_apiPool, m_tokenizeSourceLangFunc, m_otherCacheDir,
-            preProcessFunc, m_onPerformApi, m_onDictProcessed,
+            std::move(preProcessFunc), m_onPerformApi, m_onDictProcessed,
             m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang,
             m_maxRetries, m_threadsNum, m_apiTimeOutMs, m_checkQuota);
         const fs::path outputFilePath = m_projectDir / L"项目GPT字典-生成.toml";
