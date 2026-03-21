@@ -93,18 +93,15 @@ cd GalTranslPP
 还需将一些文件复制到文件夹内程序才可正常运行。  
 
 - 0、 先将项目根目录的`Example\BaseConfig`文件夹内的`python-3.12.10-embed-amd64.zip`文件解压到当前文件夹
-- 0.5、 将`3rdParty\OpenCC\build\share`文件夹内的`opencc`文件夹复制到`BaseConfig`文件夹内
 
 ### 6.1 GPPCLI
 
-- 1、  将`Example`文件夹内的`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPCLI`
-- 2、  将`3rdParty`文件夹内的`7z.dll`文件复制到`GalTranslPP\Release\GPPCLI`
+- 1、 运行项目根目录下的 `Release.bat`
 
 ### 6.2 GPPGUI
 
-- 1、  将`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPGUI`
-- 2、  将`7z.dll`文件复制到`GalTranslPP\Release\GPPGUI`
-- 3、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
+- 1、 运行项目根目录下的 `Release.bat`
+- 2、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
 
 ```cmd
 windeployqt path/to/GalTranslPP_GUI.exe
