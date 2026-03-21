@@ -71,7 +71,7 @@ cd GalTranslPP
 
 ### 4.4 编译 OpenCC
 
-- 1、  使用 Visual Studio 打开 `3rdParty\OpenCC` 文件夹。
+- 1、  进入 `3rdParty\OpenCC` 文件夹。
 - 2、  双击运行 `build.cmd`。
 - 3、  **确认编译产物**
   - 确保 `3rdParty\OpenCC\build\include` 文件夹存在，程序会用到里面的头文件
