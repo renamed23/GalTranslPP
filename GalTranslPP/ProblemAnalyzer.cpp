@@ -33,7 +33,7 @@ ProblemAnalyzer::ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictio
 {
 	m_excludeTraditionalCharList =
     {
-        "乾", "阪"
+        "乾", "阪", "篠", "塚"
     };
 }
 

@@ -50,11 +50,12 @@ def postRun(se: gpp.Sentence):
         # 女人
         baseText = match.group(2)
         # ""
-        kanas += gpp.utils.extractKana(baseText)
+        kanasInBaseText = gpp.utils.extractKana(baseText)
+        
+        if kanasInBaseText:
+            kanas += kanasInBaseText
+            se.problems += ["注音顺序错误(基本文本中有假名): " + match.group(0)]
 
-        cjkInBaseText = gpp.utils.extractCJK(baseText)
-        if not cjkInBaseText:
-            se.problems += ["注音顺序错误(基本文本中无汉字): " + match.group(0)]
 
     if kanas:
         logger.trace("BetterRetainJp 残留日文检测: " + kanas)
