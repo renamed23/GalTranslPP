@@ -2,7 +2,6 @@
 
 #include "GPPMacros.hpp"
 #include <toml.hpp>
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 #include <ctpl_stl.h>
 #include <unicode/unistr.h>
@@ -18,10 +17,8 @@ import LuaTranslator;
 import NLPTool;
 
 import ITranslator;
-import GPPDefines;
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 class LuaJson {
@@ -576,8 +573,8 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 	sol::table utilsTable = lua.create_named_table("utils");
 	utilsTable["ascii2Ascii"] = [](const std::string& ascii, std::optional<int> src, std::optional<int> dst) -> std::tuple<std::string, bool>
 		{
-			BOOL usedDefaultChar = FALSE;
-			std::string resultStr = ascii2Ascii(ascii, (UINT)src.value_or(65001), (UINT)dst.value_or(0), &usedDefaultChar);
+			int usedDefaultChar = 0;
+			std::string resultStr = ascii2Ascii(ascii, (unsigned int)src.value_or(65001), (unsigned int)dst.value_or(0), &usedDefaultChar);
 			return std::make_tuple(resultStr, (bool)usedDefaultChar);
 		};
 	utilsTable["executeCommand"] = [](const std::string& program, const std::string& args, std::optional<bool> showWindow, std::optional<int> timeDelayAfterCommand) -> bool

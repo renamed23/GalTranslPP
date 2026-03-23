@@ -3,15 +3,14 @@
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <cpp-base64/base64.h>
 #include <toml.hpp>
 #include <sol/sol.hpp>
 
 module SkipTrans;
 
-import Tool;
 import ConditionTool;
+import Tool;
 
 namespace fs = std::filesystem;
 

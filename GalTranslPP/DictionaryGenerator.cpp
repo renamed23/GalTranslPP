@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 
@@ -9,7 +8,6 @@ module DictionaryGenerator;
 
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 DictionaryGenerator::~DictionaryGenerator() {

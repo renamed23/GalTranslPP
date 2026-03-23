@@ -3,10 +3,9 @@
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
-#include <toml.hpp>
 #include <ctpl_stl.h>
 #include <proxy/proxy.h>
+#include <toml.hpp>
 
 export module NormalJsonTranslator;
 

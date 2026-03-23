@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 module APIPool;
 

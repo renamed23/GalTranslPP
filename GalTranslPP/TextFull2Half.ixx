@@ -2,7 +2,6 @@
 
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 export module TextFull2Half;

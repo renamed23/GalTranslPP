@@ -7,7 +7,6 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 #endif
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
@@ -22,8 +21,6 @@ import NormalJsonTranslatorHelperTool;
 import NLPTool;
 import Tool;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 namespace py = pybind11;
 

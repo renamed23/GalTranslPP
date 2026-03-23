@@ -1,15 +1,12 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 module NameTranslator;
 
-import GPPDefines;
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 NameTranslator::NameTranslator(

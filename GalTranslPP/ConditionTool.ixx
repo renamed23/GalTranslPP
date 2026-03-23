@@ -4,7 +4,6 @@
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <toml.hpp>
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 
 export module ConditionTool;

@@ -3,11 +3,11 @@
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
 #include <toml.hpp>
-#include <spdlog/spdlog.h>
 
 export module PythonManager;
 
 import std;
+import spdlog;
 
 namespace fs = std::filesystem;
 namespace py = pybind11;

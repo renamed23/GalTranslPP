@@ -2,7 +2,6 @@
 
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <unicode/unistr.h>
 #include <unicode/uchar.h>
 #include <utf8cpp/utf8.h>

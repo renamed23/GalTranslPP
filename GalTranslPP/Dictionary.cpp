@@ -3,7 +3,6 @@
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <sol/sol.hpp>
 

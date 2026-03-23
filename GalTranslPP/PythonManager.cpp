@@ -2,7 +2,6 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <ctpl_stl.h>
 
 module PythonManager;
@@ -13,7 +12,6 @@ import PDFTranslator;
 import NLPTool;
 
 import ITranslator;
-import GPPDefines;
 import Tool;
 
 namespace fs = std::filesystem;

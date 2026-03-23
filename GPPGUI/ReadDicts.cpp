@@ -1,9 +1,8 @@
-#include "ReadDicts.h"
+﻿#include "ReadDicts.h"
 #include "ElaMessageBar.h"
 #include <toml.hpp>
 
 import Tool;
-using json = nlohmann::json;
 
 
 QString ReadDicts::readDictsStr(const fs::path& dictPath)

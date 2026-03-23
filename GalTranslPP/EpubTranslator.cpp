@@ -2,7 +2,6 @@
 
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <zip.h>
 #pragma  warning( push ) 
 #pragma  warning( disable: 4005 ) 
@@ -12,10 +11,8 @@
 
 module EpubTranslator;
 
-import GPPDefines;
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 // 递归遍历 Gumbo 树以提取文本节点

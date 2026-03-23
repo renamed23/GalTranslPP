@@ -1,6 +1,8 @@
 ﻿export module GPPDefines;
 
 export import std;
+export import nlohmann.json;
+export import spdlog;
 
 namespace fs = std::filesystem;
 
@@ -107,5 +109,8 @@ export {
     using CheckSeCondFunc = std::function<bool(const Sentence*)>;
 
     using DictList = std::vector<std::tuple<std::string, std::string, std::string>>;
+
+    using json = nlohmann::json;
+    using ordered_json = nlohmann::ordered_json;
 
 }

@@ -2,10 +2,7 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <exception>
 #include <mecab/mecab.h>
-#include <mutex>
-#include <spdlog/spdlog.h>
 
 module NLPTool;
 

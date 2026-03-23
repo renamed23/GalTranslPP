@@ -1,22 +1,22 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
-#include <unicode/uscript.h>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #include <ctpl_stl.h>
 #include <toml.hpp>
+#include <unicode/uscript.h>
 
 export module Tool;
 
 export import GPPDefines;
-export import nlohmann.json;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 
 export {
 
+#ifdef _WIN32
     std::string wide2Ascii(const std::wstring& wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr);
     std::string wide2Ascii(std::wstring_view wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr);
     inline std::string wide2Ascii(const wchar_t* wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr) {
@@ -25,11 +25,7 @@ export {
     template<typename T>
     requires(std::is_same_v<std::remove_cvref_t<T>, fs::path>)
     inline std::string wide2Ascii(T&& path, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr) {
-#ifdef _WIN32
         return wide2Ascii(path.native(), codePage, usedDefaultChar);
-#else
-        return path.string();
-#endif
     }
 
     std::wstring ascii2Wide(const std::string& ascii, UINT codePage = CP_UTF8);
@@ -41,6 +37,8 @@ export {
     bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow = true, int timeDelayAfterCommand = 5);
 
     int getConsoleWidth();
+#endif
+
 
     std::string getNameString(const Sentence* se);
     std::string getNameString(const json& j);

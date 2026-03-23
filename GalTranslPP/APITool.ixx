@@ -1,14 +1,11 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module APITool;
 
 import Tool;
 import ITranslator;
-
-using json = nlohmann::json;
 
 export {
     struct TranslationApi {

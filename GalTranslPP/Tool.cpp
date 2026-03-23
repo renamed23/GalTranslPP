@@ -1,6 +1,7 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
+
 #ifdef _WIN32
 #include <Windows.h>
 #pragma comment(lib, "Shlwapi.lib")
@@ -8,21 +9,28 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
+#include <boost/crc.hpp>
+
 #define BIT7Z_AUTO_FORMAT
 #include <bit7z/bitarchivereader.hpp>
 #include <bit7z/bitfileextractor.hpp>
-#include <spdlog/spdlog.h>
+
+#include <ctpl_stl.h>
+
+#include <opencc/opencc.h>
+
+#include <toml.hpp>
+
 #include <unicode/unistr.h>
 #include <unicode/brkiter.h>
 #include <unicode/uscript.h>
 #include <unicode/translit.h>
-#include <utf8cpp/utf8.h>
-#include <boost/crc.hpp>
-#include <toml.hpp>
-#include <cpp-base64/base64.cpp>
-#include <ctpl_stl.h>
 
-#include <opencc/opencc.h>
+#include <utf8cpp/utf8.h>
+
+#include <cpp-base64/base64.cpp>
+
+
 #pragma comment(lib, "marisa.lib")
 #pragma comment(lib, "opencc.lib")
 
@@ -31,8 +39,6 @@
 
 module Tool;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 
 
@@ -151,6 +157,8 @@ int getConsoleWidth() {
     return 80; // 获取失败，返回默认值
 }
 #endif
+
+
 
 std::string names2String(const std::vector<std::string>& names) {
     std::string result;

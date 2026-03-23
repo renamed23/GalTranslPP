@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 export module NormalJsonTranslatorHelperTool;
@@ -9,8 +8,6 @@ export module NormalJsonTranslatorHelperTool;
 import Tool;
 import ITranslator;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 
 export {

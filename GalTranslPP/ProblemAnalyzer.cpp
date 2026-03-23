@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #pragma  warning( push ) 
 #pragma  warning( disable: 4244 )
 #pragma  warning( disable: 4251 )

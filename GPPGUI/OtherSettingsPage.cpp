@@ -18,8 +18,6 @@
 
 import Tool;
 import NormalJsonTranslatorHelperTool;
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 OtherSettingsPage::OtherSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) :
 	BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)

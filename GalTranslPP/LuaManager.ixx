@@ -1,12 +1,12 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 
 export module LuaManager;
 
 import std;
+import spdlog;
 
 namespace fs = std::filesystem;
 
