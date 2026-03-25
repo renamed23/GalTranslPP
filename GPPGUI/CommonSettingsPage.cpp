@@ -509,5 +509,5 @@ void CommonSettingsPage::_setupUI()
 		};
 
 	mainLayout->addStretch();
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }

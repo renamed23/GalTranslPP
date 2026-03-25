@@ -120,7 +120,7 @@ void APISettingsPage::_setupUI()
     _mainLayout->addWidget(apiTimeoutArea);
     _mainLayout->addWidget(addApiButton);
     _mainLayout->addStretch();
-    addCentralWidget(centerWidget, true, true, 0);
+    addCentralWidget(centerWidget, true, false, 0);
 }
 
 // 【重构】这个函数现在只负责调用创建函数并插入到正确位置

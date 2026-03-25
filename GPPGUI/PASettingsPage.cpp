@@ -220,5 +220,5 @@ void PASettingsPage::_setupUI()
 			overwriteCompareObjSaveFunc();
 		};
 
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }

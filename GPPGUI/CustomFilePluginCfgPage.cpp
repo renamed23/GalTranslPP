@@ -1,4 +1,4 @@
-#include "CustomFilePluginCfgPage.h"
+﻿#include "CustomFilePluginCfgPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -77,7 +77,7 @@ CustomFilePluginCfgPage::CustomFilePluginCfgPage(fs::path& projectDir, toml::ord
 
 	mainLayout->addStretch();
 	centerWidget->setWindowTitle(tr("自定义文件处理插件配置"));
-	addCentralWidget(centerWidget, true, true, 0);
+	addCentralWidget(centerWidget, true, false, 0);
 }
 
 CustomFilePluginCfgPage::~CustomFilePluginCfgPage()

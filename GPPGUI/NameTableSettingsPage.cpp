@@ -271,5 +271,5 @@ void NameTableSettingsPage::_setupUI()
 
 	tabWidget->addTab(nameTableWidget, tr("人名替换表"));
 	mainLayout->addWidget(tabWidget);
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }

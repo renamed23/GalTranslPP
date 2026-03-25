@@ -227,7 +227,7 @@ TLFCfgPage::TLFCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : Ba
 
 	mainLayout->addStretch();
 	centerWidget->setWindowTitle(tr("换行修复设置"));
-	addCentralWidget(centerWidget, true, true, 0);
+	addCentralWidget(centerWidget, true, false, 0);
 }
 
 TLFCfgPage::~TLFCfgPage()

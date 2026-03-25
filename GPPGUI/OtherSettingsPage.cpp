@@ -49,7 +49,6 @@ void OtherSettingsPage::_setupUI()
 	pathLayout->addStretch();
 	ElaLineEdit* pathEdit = new ElaLineEdit(pathArea);
 	pathEdit->setReadOnly(true);
-	pathEdit->setClearButtonEnabled(false);
 	pathEdit->setText(QString(_projectDir.wstring()));
 	pathEdit->setFixedWidth(650);
 	pathLayout->addWidget(pathEdit);
@@ -391,5 +390,5 @@ void OtherSettingsPage::_setupUI()
 	mainLayout->addWidget(cacheArea);
 	
 	mainLayout->addStretch();
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }

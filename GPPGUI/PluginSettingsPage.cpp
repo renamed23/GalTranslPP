@@ -181,15 +181,15 @@ void PluginSettingsPage::_setupUI()
     auto saveCustomPluginsFunc = createCustomPluginsPlainTextEditFunc(tr("自定义文本处理插件"), "customTextPlugins", customPlugins);
     mainLayout->addStretch();
 
-    addCentralWidget(mainWidget, true, true, 0);
+    addCentralWidget(mainWidget, true, false, 0);
 
     // 这里的顺序和 _onItemSettings 中的 navigation 索引对应
     _tf2hCfgPage = new TF2HCfgPage(_projectConfig, this);
-    addCentralWidget(_tf2hCfgPage, true, true, 0);;
+    addCentralWidget(_tf2hCfgPage, true, false, 0);;
     _tlfCfgPage = new TLFCfgPage(_projectConfig, this);
-    addCentralWidget(_tlfCfgPage, true, true, 0);
+    addCentralWidget(_tlfCfgPage, true, false, 0);
     _skipTransCfgPage = new SkipTransCfgPage(_projectConfig, this);
-    addCentralWidget(_skipTransCfgPage, true, true, 0);
+    addCentralWidget(_skipTransCfgPage, true, false, 0);
 
 
 

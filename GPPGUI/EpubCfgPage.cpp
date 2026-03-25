@@ -166,7 +166,7 @@ EpubCfgPage::EpubCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : 
 	
 	mainLayout->addStretch();
 	centerWidget->setWindowTitle(tr("Epub 输出配置"));
-	addCentralWidget(centerWidget, true, true, 0);
+	addCentralWidget(centerWidget, true, false, 0);
 }
 
 EpubCfgPage::~EpubCfgPage()

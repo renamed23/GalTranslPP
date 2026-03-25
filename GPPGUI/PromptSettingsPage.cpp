@@ -146,5 +146,5 @@ void PromptSettingsPage::_setupUI()
 		};
 
 	mainLayout->addWidget(tabWidget);
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }

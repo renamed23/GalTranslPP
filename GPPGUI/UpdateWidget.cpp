@@ -17,6 +17,7 @@ UpdateWidget::UpdateWidget(QWidget* parent)
     ElaText* updateTitle = new ElaText("v" + QString::fromStdString(GPPVERSION) + " 更新", 15, this);
     QStringList updateList = {
         "1. 优化了几个常见的繁体检测错误",
+		"2. [GUI] 优化交互逻辑，修复比如框选 LineEdit 里的文本时会拖拽到外侧 Widget 包装之类的问题",
 
     };
 

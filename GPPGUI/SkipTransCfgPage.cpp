@@ -82,7 +82,7 @@ SkipTransCfgPage::SkipTransCfgPage(toml::ordered_value& projectConfig, QWidget* 
     mainLayout->addStretch();
 
     centerWidget->setWindowTitle(tr("跳过翻译设置"));
-    addCentralWidget(centerWidget, true, true, 0);
+    addCentralWidget(centerWidget, true, false, 0);
 }
 
 SkipTransCfgPage::~SkipTransCfgPage()

@@ -2042,29 +2042,29 @@
         <translation>Project path</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="57"/>
+        <location filename="OtherSettingsPage.cpp" line="56"/>
         <source>打开文件夹</source>
         <translation>Open project dir</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="77"/>
+        <location filename="OtherSettingsPage.cpp" line="76"/>
         <source>移动项目</source>
         <translation>Move project</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="81"/>
-        <location filename="OtherSettingsPage.cpp" line="92"/>
-        <location filename="OtherSettingsPage.cpp" line="100"/>
+        <location filename="OtherSettingsPage.cpp" line="80"/>
+        <location filename="OtherSettingsPage.cpp" line="91"/>
+        <location filename="OtherSettingsPage.cpp" line="99"/>
         <source>移动失败</source>
         <translation>Fail to move</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="81"/>
+        <location filename="OtherSettingsPage.cpp" line="80"/>
         <source>项目仍在运行中，无法移动</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="85"/>
+        <location filename="OtherSettingsPage.cpp" line="84"/>
         <source>请选择要移动到的文件夹</source>
         <translation>Please choose the dir you want to move to</translation>
     </message>
@@ -2073,66 +2073,66 @@
         <translation type="vanished">Dir with the same name has already existed</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="105"/>
+        <location filename="OtherSettingsPage.cpp" line="104"/>
         <source>移动成功</source>
         <translation>Moved successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="105"/>
+        <location filename="OtherSettingsPage.cpp" line="104"/>
         <source> 项目已移动到新文件夹</source>
         <translation> has been moved to new dir</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="110"/>
+        <location filename="OtherSettingsPage.cpp" line="109"/>
         <source>项目更名</source>
         <translation>Rename project</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="114"/>
-        <location filename="OtherSettingsPage.cpp" line="126"/>
-        <location filename="OtherSettingsPage.cpp" line="132"/>
-        <location filename="OtherSettingsPage.cpp" line="140"/>
+        <location filename="OtherSettingsPage.cpp" line="113"/>
+        <location filename="OtherSettingsPage.cpp" line="125"/>
+        <location filename="OtherSettingsPage.cpp" line="131"/>
+        <location filename="OtherSettingsPage.cpp" line="139"/>
         <source>更名失败</source>
         <translation>Fail to rename</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="114"/>
+        <location filename="OtherSettingsPage.cpp" line="113"/>
         <source>项目仍在运行中，无法更名</source>
         <translation>Project is still running</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="120"/>
+        <location filename="OtherSettingsPage.cpp" line="119"/>
         <source>请输入新的项目名称</source>
         <translation>Please type in new project name</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="120"/>
+        <location filename="OtherSettingsPage.cpp" line="119"/>
         <source>新的项目名</source>
         <translation>New name</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="126"/>
+        <location filename="OtherSettingsPage.cpp" line="125"/>
         <source>项目名不能为空且不能包含斜杠</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="92"/>
-        <location filename="OtherSettingsPage.cpp" line="132"/>
+        <location filename="OtherSettingsPage.cpp" line="91"/>
+        <location filename="OtherSettingsPage.cpp" line="131"/>
         <source>目录下已有同名文件或文件夹</source>
         <translation>File/dir with the same name has already existed</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="146"/>
+        <location filename="OtherSettingsPage.cpp" line="145"/>
         <source>更名成功</source>
         <translation>Renamed successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="146"/>
+        <location filename="OtherSettingsPage.cpp" line="145"/>
         <source>项目已更名为 </source>
         <translation>Project has been renamed to </translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="168"/>
+        <location filename="OtherSettingsPage.cpp" line="167"/>
         <source>选择翻译问题概览文件</source>
         <translation>Choose translation problems overview file</translation>
     </message>
@@ -2141,33 +2141,33 @@
         <translation type="vanished">The app also automatically saves all project configs when beginning translating or exiting.</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="281"/>
+        <location filename="OtherSettingsPage.cpp" line="280"/>
         <source>保存项目配置</source>
         <translation>Save project settings</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="285"/>
+        <location filename="OtherSettingsPage.cpp" line="284"/>
         <source>保存</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="289"/>
+        <location filename="OtherSettingsPage.cpp" line="288"/>
         <source>保存成功</source>
         <translation>Saved successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="289"/>
-        <location filename="OtherSettingsPage.cpp" line="385"/>
+        <location filename="OtherSettingsPage.cpp" line="288"/>
+        <location filename="OtherSettingsPage.cpp" line="384"/>
         <source>项目 </source>
         <translation>Project </translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="289"/>
+        <location filename="OtherSettingsPage.cpp" line="288"/>
         <source> 的配置信息已保存</source>
         <translation> &apos;s config info has been saved</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="299"/>
+        <location filename="OtherSettingsPage.cpp" line="298"/>
         <source>刷新项目配置</source>
         <translation>Refresh project configs</translation>
     </message>
@@ -2176,153 +2176,153 @@
         <translation type="vanished">Take care because all configs and dicts of this project will be refreshed.</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="303"/>
+        <location filename="OtherSettingsPage.cpp" line="302"/>
         <source>刷新</source>
         <translation>Refresh</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="319"/>
+        <location filename="OtherSettingsPage.cpp" line="318"/>
         <source>你确定要刷新项目配置吗？</source>
         <translation>Are you sure to refresh project config?</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="324"/>
+        <location filename="OtherSettingsPage.cpp" line="323"/>
         <source>GUI中未保存的数据将会被覆盖！</source>
         <translation>Data in GUI that not saved will be covered!</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="344"/>
+        <location filename="OtherSettingsPage.cpp" line="343"/>
         <source>删除翻译缓存</source>
         <translation>Delete translation cache</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="348"/>
+        <location filename="OtherSettingsPage.cpp" line="347"/>
         <source>删除</source>
         <translation>Delete</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="352"/>
-        <location filename="OtherSettingsPage.cpp" line="382"/>
+        <location filename="OtherSettingsPage.cpp" line="351"/>
+        <location filename="OtherSettingsPage.cpp" line="381"/>
         <source>删除失败</source>
         <translation>Fail to delete</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="352"/>
+        <location filename="OtherSettingsPage.cpp" line="351"/>
         <source>项目仍在运行中，无法删除缓存</source>
+        <translation>Project is still running</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="311"/>
+        <location filename="OtherSettingsPage.cpp" line="357"/>
+        <source>否</source>
+        <translation>No</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="71"/>
+        <source>项目移动/更名</source>
+        <translation>Move/Rename project</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="156"/>
+        <source>导入翻译问题概览至翻译缓存</source>
+        <translation>Import translation problems overview to trans_cache</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="156"/>
+        <source>使用 翻译问题概览.json/.toml 中的 Sentence 替换 trans_cache 中的 Sentence</source>
+        <translation>Use sentences in TranslationProblemsOverview.json/.toml to replace those in trans_cache</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="160"/>
+        <source>导入</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="164"/>
+        <location filename="OtherSettingsPage.cpp" line="268"/>
+        <source>导入失败</source>
+        <translation>Fail to import</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="164"/>
+        <source>项目仍在运行中，无法导入</source>
+        <translation>Project is still running</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="252"/>
+        <source>成功导入 </source>
+        <translation>Successfully import </translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="252"/>
+        <source> 个句子至 trans_cache</source>
+        <translation> sentences to trans_cache</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="261"/>
+        <location filename="OtherSettingsPage.cpp" line="264"/>
+        <source>导入完毕</source>
+        <translation>Importing completes</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="261"/>
+        <source>导入中出现的问题记录在 import_problems.log 中</source>
+        <translation>Problems during importing saved to import_problems.log</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="280"/>
+        <source>开始翻译或关闭程序时会自动保存所有项目的配置，一般无需手动保存</source>
+        <translation>The app also automatically saves all project configs when beginning translating or exiting</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="298"/>
+        <source>刷新现有配置和字典，谨慎使用</source>
+        <translation>Take care because all configs and dicts of this project will be refreshed</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="306"/>
+        <source>刷新失败</source>
+        <translation>Fail to refresh</translation>
+    </message>
+    <message>
+        <location filename="OtherSettingsPage.cpp" line="306"/>
+        <source>项目仍在运行中，无法刷新</source>
         <translation>Project is still running</translation>
     </message>
     <message>
         <location filename="OtherSettingsPage.cpp" line="312"/>
         <location filename="OtherSettingsPage.cpp" line="358"/>
-        <source>否</source>
-        <translation>No</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="72"/>
-        <source>项目移动/更名</source>
-        <translation>Move/Rename project</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="157"/>
-        <source>导入翻译问题概览至翻译缓存</source>
-        <translation>Import translation problems overview to trans_cache</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="157"/>
-        <source>使用 翻译问题概览.json/.toml 中的 Sentence 替换 trans_cache 中的 Sentence</source>
-        <translation>Use sentences in TranslationProblemsOverview.json/.toml to replace those in trans_cache</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="161"/>
-        <source>导入</source>
-        <translation>Import</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="165"/>
-        <location filename="OtherSettingsPage.cpp" line="269"/>
-        <source>导入失败</source>
-        <translation>Fail to import</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="165"/>
-        <source>项目仍在运行中，无法导入</source>
-        <translation>Project is still running</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="253"/>
-        <source>成功导入 </source>
-        <translation>Successfully import </translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="253"/>
-        <source> 个句子至 trans_cache</source>
-        <translation> sentences to trans_cache</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="262"/>
-        <location filename="OtherSettingsPage.cpp" line="265"/>
-        <source>导入完毕</source>
-        <translation>Importing completes</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="262"/>
-        <source>导入中出现的问题记录在 import_problems.log 中</source>
-        <translation>Problems during importing saved to import_problems.log</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="281"/>
-        <source>开始翻译或关闭程序时会自动保存所有项目的配置，一般无需手动保存</source>
-        <translation>The app also automatically saves all project configs when beginning translating or exiting</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="299"/>
-        <source>刷新现有配置和字典，谨慎使用</source>
-        <translation>Take care because all configs and dicts of this project will be refreshed</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="307"/>
-        <source>刷新失败</source>
-        <translation>Fail to refresh</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="307"/>
-        <source>项目仍在运行中，无法刷新</source>
-        <translation>Project is still running</translation>
-    </message>
-    <message>
-        <location filename="OtherSettingsPage.cpp" line="313"/>
-        <location filename="OtherSettingsPage.cpp" line="359"/>
         <source>思考人生</source>
         <translation>Thinking of life</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="314"/>
-        <location filename="OtherSettingsPage.cpp" line="360"/>
+        <location filename="OtherSettingsPage.cpp" line="313"/>
+        <location filename="OtherSettingsPage.cpp" line="359"/>
         <source>是</source>
         <translation>Yes</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="344"/>
+        <location filename="OtherSettingsPage.cpp" line="343"/>
         <source>删除项目的翻译缓存，下次翻译将会重新从头开始</source>
         <translation>Translation all over again</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="365"/>
+        <location filename="OtherSettingsPage.cpp" line="364"/>
         <source>你确定要删除项目翻译缓存吗？</source>
         <translation>Are you sure to delete translation cache of this project?</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="370"/>
+        <location filename="OtherSettingsPage.cpp" line="369"/>
         <source>再次翻译将会重新从头开始！</source>
         <translation>You have to start all over again on next translation!</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="385"/>
+        <location filename="OtherSettingsPage.cpp" line="384"/>
         <source>删除成功</source>
         <translation>Deleted successfully</translation>
     </message>
     <message>
-        <location filename="OtherSettingsPage.cpp" line="385"/>
+        <location filename="OtherSettingsPage.cpp" line="384"/>
         <source> 的翻译缓存已删除</source>
         <translation> &apos;s transl_cache has been deleted</translation>
     </message>
@@ -3087,114 +3087,114 @@
         <translation>Stop translation</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="523"/>
+        <location filename="StartSettingsPage.cpp" line="525"/>
         <source>文件格式错误</source>
         <translation>File format error</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="523"/>
+        <location filename="StartSettingsPage.cpp" line="525"/>
         <source>自定义文件插件的格式必须是 .lua 或 .py 格式。</source>
         <translation>Custom plugin must be *.lua or *.py format.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="580"/>
+        <location filename="StartSettingsPage.cpp" line="582"/>
         <source>停止中</source>
         <translation>Stopping</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="580"/>
+        <location filename="StartSettingsPage.cpp" line="582"/>
         <source>正在等待最后一批翻译完成，请稍候...</source>
         <translation>Waiting for the last batch of translations...</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="592"/>
-        <location filename="StartSettingsPage.cpp" line="597"/>
-        <location filename="StartSettingsPage.cpp" line="604"/>
+        <location filename="StartSettingsPage.cpp" line="594"/>
+        <location filename="StartSettingsPage.cpp" line="599"/>
+        <location filename="StartSettingsPage.cpp" line="606"/>
         <source>翻译失败</source>
         <translation>Fail to translate</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="592"/>
-        <location filename="StartSettingsPage.cpp" line="598"/>
-        <location filename="StartSettingsPage.cpp" line="604"/>
-        <location filename="StartSettingsPage.cpp" line="609"/>
-        <location filename="StartSettingsPage.cpp" line="613"/>
-        <location filename="StartSettingsPage.cpp" line="642"/>
-        <location filename="StartSettingsPage.cpp" line="646"/>
+        <location filename="StartSettingsPage.cpp" line="594"/>
+        <location filename="StartSettingsPage.cpp" line="600"/>
+        <location filename="StartSettingsPage.cpp" line="606"/>
+        <location filename="StartSettingsPage.cpp" line="611"/>
+        <location filename="StartSettingsPage.cpp" line="615"/>
+        <location filename="StartSettingsPage.cpp" line="644"/>
+        <location filename="StartSettingsPage.cpp" line="648"/>
         <source>项目 </source>
         <translation>Project </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="593"/>
-        <location filename="StartSettingsPage.cpp" line="598"/>
+        <location filename="StartSettingsPage.cpp" line="595"/>
+        <location filename="StartSettingsPage.cpp" line="600"/>
         <source> 的翻译任务失败，请检查日志输出。</source>
         <translation> &apos;s task failed, please check logs.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="605"/>
+        <location filename="StartSettingsPage.cpp" line="607"/>
         <source> 连工厂函数都失败了，玩毛啊</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="609"/>
-        <location filename="StartSettingsPage.cpp" line="612"/>
-        <location filename="StartSettingsPage.cpp" line="619"/>
-        <location filename="StartSettingsPage.cpp" line="622"/>
+        <location filename="StartSettingsPage.cpp" line="611"/>
+        <location filename="StartSettingsPage.cpp" line="614"/>
+        <location filename="StartSettingsPage.cpp" line="621"/>
+        <location filename="StartSettingsPage.cpp" line="624"/>
         <source>生成完成</source>
         <translation>Generation completed</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="610"/>
-        <location filename="StartSettingsPage.cpp" line="613"/>
+        <location filename="StartSettingsPage.cpp" line="612"/>
+        <location filename="StartSettingsPage.cpp" line="615"/>
         <source> 的生成任务已完成。</source>
         <translation> &apos;s gerneration task has completed.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="620"/>
-        <location filename="StartSettingsPage.cpp" line="623"/>
+        <location filename="StartSettingsPage.cpp" line="622"/>
+        <location filename="StartSettingsPage.cpp" line="625"/>
         <source>请在 show_normal 文件夹中查收项目 </source>
         <translation>Please go to show_normal dir to check out </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="620"/>
-        <location filename="StartSettingsPage.cpp" line="623"/>
+        <location filename="StartSettingsPage.cpp" line="622"/>
+        <location filename="StartSettingsPage.cpp" line="625"/>
         <source> 的预处理结果。</source>
         <translation> &apos;s preproc result.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="629"/>
-        <location filename="StartSettingsPage.cpp" line="632"/>
+        <location filename="StartSettingsPage.cpp" line="631"/>
+        <location filename="StartSettingsPage.cpp" line="634"/>
         <source>翻译完成</source>
         <translation>Translation completed</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="630"/>
-        <location filename="StartSettingsPage.cpp" line="633"/>
+        <location filename="StartSettingsPage.cpp" line="632"/>
+        <location filename="StartSettingsPage.cpp" line="635"/>
         <source>请在 gt_output 文件夹中查收项目 </source>
         <translation>Please go to gt_output dir to check out </translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="633"/>
+        <location filename="StartSettingsPage.cpp" line="635"/>
         <source> 的翻译结果。</source>
         <translation> &apos;s translation result.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="641"/>
+        <location filename="StartSettingsPage.cpp" line="643"/>
         <source>翻译停止</source>
         <translation>Translation stopped</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="642"/>
+        <location filename="StartSettingsPage.cpp" line="644"/>
         <source> 的翻译任务停止成功。</source>
         <translation> &apos;s task stopped successfully.</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="646"/>
+        <location filename="StartSettingsPage.cpp" line="648"/>
         <source>停止成功</source>
         <translation>Stopped succeesfully</translation>
     </message>
     <message>
-        <location filename="StartSettingsPage.cpp" line="647"/>
+        <location filename="StartSettingsPage.cpp" line="649"/>
         <source> 的翻译任务已终止</source>
         <translation> &apos;s task has been stoped</translation>
     </message>

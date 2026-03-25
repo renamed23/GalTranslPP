@@ -39,7 +39,7 @@ NJCfgPage::NJCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : Base
 
 	mainLayout->addStretch();
 	centerWidget->setWindowTitle(tr("NormalJson 输出配置"));
-	addCentralWidget(centerWidget);
+	addCentralWidget(centerWidget, true, false, 0);
 }
 
 NJCfgPage::~NJCfgPage()

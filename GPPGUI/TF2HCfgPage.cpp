@@ -106,7 +106,7 @@ TF2HCfgPage::TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent)
 
     mainLayout->addStretch();
     centerWidget->setWindowTitle(tr("全角半角转换设置"));
-    addCentralWidget(centerWidget, true, true, 0);
+    addCentralWidget(centerWidget, true, false, 0);
 }
 
 TF2HCfgPage::~TF2HCfgPage()

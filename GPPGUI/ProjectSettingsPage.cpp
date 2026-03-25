@@ -225,7 +225,7 @@ void ProjectSettingsPage::_setupUI()
     mainLayout->addSpacing(10);
     mainLayout->addWidget(_stackedWidget);
     
-    addCentralWidget(centralWidget, true, true, 0);
+    addCentralWidget(centralWidget, true, false, 0);
 }
 
 void ProjectSettingsPage::_createPages()

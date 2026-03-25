@@ -40,7 +40,7 @@ PDFCfgPage::PDFCfgPage(toml::ordered_value& projectConfig, QWidget* parent) : Ba
 
 	mainLayout->addStretch();
 	centerWidget->setWindowTitle(tr("PDF 输出配置"));
-	addCentralWidget(centerWidget);
+	addCentralWidget(centerWidget, true, false, 0);
 }
 
 PDFCfgPage::~PDFCfgPage()

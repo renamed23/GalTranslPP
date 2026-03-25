@@ -229,5 +229,5 @@ void DictExSettingsPage::_setupUI()
 			insertToml(_projectConfig, "dictionary.useGPTDictToReplaceName", useGPTDictToReplaceNameSwitch->getIsToggled());
 		};
 
-	addCentralWidget(mainWidget);
+	addCentralWidget(mainWidget, true, false, 0);
 }
