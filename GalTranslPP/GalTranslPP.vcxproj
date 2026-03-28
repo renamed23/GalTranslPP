@@ -165,9 +165,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\json.ixx" />
-    <ClCompile Include="..\common\proxy.ixx" />
-    <ClCompile Include="..\common\spdlog.ixx" />
+    <ClCompile Include="..\3rdParty\json.ixx" />
+    <ClCompile Include="..\3rdParty\spdlog.ixx" />
     <ClCompile Include="APIPool.cpp" />
     <ClCompile Include="APIPool.ixx" />
     <ClCompile Include="APITool.cpp" />

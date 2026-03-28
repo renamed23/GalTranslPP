@@ -151,13 +151,10 @@
     <ClCompile Include="NameTranslator.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\json.ixx">
+    <ClCompile Include="..\3rdParty\json.ixx">
       <Filter>Tools\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\proxy.ixx">
-      <Filter>Tools\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\spdlog.ixx">
+    <ClCompile Include="..\3rdParty\spdlog.ixx">
       <Filter>Tools\Utils</Filter>
     </ClCompile>
   </ItemGroup>
