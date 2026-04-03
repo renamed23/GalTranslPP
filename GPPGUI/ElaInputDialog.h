@@ -1,4 +1,4 @@
-// ElaInputDialog.h
+﻿// ElaInputDialog.h
 
 #ifndef ELAINPUTDIALOG_H
 #define ELAINPUTDIALOG_H
@@ -13,7 +13,7 @@ class ElaInputDialog : public ElaContentDialog
 
 public:
     explicit ElaInputDialog(QWidget* parent, const QString& label, const QString& text, QString& result, bool* ok);
-    ~ElaInputDialog();
+    ~ElaInputDialog() override;
 
 private Q_SLOTS:
     virtual void onRightButtonClicked() override;

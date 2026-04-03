@@ -1,4 +1,4 @@
-#ifndef SKIPTRANSCFGPAGE_H
+﻿#ifndef SKIPTRANSCFGPAGE_H
 #define SKIPTRANSCFGPAGE_H
 
 #include <toml.hpp>
@@ -10,7 +10,7 @@ class SkipTransCfgPage : public BasePage
 
 public:
     explicit SkipTransCfgPage(toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~SkipTransCfgPage();
+    ~SkipTransCfgPage() override;
 
 private:
     toml::ordered_value& _projectConfig;

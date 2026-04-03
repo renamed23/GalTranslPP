@@ -1,6 +1,6 @@
 cd /d %~dp0
 
-robocopy "3rdParty\OpenCC\build\share\opencc" "Example\BaseConfig\opencc" /E
+robocopy "vcpkg_installed\gpp-x64-windows-release\gpp-x64-windows-release\share\opencc" "Example\BaseConfig\opencc" /E
 
 robocopy "Example\BaseConfig" "Release\GPPCLI\BaseConfig" /E /XF "python-3.12.10-embed-amd64.zip"
 robocopy "Example\BaseConfig" "Release\GPPGUI\BaseConfig" /E /XF "python-3.12.10-embed-amd64.zip"

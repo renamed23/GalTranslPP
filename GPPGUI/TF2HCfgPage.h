@@ -10,7 +10,7 @@ class TF2HCfgPage : public BasePage
 
 public:
     explicit TF2HCfgPage(toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~TF2HCfgPage();
+    ~TF2HCfgPage() override;
 
 private:
     toml::ordered_value& _projectConfig;

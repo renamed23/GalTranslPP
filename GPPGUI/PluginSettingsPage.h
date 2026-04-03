@@ -21,7 +21,7 @@ class PluginSettingsPage : public BasePage
 
 public:
     explicit PluginSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~PluginSettingsPage();
+    ~PluginSettingsPage() override;
     virtual void apply2Config() override;
 
 private Q_SLOTS:

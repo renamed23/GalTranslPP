@@ -51,7 +51,7 @@ private:
     void _setLogPaused(bool paused);
     void _enqueuePendingLog(const QString& chunk);
     void _flushPendingLogToView();
-    void _appendLogChunkToView(const QString& chunk);
+    void _appendLogChunkToView(const QString& log);
     void _resetLogBufferState(bool keepViewContent);
 
 private:

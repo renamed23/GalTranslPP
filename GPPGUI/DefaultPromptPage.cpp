@@ -8,7 +8,6 @@
 #include "ElaPlainTextEdit.h"
 #include "ElaMenu.h"
 #include "ElaMessageBar.h"
-#include "ElaNavigationRouter.h"
 #include "ElaTabWidget.h"
 
 import Tool;

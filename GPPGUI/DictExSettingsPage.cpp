@@ -1,4 +1,4 @@
-#include "DictExSettingsPage.h"
+﻿#include "DictExSettingsPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -160,16 +160,16 @@ void DictExSettingsPage::_setupUI()
 	_refreshCommonDictsListFunc = [=]()
 		{
 			auto refreshCommonDictsListFunc = 
-				[=](const QString& excludeName, const std::string& globalConfigKey, ElaMultiSelectComboBox* comboBox)
+				[=](const QString& excludeName, const std::string& globalConfigKey, ElaMultiSelectComboBox* comboBox_)
 				{
 					const auto& commonDictsArr = toml::find_or_default<toml::array>(_globalConfig, globalConfigKey, "dictNames");
 					QList<int> dictIndexesToRemove;
-					for (int i = 0; i < comboBox->count(); i++) {
+					for (int i = 0; i < comboBox_->count(); i++) {
 						if (
-							comboBox->itemText(i) != excludeName &&
+							comboBox_->itemText(i) != excludeName &&
 							!std::ranges::any_of(commonDictsArr, [=](const auto& elem)
 								{
-									return elem.is_string() && elem.as_string() == comboBox->itemText(i).toStdString();
+									return elem.is_string() && elem.as_string() == comboBox_->itemText(i).toStdString();
 								})
 							)
 						{
@@ -178,22 +178,22 @@ void DictExSettingsPage::_setupUI()
 					}
 					std::ranges::sort(dictIndexesToRemove, [](int a, int b) { return a > b; });
 					for (int index : dictIndexesToRemove) {
-						comboBox->removeItem(index);
+						comboBox_->removeItem(index);
 					}
-					QStringList commonDictsChosen = comboBox->getCurrentSelection();
+					QStringList commonDictsChosen = comboBox_->getCurrentSelection();
 					for (const auto& dictName : commonDictsArr) {
 						if (dictName.is_string()) {
-							int index = comboBox->findText(QString::fromStdString(dictName.as_string()));
+							int index = comboBox_->findText(QString::fromStdString(dictName.as_string()));
 							if (index >= 0) {
 								continue;
 							}
-							comboBox->insertItem(0, QString::fromStdString(dictName.as_string()));
+							comboBox_->insertItem(0, QString::fromStdString(dictName.as_string()));
 							if (toml::find_or(_globalConfig, globalConfigKey, "spec", dictName.as_string(), "defaultOn", true)) {
 								commonDictsChosen.append(QString::fromStdString(dictName.as_string()));
 							}
 						}
 					}
-					comboBox->setCurrentSelection(commonDictsChosen);
+					comboBox_->setCurrentSelection(commonDictsChosen);
 				};
 
 			refreshCommonDictsListFunc(tr("项目译前字典"), "commonPreDicts", comboBox);

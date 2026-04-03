@@ -1,4 +1,4 @@
-#ifndef DEFAULTPROMPTPAGE_H
+﻿#ifndef DEFAULTPROMPTPAGE_H
 #define DEFAULTPROMPTPAGE_H
 
 #include <toml.hpp>
@@ -11,7 +11,7 @@ class DefaultPromptPage : public BasePage
 public:
 
     explicit DefaultPromptPage(QWidget* parent = nullptr);
-    ~DefaultPromptPage();
+    ~DefaultPromptPage() override;
 
 private:
 

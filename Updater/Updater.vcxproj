@@ -85,7 +85,7 @@ copy "$(TargetPath)" "$(TargetDir)..\GUICORE\$(TargetName)_new$(TargetExt)"
 if exist "$(TargetDir)..\GPPGUI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GPPGUI_PRIVATE\$(TargetName)_new$(TargetExt)"</Command>
     </PostBuildEvent>
     <Link>
-      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;..\3rdParty\OpenCC\build\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">

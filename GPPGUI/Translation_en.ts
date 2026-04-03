@@ -1116,58 +1116,58 @@
 <context>
     <name>DefaultPromptPage</name>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="20"/>
+        <location filename="DefaultPromptPage.cpp" line="19"/>
         <source>默认提示词管理</source>
         <translation>Default Prompt manager</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="28"/>
+        <location filename="DefaultPromptPage.cpp" line="27"/>
         <source>解析失败</source>
         <translation>Fail to analyze</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="28"/>
+        <location filename="DefaultPromptPage.cpp" line="27"/>
         <source>默认提示词配置文件不符合 toml 规范</source>
         <translation>Default prompt config file is nonconforming</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="109"/>
-        <location filename="DefaultPromptPage.cpp" line="128"/>
+        <location filename="DefaultPromptPage.cpp" line="108"/>
+        <location filename="DefaultPromptPage.cpp" line="127"/>
         <source>保存成功</source>
         <translation>Saved successfully</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="109"/>
+        <location filename="DefaultPromptPage.cpp" line="108"/>
         <source>所有默认提示词配置已保存。</source>
         <translation>All default prompt settings are saved.</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="128"/>
+        <location filename="DefaultPromptPage.cpp" line="127"/>
         <source>默认 </source>
         <translation>Default </translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="128"/>
+        <location filename="DefaultPromptPage.cpp" line="127"/>
         <source> 提示词配置已保存。</source>
         <translation> setting is saved.</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="59"/>
+        <location filename="DefaultPromptPage.cpp" line="58"/>
         <source>用户提示词</source>
         <translation>User prompt</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="62"/>
+        <location filename="DefaultPromptPage.cpp" line="61"/>
         <source>系统提示词</source>
         <translation>System prompt</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="65"/>
+        <location filename="DefaultPromptPage.cpp" line="64"/>
         <source>全部保存</source>
         <translation>Save all</translation>
     </message>
     <message>
-        <location filename="DefaultPromptPage.cpp" line="67"/>
+        <location filename="DefaultPromptPage.cpp" line="66"/>
         <source>保存</source>
         <translation>Save</translation>
     </message>
@@ -1474,22 +1474,22 @@
 <context>
     <name>HomePage</name>
     <message>
-        <location filename="HomePage.cpp" line="25"/>
+        <location filename="HomePage.cpp" line="24"/>
         <source>主页</source>
         <translation>Home Page</translation>
     </message>
     <message>
-        <location filename="HomePage.cpp" line="56"/>
+        <location filename="HomePage.cpp" line="55"/>
         <source>AI 自动化翻译解决方案</source>
         <translation>AI-Powered Translation Solution</translation>
     </message>
     <message>
-        <location filename="HomePage.cpp" line="124"/>
+        <location filename="HomePage.cpp" line="123"/>
         <source>启动</source>
         <translation>Open</translation>
     </message>
     <message>
-        <location filename="HomePage.cpp" line="127"/>
+        <location filename="HomePage.cpp" line="126"/>
         <source>获取</source>
         <translation>Get</translation>
     </message>

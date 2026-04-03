@@ -10,7 +10,7 @@ class AboutDialog : public ElaDialog
     Q_OBJECT
 public:
     explicit AboutDialog(QWidget* parent = nullptr);
-    ~AboutDialog();
+    ~AboutDialog() override;
     void setDownloadButtonEnabled(bool enabled);
 
 Q_SIGNALS:

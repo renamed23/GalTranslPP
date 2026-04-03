@@ -1,4 +1,4 @@
-// GptDictModel.cpp
+﻿// GptDictModel.cpp
 
 #include "GptDictModel.h"
 #include <QFont>
@@ -17,7 +17,7 @@ int GptDictModel::rowCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return _entries.count();
+    return (int)_entries.count();
 }
 
 // 返回列数
@@ -26,19 +26,19 @@ int GptDictModel::columnCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return _headerLabels.count();
+    return (int)_headerLabels.count();
 }
 
 // 提供数据给视图
 QVariant GptDictModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid()) {
-        return QVariant();
+        return {};
     }
 
     // 确保行和列在有效范围内
     if (index.row() >= _entries.count() || index.column() >= _headerLabels.count()) {
-        return QVariant();
+        return {};
     }
 
     // --- 核心逻辑：根据 'role' 提供不同的数据 ---
@@ -61,7 +61,7 @@ QVariant GptDictModel::data(const QModelIndex& index, int role) const
     //     return font;
     // }
 
-    return QVariant();
+    return {};
 }
 
 // 提供表头数据
@@ -140,7 +140,7 @@ void GptDictModel::loadData(const QList<GptDictEntry>& entries)
     endResetModel();
 }
 
-bool GptDictModel::insertRow(int row, GptDictEntry entry, const QModelIndex& parent)
+bool GptDictModel::insertRow(int row, const GptDictEntry& entry, const QModelIndex& parent)
 {
     // 在插入行之前，调用 beginInsertRows()
     beginInsertRows(parent, row, row);

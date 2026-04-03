@@ -1,4 +1,4 @@
-// PDFCfgPage.h
+﻿// PDFCfgPage.h
 
 #ifndef PDFCFGPAGE_H
 #define PDFCFGPAGE_H
@@ -12,7 +12,7 @@ class PDFCfgPage : public BasePage
 
 public:
     explicit PDFCfgPage(toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~PDFCfgPage();
+    ~PDFCfgPage() override;
 
 private:
     toml::ordered_value& _projectConfig;

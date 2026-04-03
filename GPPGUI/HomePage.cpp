@@ -12,7 +12,6 @@
 #include "ElaAcrylicUrlCard.h"
 #include "ElaFlowLayout.h"
 #include "ElaImageCard.h"
-#include "ElaNavigationRouter.h"
 #include "ElaPopularCard.h"
 #include "ElaScrollArea.h"
 #include "ElaText.h"

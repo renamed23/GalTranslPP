@@ -69,15 +69,6 @@ cd GalTranslPP
   - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib\ElaWidgetTools.lib` 文件存在
   - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\bin\ElaWidgetTools.dll` 文件存在
 
-### 4.4 编译 OpenCC
-
-- 1、  进入 `3rdParty\OpenCC` 文件夹。
-- 2、  双击运行 `build.cmd`。
-- 3、  **确认编译产物**
-  - 确保 `3rdParty\OpenCC\build\include` 文件夹存在，程序会用到里面的头文件
-  - 确保 `3rdParty\OpenCC\build\lib` 目录下存在文件 `marisa.lib` 和 `opencc.lib`
-  - 确保 `3rdParty\OpenCC\build\bin\opencc.dll` 文件存在
-
 ## 5. 编译 GalTranslPP (主项目)
 
 - 1、  使用 Visual Studio 打开根目录下的 `GalTranslPP.sln` 解决方案文件。
