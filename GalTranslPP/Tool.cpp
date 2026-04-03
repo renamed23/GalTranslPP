@@ -406,35 +406,35 @@ std::vector<std::string> splitIntoGraphemes(const std::string& sourceString) {
     return resultVector;
 }
 
-auto countGraphemesFunc = [](auto&& sourceString) -> size_t
-    {
-        if (sourceString.empty()) {
-            return 0;
-        }
-        UErrorCode errorCode = U_ZERO_ERROR;
-        const icu::UnicodeString uString = icu::UnicodeString::fromUTF8(sourceString);
-        const std::unique_ptr<icu::BreakIterator> breakIterator(
-            icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
-        );
-        if (U_FAILURE(errorCode)) {
-            throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
-        }
-        breakIterator->setText(uString);
+size_t countGraphemesImpl(auto&& sourceString)
+{
+    if (sourceString.empty()) {
+        return 0;
+    }
+    UErrorCode errorCode = U_ZERO_ERROR;
+    const icu::UnicodeString uString = icu::UnicodeString::fromUTF8(sourceString);
+    const std::unique_ptr<icu::BreakIterator> breakIterator(
+        icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
+    );
+    if (U_FAILURE(errorCode)) {
+        throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
+    }
+    breakIterator->setText(uString);
 
-        int32_t start = breakIterator->first();
-        size_t count = 0;
-        for (int32_t end = breakIterator->next(); end != icu::BreakIterator::DONE; end = breakIterator->next()) {
-            ++count;
-        }
-        return count;
-    };
+    int32_t start = breakIterator->first();
+    size_t count = 0;
+    for (int32_t end = breakIterator->next(); end != icu::BreakIterator::DONE; end = breakIterator->next()) {
+        ++count;
+    }
+    return count;
+}
 
 size_t countGraphemes(std::string_view sourceString) {
-    return countGraphemesFunc(sourceString);
+    return countGraphemesImpl(sourceString);
 }
 
 size_t countGraphemes(const std::string& sourceString) {
-    return countGraphemesFunc(sourceString);
+    return countGraphemesImpl(sourceString);
 }
 
 std::vector<std::string> splitIntoTokens(const WordPosVec& wordPosVec, const std::string& text)
