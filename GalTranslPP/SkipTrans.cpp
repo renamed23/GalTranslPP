@@ -3,15 +3,14 @@
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <cpp-base64/base64.h>
 #include <toml.hpp>
 #include <sol/sol.hpp>
 
 module SkipTrans;
 
-import Tool;
 import ConditionTool;
+import Tool;
 
 namespace fs = std::filesystem;
 
@@ -60,7 +59,7 @@ SkipTrans::SkipTrans(const fs::path& projectDir, const toml::value& projectConfi
                 m_skipKeys.push_back(std::move(checkFunc));
             }
             else if (elem.is_array() || elem.is_table()) {
-                CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, projectDir, pythonManager, luaManager, m_logger, m_needReboot);
+                CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, projectDir, pythonManager, luaManager, m_logger);
                 m_skipKeys.push_back(std::move(checkFunc));
             }
             else {

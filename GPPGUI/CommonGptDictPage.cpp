@@ -6,7 +6,6 @@
 #include <QFileDialog>
 
 #include "ElaText.h"
-#include "ElaLineEdit.h"
 #include "ElaIconButton.h"
 #include "ElaScrollPageArea.h"
 #include "ElaToolTip.h"
@@ -14,7 +13,6 @@
 #include "ElaPushButton.h"
 #include "ElaMessageBar.h"
 #include "ElaToggleButton.h"
-#include "ElaToggleSwitch.h"
 #include "ElaPlainTextEdit.h"
 #include "ElaTabWidget.h"
 #include "ElaInputDialog.h"
@@ -28,7 +26,6 @@ CommonGptDictPage::CommonGptDictPage(toml::ordered_value& globalConfig, QWidget*
 {
 	setWindowTitle(tr("默认GPT字典设置"));
 	setTitleVisible(false);
-	setContentsMargins(5, 5, 5, 5);
 
 	_setupUI();
 }
@@ -42,21 +39,21 @@ void CommonGptDictPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	mainLayout->setContentsMargins(10, 10, 10, 0);
 
-	QWidget* mainButtonWidget = new QWidget(mainWidget);
-	QHBoxLayout* mainButtonLayout = new QHBoxLayout(mainButtonWidget);
-	ElaText* dictNameLabel = new ElaText(tr("通用GPT字典"), mainButtonWidget);
+	QHBoxLayout* mainButtonLayout = new QHBoxLayout(mainWidget);
+	ElaText* dictNameLabel = new ElaText(tr("通用GPT字典"), mainWidget);
 	dictNameLabel->setTextPixelSize(18);
-	ElaPushButton* importButton = new ElaPushButton(mainButtonWidget);
+	ElaPushButton* importButton = new ElaPushButton(mainWidget);
 	importButton->setText(tr("导入字典页"));
-	ElaPushButton* addNewTabButton = new ElaPushButton(mainButtonWidget);
+	ElaPushButton* addNewTabButton = new ElaPushButton(mainWidget);
 	addNewTabButton->setText(tr("添加新字典页"));
 	mainButtonLayout->addSpacing(10);
 	mainButtonLayout->addWidget(dictNameLabel);
 	mainButtonLayout->addStretch();
 	mainButtonLayout->addWidget(importButton);
 	mainButtonLayout->addWidget(addNewTabButton);
-	mainLayout->addWidget(mainButtonWidget, 0, Qt::AlignTop);
+	mainLayout->addLayout(mainButtonLayout);
 
 	ElaTabWidget* tabWidget = new ElaTabWidget(mainWidget);
 	tabWidget->setTabsClosable(false);
@@ -70,45 +67,45 @@ void CommonGptDictPage::_setupUI()
 
 			QWidget* pageMainWidget = new QWidget(tabWidget);
 			QVBoxLayout* pageMainLayout = new QVBoxLayout(pageMainWidget);
+			pageMainLayout->setContentsMargins(0, 0, 0, 0);
 
-			QWidget* pageButtonWidget = new QWidget(pageMainWidget);
-			QHBoxLayout* pageButtonLayout = new QHBoxLayout(pageButtonWidget);
-			ElaPushButton* plainTextModeButton = new ElaPushButton(mainButtonWidget);
+			QHBoxLayout* pageButtonLayout = new QHBoxLayout(pageMainWidget);
+			ElaPushButton* plainTextModeButton = new ElaPushButton(pageMainWidget);
 			plainTextModeButton->setText(tr("纯文本模式"));
-			ElaPushButton* tableModeButton = new ElaPushButton(mainButtonWidget);
+			ElaPushButton* tableModeButton = new ElaPushButton(pageMainWidget);
 			tableModeButton->setText(tr("表模式"));
-			ElaToggleButton* defaultOnButton = new ElaToggleButton(mainButtonWidget);
+			ElaToggleButton* defaultOnButton = new ElaToggleButton(pageMainWidget);
 			defaultOnButton->setText(tr("默认启用"));
-			ElaIconButton* saveAllButton = new ElaIconButton(ElaIconType::CheckDouble, mainButtonWidget);
+			ElaIconButton* saveAllButton = new ElaIconButton(ElaIconType::CheckDouble, pageMainWidget);
 			saveAllButton->setFixedWidth(30);
 			ElaToolTip* saveAllButtonToolTip = new ElaToolTip(saveAllButton);
 			saveAllButtonToolTip->setToolTip(tr("保存所有页"));
-			ElaIconButton* saveButton = new ElaIconButton(ElaIconType::Check, mainButtonWidget);
+			ElaIconButton* saveButton = new ElaIconButton(ElaIconType::Check, pageMainWidget);
 			saveButton->setFixedWidth(30);
 			ElaToolTip* saveButtonToolTip = new ElaToolTip(saveButton);
 			saveButtonToolTip->setToolTip(tr("保存当前页"));
-			ElaIconButton* removeTabButton = new ElaIconButton(ElaIconType::Trash, mainButtonWidget);
+			ElaIconButton* removeTabButton = new ElaIconButton(ElaIconType::Trash, pageMainWidget);
 			removeTabButton->setFixedWidth(30);
 			ElaToolTip* removeTabButtonToolTip = new ElaToolTip(removeTabButton);
 			removeTabButtonToolTip->setToolTip(tr("删除当前页"));
-			ElaIconButton* renameTabButton = new ElaIconButton(ElaIconType::ArrowsRetweet, mainButtonWidget);
+			ElaIconButton* renameTabButton = new ElaIconButton(ElaIconType::ArrowsRetweet, pageMainWidget);
 			renameTabButton->setFixedWidth(30);
 			ElaToolTip* renameTabButtonToolTip = new ElaToolTip(renameTabButton);
 			renameTabButtonToolTip->setToolTip(tr("重命名当前页"));
-			ElaIconButton* withdrawButton = new ElaIconButton(ElaIconType::ArrowLeft, mainButtonWidget);
+			ElaIconButton* withdrawButton = new ElaIconButton(ElaIconType::ArrowLeft, pageMainWidget);
 			withdrawButton->setFixedWidth(30);
 			ElaToolTip* withdrawButtonToolTip = new ElaToolTip(withdrawButton);
 			withdrawButtonToolTip->setToolTip(tr("撤回删除行"));
 			withdrawButton->setEnabled(false);
-			ElaIconButton* refreshButton = new ElaIconButton(ElaIconType::ArrowRotateRight, mainButtonWidget);
+			ElaIconButton* refreshButton = new ElaIconButton(ElaIconType::ArrowRotateRight, pageMainWidget);
 			refreshButton->setFixedWidth(30);
 			ElaToolTip* refreshButtonToolTip = new ElaToolTip(refreshButton);
 			refreshButtonToolTip->setToolTip(tr("刷新当前页"));
-			ElaIconButton* addDictButton = new ElaIconButton(ElaIconType::Plus, mainButtonWidget);
+			ElaIconButton* addDictButton = new ElaIconButton(ElaIconType::Plus, pageMainWidget);
 			addDictButton->setFixedWidth(30);
 			ElaToolTip* addDictButtonToolTip = new ElaToolTip(addDictButton);
 			addDictButtonToolTip->setToolTip(tr("添加词条"));
-			ElaIconButton* removeDictButton = new ElaIconButton(ElaIconType::Minus, mainButtonWidget);
+			ElaIconButton* removeDictButton = new ElaIconButton(ElaIconType::Minus, pageMainWidget);
 			removeDictButton->setFixedWidth(30);
 			ElaToolTip* removeDictButtonToolTip = new ElaToolTip(removeDictButton);
 			removeDictButtonToolTip->setToolTip(tr("删除词条"));
@@ -124,7 +121,7 @@ void CommonGptDictPage::_setupUI()
 			pageButtonLayout->addWidget(refreshButton);
 			pageButtonLayout->addWidget(addDictButton);
 			pageButtonLayout->addWidget(removeDictButton);
-			pageMainLayout->addWidget(pageButtonWidget, 0, Qt::AlignTop);
+			pageMainLayout->addLayout(pageButtonLayout);
 
 			QStackedWidget* stackedWidget = new QStackedWidget(tabWidget);
 
@@ -147,10 +144,10 @@ void CommonGptDictPage::_setupUI()
 			tableView->setModel(model);
 			stackedWidget->addWidget(tableView);
 			stackedWidget->setCurrentIndex(toml::find_or(_globalConfig, "commonGptDicts", "spec", dictName, "openMode", 1));
-			tableView->setColumnWidth(0, toml::find_or(_globalConfig, "commonGptDicts", "spec", dictName, "columnWidth", "0", 175));
-			tableView->setColumnWidth(1, toml::find_or(_globalConfig, "commonGptDicts", "spec", dictName, "columnWidth", "1", 175));
+			tableView->setColumnWidth(0, toml::find_or(_globalConfig, "commonGptDicts", "spec", dictName, "columnWidth", "0", 360));
+			tableView->setColumnWidth(1, toml::find_or(_globalConfig, "commonGptDicts", "spec", dictName, "columnWidth", "1", 215));
 			tableView->setColumnWidth(2, toml::find_or(_globalConfig, "commonGptDicts", "spec", dictName, "columnWidth", "2", 425));
-			pageMainLayout->addWidget(stackedWidget, 1);
+			pageMainLayout->addWidget(stackedWidget);
 
 			plainTextModeButton->setEnabled(stackedWidget->currentIndex() != 0);
 			tableModeButton->setEnabled(stackedWidget->currentIndex() != 1);
@@ -200,7 +197,7 @@ void CommonGptDictPage::_setupUI()
 					if (it == _gptTabEntries.end()) {
 						return false;
 					}
-					std::ofstream ofs(it->dictPath);
+					std::ofstream ofs(it->dictPath, std::ios::binary);
 					if (!ofs.is_open()) {
 						ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("保存失败"), tr("无法打开文件: ") +
 							QString(it->dictPath.wstring()), 3000);
@@ -558,7 +555,7 @@ void CommonGptDictPage::_setupUI()
 			}
 
 			fs::path newDictPath = defaultGptDictPath / (dictName.toStdWString() + L".toml");
-			std::ofstream ofs(newDictPath);
+			std::ofstream ofs(newDictPath, std::ios::binary);
 			if (!ofs.is_open()) {
 				ElaMessageBar::error(ElaMessageBarType::TopLeft, tr("新建失败"), tr("无法创建 ") +
 					QString(newDictPath.wstring()) + tr(" 文件"), 3000);
@@ -616,6 +613,6 @@ void CommonGptDictPage::_setupUI()
 		};
 
 
-	mainLayout->addWidget(tabWidget, 1);
-	addCentralWidget(mainWidget, true, true, 0);
+	mainLayout->addWidget(tabWidget);
+	addCentralWidget(mainWidget, true, false, 0);
 }

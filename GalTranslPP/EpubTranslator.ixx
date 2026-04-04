@@ -3,10 +3,10 @@
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module EpubTranslator;
 
+import spdlog;
 import ITranslator;
 import NormalJsonTranslator;
 
@@ -33,7 +33,7 @@ export {
         std::unique_ptr<jpc::Regex> org;
         std::unique_ptr<jpc::RegexReplace> rep;
 
-        std::multimap<int, CallbackPattern> callbackPatterns;
+        absl::btree_multimap<int, CallbackPattern> callbackPatterns;
         bool isCallback;
 
         RegexPattern() {

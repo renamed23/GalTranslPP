@@ -78,7 +78,6 @@ int main(int argc, char* argv[]) {
     }
 
     if (parser.isSet("newActionFlag")) {
-        bool isCompatible;
         std::string orgGppVersion = parser.isSet("gppVersion") ? parser.value("gppVersion").toStdString() : "1.0.0";
         std::string orgPythonVersion = parser.isSet("pythonVersion") ? parser.value("pythonVersion").toStdString() : "1.0.0";
         std::string orgPromptVersion = parser.isSet("promptVersion") ? parser.value("promptVersion").toStdString() : "1.0.0";
@@ -86,16 +85,11 @@ int main(int argc, char* argv[]) {
         std::string orgQtVersion = parser.isSet("qtVersion") ? parser.value("qtVersion").toStdString() : "6.9.2";
         std::string orgIcuVersion = parser.isSet("icuVersion") ? parser.value("icuVersion").toStdString() : "7.4.0";
 
-        if (cmpVer("2.1.1", orgGppVersion, isCompatible)) {
-#ifdef Q_OS_WIN
-            MessageBoxW(nullptr, L"版本过旧，无法自动更新至最新版本，请前往 github 手动下载新版。", L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
-#endif
-            return -1;
-        }
-
         waitForProcessToExit(pid);
 
         try {
+            bool isCompatible;
+
             std::set<std::string> excludePreFixes =
             {
                 "BaseConfig/pyScripts", "BaseConfig/Prompt.toml", 
@@ -148,11 +142,11 @@ int main(int argc, char* argv[]) {
             }
 
             {
-                const std::set<std::string> excludePreFixes2 = excludePreFixes | std::views::transform([](const auto& s)
+                const std::vector<std::string> transformedExcludePreFixes = excludePreFixes | std::views::transform([](const auto& s)
                     {
                         return replaceStr(s, "/", "\\");
-                    }) | std::ranges::to<std::set>();
-                excludePreFixes.insert_range(excludePreFixes2);
+                    }) | std::ranges::to<std::vector>();
+                excludePreFixes.insert_range(transformedExcludePreFixes);
             }
             extractZipExclude(sourceZip.toStdWString(), targetDir.toStdWString(), excludePreFixes);
 
@@ -201,7 +195,7 @@ int main(int argc, char* argv[]) {
     }
     catch (const std::exception& e) {
 #ifdef Q_OS_WIN
-        MessageBoxW(nullptr, std::format(L"Failed to extract Updater_new.exe.\nError: {}", ascii2Wide(e.what())).c_str(),
+        MessageBoxW(nullptr, std::format(L"Failed to extract Updater_new.exe.\nError: {}", ascii2Wide(std::string_view(e.what()))).c_str(),
             L"GalTransl++ Updater", MB_ICONERROR | MB_TOPMOST);
 #endif
         return -1;

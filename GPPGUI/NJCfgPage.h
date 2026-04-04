@@ -1,4 +1,4 @@
-// NJCfgPage.h
+﻿// NJCfgPage.h
 
 #ifndef NJCFGPAGE_H
 #define NJCFGPAGE_H
@@ -12,7 +12,7 @@ class NJCfgPage : public BasePage
 
 public:
     explicit NJCfgPage(toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~NJCfgPage();
+    ~NJCfgPage() override;
 
 private:
     toml::ordered_value& _projectConfig;

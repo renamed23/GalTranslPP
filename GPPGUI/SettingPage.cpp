@@ -26,7 +26,7 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     // 预览窗口标题
     ElaWindow* window = qobject_cast<ElaWindow*>(parent);
     setWindowTitle("Setting");
-    setContentsMargins(20, 10, 20, 10);
+    setContentsMargins(30, 15, 15, 0);
 
     ElaText* themeText = new ElaText(tr("主题设置"), this);
     themeText->setWordWrap(false);
@@ -101,8 +101,7 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     connect(eApp, &ElaApplication::pWindowDisplayModeChanged, this, [=]()
         {
             auto button = windowModeButtonGroup->button(eApp->getWindowDisplayMode());
-            ElaRadioButton* elaRadioButton = qobject_cast<ElaRadioButton*>(button);
-            if (elaRadioButton) 
+            if (ElaRadioButton* elaRadioButton = qobject_cast<ElaRadioButton*>(button))
             {
                 elaRadioButton->setChecked(true);
             }
@@ -420,16 +419,13 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     QWidget* centralWidget = new QWidget(this);
     centralWidget->setWindowTitle("Setting");
     QVBoxLayout* centerLayout = new QVBoxLayout(centralWidget);
-    centerLayout->addSpacing(30);
     centerLayout->addWidget(themeText);
-    centerLayout->addSpacing(10);
     centerLayout->addWidget(themeSwitchArea);
     centerLayout->addWidget(windowModeSwitchArea);
     centerLayout->addWidget(guideBarModeArea);
     centerLayout->addWidget(stackSwitchModeArea);
     centerLayout->addSpacing(15);
     centerLayout->addWidget(helperText);
-    centerLayout->addSpacing(10);
     centerLayout->addWidget(autoRefreshArea);
     centerLayout->addWidget(nameTableOpenModeArea);
     centerLayout->addWidget(dictOpenModeArea);
@@ -439,7 +435,6 @@ SettingPage::SettingPage(toml::ordered_value& globalConfig, QWidget* parent)
     centerLayout->addWidget(languageArea);
     centerLayout->addWidget(pyEnvPathArea);
     centerLayout->addStretch();
-    centerLayout->setContentsMargins(0, 0, 0, 0);
     addCentralWidget(centralWidget, true, true, 0);
 }
 

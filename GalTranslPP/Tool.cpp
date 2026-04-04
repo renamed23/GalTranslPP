@@ -1,58 +1,85 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
+
 #ifdef _WIN32
 #include <Windows.h>
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "winhttp.lib")
 #endif
 
+#include <boost/algorithm/string.hpp>
+#include <boost/crc.hpp>
+
 #define BIT7Z_AUTO_FORMAT
 #include <bit7z/bitarchivereader.hpp>
 #include <bit7z/bitfileextractor.hpp>
-#include <spdlog/spdlog.h>
+
+#include <ctpl_stl.h>
+
+#include <opencc/opencc.h>
+
+#include <toml.hpp>
+
 #include <unicode/unistr.h>
 #include <unicode/brkiter.h>
 #include <unicode/uscript.h>
 #include <unicode/translit.h>
+
 #include <utf8cpp/utf8.h>
-#include <boost/crc.hpp>
-#include <toml.hpp>
+
 #include <cpp-base64/base64.cpp>
-#include <ctpl_stl.h>
 
-#include <opencc/opencc.h>
-#pragma comment(lib, "marisa.lib")
-#pragma comment(lib, "opencc.lib")
-
+#pragma comment(lib, "python3.lib")
+#pragma comment(lib, "python312.lib")
 
 module Tool;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 
 
 #ifdef _WIN32
-std::string wide2Ascii(const std::wstring& wide, UINT CodePage, LPBOOL usedDefaultChar) {
-    int len = WideCharToMultiByte
-    (CodePage, 0, wide.c_str(), (int)wide.length(), nullptr, 0, nullptr, usedDefaultChar);
+std::string wide2Ascii(const std::wstring& wide, UINT codePage, LPBOOL usedDefaultChar) {
+    int len = WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(), 
+        nullptr, 0, nullptr, usedDefaultChar);
     if (len == 0) return {};
     std::string ascii(len, '\0');
-    WideCharToMultiByte
-    (CodePage, 0, wide.c_str(), (int)wide.length(), ascii.data(), len, nullptr, nullptr);
+    WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(), 
+        ascii.data(), len, nullptr, nullptr);
     return ascii;
 }
 
-std::wstring ascii2Wide(const std::string& ascii, UINT CodePage) {
-    int len = MultiByteToWideChar(CodePage, 0, ascii.c_str(), (int)ascii.length(), nullptr, 0);
+std::string wide2Ascii(std::wstring_view wide, UINT codePage, LPBOOL usedDefaultChar) {
+    int len = WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(),
+        nullptr, 0, nullptr, usedDefaultChar);
+    if (len == 0) return {};
+    std::string ascii(len, '\0');
+    WideCharToMultiByte(codePage, 0, wide.data(), (int)wide.length(),
+        ascii.data(), len, nullptr, nullptr);
+    return ascii;
+}
+
+std::wstring ascii2Wide(const std::string& ascii, UINT codePage) {
+    int len = MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), nullptr, 0);
     if (len == 0) return {};
     std::wstring wide(len, L'\0');
-    MultiByteToWideChar(CodePage, 0, ascii.c_str(), (int)ascii.length(), wide.data(), len);
+    MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), wide.data(), len);
+    return wide;
+}
+
+std::wstring ascii2Wide(std::string_view ascii, UINT codePage) {
+    int len = MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), nullptr, 0);
+    if (len == 0) return {};
+    std::wstring wide(len, L'\0');
+    MultiByteToWideChar(codePage, 0, ascii.data(), (int)ascii.length(), wide.data(), len);
     return wide;
 }
 
 std::string ascii2Ascii(const std::string& ascii, UINT src, UINT dst, LPBOOL usedDefaultChar) {
+    return wide2Ascii(ascii2Wide(ascii, src), dst, usedDefaultChar);
+}
+
+std::string ascii2Ascii(std::string_view ascii, UINT src, UINT dst, LPBOOL usedDefaultChar) {
     return wide2Ascii(ascii2Wide(ascii, src), dst, usedDefaultChar);
 }
 
@@ -126,6 +153,8 @@ int getConsoleWidth() {
     return 80; // 获取失败，返回默认值
 }
 #endif
+
+
 
 std::string names2String(const std::vector<std::string>& names) {
     std::string result;
@@ -377,35 +406,35 @@ std::vector<std::string> splitIntoGraphemes(const std::string& sourceString) {
     return resultVector;
 }
 
-auto countGraphemesFunc = [](auto&& sourceString) -> size_t
-    {
-        if (sourceString.empty()) {
-            return 0;
-        }
-        UErrorCode errorCode = U_ZERO_ERROR;
-        const icu::UnicodeString uString = icu::UnicodeString::fromUTF8(sourceString);
-        const std::unique_ptr<icu::BreakIterator> breakIterator(
-            icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
-        );
-        if (U_FAILURE(errorCode)) {
-            throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
-        }
-        breakIterator->setText(uString);
+size_t countGraphemesImpl(auto&& sourceString)
+{
+    if (sourceString.empty()) {
+        return 0;
+    }
+    UErrorCode errorCode = U_ZERO_ERROR;
+    const icu::UnicodeString uString = icu::UnicodeString::fromUTF8(sourceString);
+    const std::unique_ptr<icu::BreakIterator> breakIterator(
+        icu::BreakIterator::createCharacterInstance(icu::Locale::getRoot(), errorCode)
+    );
+    if (U_FAILURE(errorCode)) {
+        throw std::runtime_error(std::format("Failed to create a character break iterator: {}", u_errorName(errorCode)));
+    }
+    breakIterator->setText(uString);
 
-        int32_t start = breakIterator->first();
-        size_t count = 0;
-        for (int32_t end = breakIterator->next(); end != icu::BreakIterator::DONE; end = breakIterator->next()) {
-            ++count;
-        }
-        return count;
-    };
+    int32_t start = breakIterator->first();
+    size_t count = 0;
+    for (int32_t end = breakIterator->next(); end != icu::BreakIterator::DONE; end = breakIterator->next()) {
+        ++count;
+    }
+    return count;
+}
 
 size_t countGraphemes(std::string_view sourceString) {
-    return countGraphemesFunc(sourceString);
+    return countGraphemesImpl(sourceString);
 }
 
 size_t countGraphemes(const std::string& sourceString) {
-    return countGraphemesFunc(sourceString);
+    return countGraphemesImpl(sourceString);
 }
 
 std::vector<std::string> splitIntoTokens(const WordPosVec& wordPosVec, const std::string& text)
@@ -464,13 +493,12 @@ std::vector<double> getSubstringPositions(const std::string& text, std::string_v
 }
 
 std::string& replaceStrInplace(std::string& str, std::string_view org, std::string_view rep) {
-    str = str | std::views::split(org) | std::views::join_with(rep) | std::ranges::to<std::string>();
+    boost::replace_all(str, org, rep);
     return str;
 }
 
 std::string replaceStr(const std::string& str, std::string_view org, std::string_view rep) {
-    std::string result = str | std::views::split(org) | std::views::join_with(rep) | std::ranges::to<std::string>();
-    return result;
+    return boost::replace_all_copy(str, org, rep);
 }
 
 // 核心辅助函数
@@ -665,7 +693,7 @@ void loadTokenizeCache
 (absl::flat_hash_map<std::string, std::vector<std::vector<std::string>>>& result, const fs::path& cachePath, const std::shared_ptr<spdlog::logger>& logger) {
     try {
         if (fs::exists(cachePath)) {
-            std::ifstream ifs(cachePath);
+            std::ifstream ifs(cachePath, std::ios::binary);
             json::parse(ifs).get_to(result);
         }
         else {
@@ -682,7 +710,7 @@ void saveTokenizeCache
     try {
         createParent(cachePath);
         const json j = cache;
-        std::ofstream ofs(cachePath);
+        std::ofstream ofs(cachePath, std::ios::binary);
         ofs << j.dump(2);
         ofs.close();
         logger->debug("分词缓存已保存到 {}", wide2Ascii(cachePath, 65001, nullptr));

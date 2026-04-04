@@ -16,7 +16,7 @@ class PluginItemWidget : public ElaScrollPageArea
 
 public:
     explicit PluginItemWidget(const QString& pluginName, const QString& runTimeStr, QWidget* parent = nullptr);
-    ~PluginItemWidget();
+    ~PluginItemWidget() override;
 
     // 公共方法，用于获取当前项的状态
     QString getPluginName() const;

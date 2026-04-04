@@ -1,4 +1,4 @@
-// GptDictModel.h
+﻿// GptDictModel.h
 
 #ifndef GPTDICTMODEL_H
 #define GPTDICTMODEL_H
@@ -34,7 +34,7 @@ public:
 
     // --- 用于操作模型的公共方法 ---
     void loadData(const QList<GptDictEntry>& entries); // 从外部加载数据
-    bool insertRow(int row, GptDictEntry entry = {}, const QModelIndex& parent = QModelIndex());
+    bool insertRow(int row, const GptDictEntry& entry = {}, const QModelIndex& parent = QModelIndex());
     bool removeRow(int row, const QModelIndex& parent = QModelIndex());
     QList<GptDictEntry> getEntries() const;
     const QList<GptDictEntry>& getEntriesRef() const;

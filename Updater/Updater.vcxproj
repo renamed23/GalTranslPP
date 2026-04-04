@@ -69,6 +69,7 @@
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <VcpkgUseStatic>false</VcpkgUseStatic>
+    <VcpkgTriplet>gpp-x64-windows-release</VcpkgTriplet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -76,6 +77,7 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <BuildStlModules>true</BuildStlModules>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;ABSL_CONTAINERS;SPDLOG_COMPILED_LIB;SPDLOG_WCHAR_FILENAMES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <PostBuildEvent>
       <Command>if not exist "$(TargetDir)..\GUICORE" mkdir "$(TargetDir)..\GUICORE"
@@ -83,7 +85,7 @@ copy "$(TargetPath)" "$(TargetDir)..\GUICORE\$(TargetName)_new$(TargetExt)"
 if exist "$(TargetDir)..\GPPGUI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GPPGUI_PRIVATE\$(TargetName)_new$(TargetExt)"</Command>
     </PostBuildEvent>
     <Link>
-      <AdditionalLibraryDirectories>..\lib;..\3rdParty\OpenCC\out\install\x64-Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\lib;..\3rdParty\pybind11\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -115,7 +117,6 @@ if exist "$(TargetDir)..\GPPGUI_PRIVATE" copy "$(TargetPath)" "$(TargetDir)..\GP
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <QtRcc Include="Updater.qrc" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

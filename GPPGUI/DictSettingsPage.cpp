@@ -23,7 +23,6 @@ DictSettingsPage::DictSettingsPage(fs::path& projectDir, toml::ordered_value& gl
 {
 	setWindowTitle(tr("项目字典设置"));
 	setTitleVisible(false);
-	setContentsMargins(0, 0, 0, 0);
 
 	_setupUI();
 }
@@ -45,6 +44,7 @@ void DictSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	mainLayout->setContentsMargins(10, 10, 10, 0);
 
 	ElaTabWidget* tabWidget = new ElaTabWidget(mainWidget);
 	tabWidget->setTabsClosable(false);
@@ -59,35 +59,36 @@ void DictSettingsPage::_setupUI()
 		using ModelType = typename std::conditional_t<std::is_same_v<EntryType, GptDictEntry>, GptDictModel, NormalDictModel>;
 		QWidget* dictWidget = new QWidget(mainWidget);
 		QVBoxLayout* dictLayout = new QVBoxLayout(dictWidget);
-		QWidget* buttonWidget = new QWidget(mainWidget);
-		QHBoxLayout* buttonLayout = new QHBoxLayout(buttonWidget);
-		ElaPushButton* plainTextModeButtom = new ElaPushButton(buttonWidget);
+		dictLayout->setContentsMargins(0, 0, 0, 0);
+		
+		QHBoxLayout* buttonLayout = new QHBoxLayout(dictWidget);
+		ElaPushButton* plainTextModeButtom = new ElaPushButton(dictWidget);
 		plainTextModeButtom->setText(tr("纯文本模式"));
-		ElaPushButton* tableModeButtom = new ElaPushButton(buttonWidget);
+		ElaPushButton* tableModeButtom = new ElaPushButton(dictWidget);
 		tableModeButtom->setText(tr("表模式"));
 
-		ElaIconButton* saveDictButton = new ElaIconButton(ElaIconType::Check, buttonWidget);
+		ElaIconButton* saveDictButton = new ElaIconButton(ElaIconType::Check, dictWidget);
 		saveDictButton->setFixedWidth(30);
 		ElaToolTip* saveDictButtonToolTip = new ElaToolTip(saveDictButton);
 		saveDictButtonToolTip->setToolTip(tr("保存当前页"));
-		ElaIconButton* importDictButton = new ElaIconButton(ElaIconType::ArrowDownFromLine, buttonWidget);
+		ElaIconButton* importDictButton = new ElaIconButton(ElaIconType::ArrowDownFromLine, dictWidget);
 		importDictButton->setFixedWidth(30);
 		ElaToolTip* importDictButtonToolTip = new ElaToolTip(importDictButton);
 		importDictButtonToolTip->setToolTip(tr("导入字典页"));
-		ElaIconButton* withdrawDictButton = new ElaIconButton(ElaIconType::ArrowLeft, buttonWidget);
+		ElaIconButton* withdrawDictButton = new ElaIconButton(ElaIconType::ArrowLeft, dictWidget);
 		withdrawDictButton->setFixedWidth(30);
 		ElaToolTip* withdrawDictButtonToolTip = new ElaToolTip(withdrawDictButton);
 		withdrawDictButtonToolTip->setToolTip(tr("撤回删除行"));
 		withdrawDictButton->setEnabled(false);
-		ElaIconButton* refreshDictButton = new ElaIconButton(ElaIconType::ArrowRotateRight, buttonWidget);
+		ElaIconButton* refreshDictButton = new ElaIconButton(ElaIconType::ArrowRotateRight, dictWidget);
 		refreshDictButton->setFixedWidth(30);
 		ElaToolTip* refreshDictButtonToolTip = new ElaToolTip(refreshDictButton);
 		refreshDictButtonToolTip->setToolTip(tr("刷新当前页"));
-		ElaIconButton* addDictButton = new ElaIconButton(ElaIconType::Plus, buttonWidget);
+		ElaIconButton* addDictButton = new ElaIconButton(ElaIconType::Plus, dictWidget);
 		addDictButton->setFixedWidth(30);
 		ElaToolTip* addDictButtonToolTip = new ElaToolTip(addDictButton);
 		addDictButtonToolTip->setToolTip(tr("添加词条"));
-		ElaIconButton* delDictButton = new ElaIconButton(ElaIconType::Minus, buttonWidget);
+		ElaIconButton* delDictButton = new ElaIconButton(ElaIconType::Minus, dictWidget);
 		delDictButton->setFixedWidth(30);
 		ElaToolTip* delDictButtonToolTip = new ElaToolTip(delDictButton);
 		delDictButtonToolTip->setToolTip(tr("删除词条"));
@@ -100,7 +101,7 @@ void DictSettingsPage::_setupUI()
 		buttonLayout->addWidget(refreshDictButton);
 		buttonLayout->addWidget(addDictButton);
 		buttonLayout->addWidget(delDictButton);
-		dictLayout->addWidget(buttonWidget, 0, Qt::AlignTop);
+		dictLayout->addLayout(buttonLayout);
 
 
 		// 每个字典里又有一个StackedWidget区分表和纯文本
@@ -127,15 +128,15 @@ void DictSettingsPage::_setupUI()
 		dictTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 		if constexpr (std::is_same_v<EntryType, GptDictEntry>) {
-			dictTableView->setColumnWidth(0, toml::find_or(_projectConfig, "GUIConfig", "gptDictTableColumnWidth", "0", 175));
-			dictTableView->setColumnWidth(1, toml::find_or(_projectConfig, "GUIConfig", "gptDictTableColumnWidth", "1", 175));
+			dictTableView->setColumnWidth(0, toml::find_or(_projectConfig, "GUIConfig", "gptDictTableColumnWidth", "0", 360));
+			dictTableView->setColumnWidth(1, toml::find_or(_projectConfig, "GUIConfig", "gptDictTableColumnWidth", "1", 215));
 			dictTableView->setColumnWidth(2, toml::find_or(_projectConfig, "GUIConfig", "gptDictTableColumnWidth", "2", 425));
 		}
 		else {
-			dictTableView->setColumnWidth(0, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "0", 200));
-			dictTableView->setColumnWidth(1, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "1", 150));
-			dictTableView->setColumnWidth(2, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "2", 100));
-			dictTableView->setColumnWidth(3, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "3", 172));
+			dictTableView->setColumnWidth(0, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "0", 285));
+			dictTableView->setColumnWidth(1, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "1", 195));
+			dictTableView->setColumnWidth(2, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "2", 135));
+			dictTableView->setColumnWidth(3, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "3", 250));
 			dictTableView->setColumnWidth(4, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "4", 75));
 			dictTableView->setColumnWidth(5, toml::find_or(_projectConfig, "GUIConfig", configKey + "DictTableColumnWidth", "5", 60));
 		}
@@ -148,7 +149,7 @@ void DictSettingsPage::_setupUI()
 		addDictButton->setEnabled(stackedWidget->currentIndex() == 1);
 		delDictButton->setEnabled(stackedWidget->currentIndex() == 1);
 
-		dictLayout->addWidget(stackedWidget, 1);
+		dictLayout->addWidget(stackedWidget);
 		auto refreshDictFunc = [=]()
 			{
 				plainTextEdit->setPlainText(readPlainTextFunc());
@@ -158,7 +159,7 @@ void DictSettingsPage::_setupUI()
 		auto saveDictFunc = [=](bool forceSaveInTableModeToInit)
 			{
 				if constexpr (std::is_same_v<EntryType, GptDictEntry>) {
-					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"));
+					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"), std::ios::binary);
 					if (fs::exists(_projectDir / L"项目GPT字典-生成.toml")) {
 						try {
 							fs::remove(_projectDir / L"项目GPT字典-生成.toml");
@@ -193,7 +194,7 @@ void DictSettingsPage::_setupUI()
 					insertToml(_projectConfig, "GUIConfig.gptDictTableOpenMode", stackedWidget->currentIndex());
 				}
 				else {
-					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"));
+					std::ofstream ofs(_projectDir / (tabName.toStdWString() + L".toml"), std::ios::binary);
 					if (stackedWidget->currentIndex() == 0 && !forceSaveInTableModeToInit) {
 						ofs << plainTextEdit->toPlainText().toStdString();
 						ofs.close();
@@ -386,6 +387,6 @@ void DictSettingsPage::_setupUI()
 			refreshAndSavePostDictFunc.second(false);
 		};
 
-	mainLayout->addWidget(tabWidget, 1);
-	addCentralWidget(mainWidget, true, true, 0);
+	mainLayout->addWidget(tabWidget);
+	addCentralWidget(mainWidget, true, false, 0);
 }

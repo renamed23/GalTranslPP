@@ -1,11 +1,11 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module APIPool;
 
 import std;
+import spdlog;
 import ITranslator;
 export import APITool;
 

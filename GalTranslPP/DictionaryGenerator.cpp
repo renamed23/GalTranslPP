@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 
@@ -9,7 +8,6 @@ module DictionaryGenerator;
 
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 DictionaryGenerator::~DictionaryGenerator() {
@@ -38,7 +36,7 @@ void DictionaryGenerator::preprocessAndTokenize(const std::vector<fs::path>& jso
     std::ifstream ifs;
     for (const auto& jsonFile : jsonFiles)
     {
-        ifs.open(jsonFile);
+        ifs.open(jsonFile, std::ios::binary);
         json data = json::parse(ifs);
         ifs.close();
 
@@ -397,7 +395,7 @@ void DictionaryGenerator::generate(const std::vector<fs::path>& jsonFiles, const
     }
 
     arr.as_array_fmt().fmt = toml::array_format::multiline;
-    std::ofstream ofs(outputFilePath);
+    std::ofstream ofs(outputFilePath, std::ios::binary);
     ofs << toml::ordered_value{ toml::ordered_table{{ "gptDict", arr }} };
     ofs.close();
     m_logger->info("字典生成完成，共 {} 个词语，已保存到 {}", finalList.size(), wide2Ascii(outputFilePath));

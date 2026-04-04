@@ -5,8 +5,6 @@
 #include <Windows.h>
 #endif
 
-#include <atomic>
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 import Tool;
@@ -35,6 +33,7 @@ namespace {
 
 int main(int argc, char* argv[])
 {
+
 #ifdef _WIN32
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
@@ -46,13 +45,19 @@ int main(int argc, char* argv[])
         const auto globalConfig = toml::uparse(globalConfigPath);
         const std::string pyEnvPathStr = toml::find_or(globalConfig, "pyEnvPath", "BaseConfig/python-3.12.10-embed-amd64");
 
-        const fs::path pyEnvPath = ascii2Wide(pyEnvPathStr);
-        if (!startUpPythonEnv(pyEnvPath, release)) {
-            spdlog::info("未设置 Python 环境，将无法使用需要 Python 环境的模块。");
+        try {
+            const fs::path pyEnvPath = ascii2Wide(pyEnvPathStr);
+            if (!startUpPythonEnv(pyEnvPath, release)) {
+                spdlog::warn("未设置 Python 环境，将无法使用需要 Python 环境的模块。");
+            }
+        }
+        catch(...) {
+            spdlog::error("Python 环境配置失败。");
         }
     }
     catch (...) {
         spdlog::critical("无法读取全局配置，请检查 BaseConfig/globalConfig.toml 是否存在。");
+        return 1;
     }
 
     fs::path projectPath;

@@ -1,16 +1,13 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 module PDFTranslator;
 
-import GPPDefines;
 import Tool;
 import PDFTool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 PDFTranslator::~PDFTranslator() 

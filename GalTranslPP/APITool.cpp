@@ -6,7 +6,6 @@
 #include <windows.h>
 #include <winhttp.h>
 #endif
-#include <spdlog/spdlog.h>
 #include <cpr/cpr.h>
 
 module APITool;

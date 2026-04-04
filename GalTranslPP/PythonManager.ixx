@@ -3,11 +3,11 @@
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
 #include <toml.hpp>
-#include <spdlog/spdlog.h>
 
 export module PythonManager;
 
 import std;
+import spdlog;
 
 namespace fs = std::filesystem;
 namespace py = pybind11;
@@ -116,11 +116,11 @@ export {
         explicit PythonManager(const std::shared_ptr<spdlog::logger>& logger) : m_logger(logger) {}
 
         std::optional<std::shared_ptr<PythonInterpreterInstance>> registerFunction
-        (const std::string& modulePath, const std::string& functionName, bool& needReboot);
+        (const std::string& modulePath, const std::string& functionName);
 
     private:
 
-        void registerCustomTypes(const std::string& moduleName, bool& needReboot);
+        void registerCustomTypes(const std::string& moduleName);
 
         absl::btree_map<fs::path, std::shared_ptr<PythonInterpreterInstance>> m_interpreters;
 

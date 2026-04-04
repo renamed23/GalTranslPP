@@ -7,7 +7,6 @@
 #include "ElaText.h"
 #include "ElaLineEdit.h"
 
-import std;
 
 ElaInputDialog::ElaInputDialog(QWidget* parent, const QString& label, const QString& text, QString& result, bool* ok) :
 	ElaContentDialog(parent), _result(result), _ok(ok)

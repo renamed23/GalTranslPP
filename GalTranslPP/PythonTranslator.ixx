@@ -2,7 +2,6 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module PythonTranslator;
 
@@ -45,20 +44,19 @@ export {
 		PythonTranslator(const std::string& modulePath, Args&&... args) :
 			BaseTranslator(std::forward<Args>(args)...), m_modulePath(modulePath)
 		{
-			bool needRoot = false;
 			this->m_pythonTranslator = true;
 			m_translatorName = wide2Ascii(fs::path(ascii2Wide(m_modulePath)).stem());
-			std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = this->m_pythonManager->registerFunction(m_modulePath, "init", needRoot);
+			std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = this->m_pythonManager->registerFunction(m_modulePath, "init");
 			if (!pythonInterpreterOpt.has_value()) {
 				throw std::runtime_error("PythonTranslator 获取 init 函数失败！");
 			}
-			pythonInterpreterOpt = this->m_pythonManager->registerFunction(m_modulePath, "run", needRoot);
+			pythonInterpreterOpt = this->m_pythonManager->registerFunction(m_modulePath, "run");
 			if (!pythonInterpreterOpt.has_value()) {
 				throw std::runtime_error("PythonTranslator 获取 run 函数失败！");
 			}
 			m_pythonInterpreter = pythonInterpreterOpt.value();
 			m_pythonRunFunc = m_pythonInterpreter->functions["run"].get();
-			this->m_pythonManager->registerFunction(m_modulePath, "unload", needRoot);
+			this->m_pythonManager->registerFunction(m_modulePath, "unload");
 
 			m_pythonInterpreter->submitTask([&]()
 				{
@@ -73,9 +71,6 @@ export {
 						throw std::runtime_error(std::format("初始化 PythonTranslator 时出现异常: {}", e.what()));
 					}
 				}).get();
-			if (needRoot) {
-				throw std::runtime_error("PythonTranslator 需要重启程序");
-			}
 			this->m_logger->info("PythonTranslator 已加载模块: {}", m_translatorName);
 		}
 

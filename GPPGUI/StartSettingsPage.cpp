@@ -216,6 +216,7 @@ void StartSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	mainLayout->setContentsMargins(20, 15, 15, 0);
 
 	QWidget* topWidget = new QWidget(mainWidget);
 	QHBoxLayout* topLayout = new QHBoxLayout(topWidget);
@@ -505,6 +506,7 @@ void StartSettingsPage::_setupUI()
 		});
 
 	_workThread->start();
+	// 这个的 isVerticalGrabGesture 保持为 true 主要是方便随便拉一下看进度条而不必非要转鼠标滚轮或者侧边滚动条
 	addCentralWidget(mainWidget, true, true, 0);
 
 	_applyFunc = [=]()
@@ -518,7 +520,8 @@ void StartSettingsPage::_setupUI()
 				if (
 					!isSameExtension(customFilePluginPath, L".lua") &&
 					!isSameExtension(customFilePluginPath, L".py")
-					) {
+					) 
+				{
 					ElaMessageBar::error(ElaMessageBarType::BottomRight, tr("文件格式错误"), tr("自定义文件插件的格式必须是 .lua 或 .py 格式。"), 3000);
 				}
 				insertToml(_projectConfig, "plugins.filePlugin", customFilePluginStr);
@@ -528,13 +531,13 @@ void StartSettingsPage::_setupUI()
 
 	// 顺序和_onOutputSettingClicked里的索引一致
 	_njCfgPage = new NJCfgPage(_projectConfig, this);
-	addCentralWidget(_njCfgPage, true, true, 0);
+	addCentralWidget(_njCfgPage, true, false, 0);
 	_epubCfgPage = new EpubCfgPage(_projectConfig, this);
-	addCentralWidget(_epubCfgPage, true, true, 0);
+	addCentralWidget(_epubCfgPage, true, false, 0);
 	_pdfCfgPage = new PDFCfgPage(_projectConfig, this);
-	addCentralWidget(_pdfCfgPage, true, true, 0);
-	_customFilePluginCfgPage = new CustomFilePluginCfgPage(_projectConfig, _globalConfig, this);
-	addCentralWidget(_customFilePluginCfgPage, true, true, 0);
+	addCentralWidget(_pdfCfgPage, true, false, 0);
+	_customFilePluginCfgPage = new CustomFilePluginCfgPage(_projectDir, _globalConfig, _projectConfig, this);
+	addCentralWidget(_customFilePluginCfgPage, true, false, 0);
 }
 
 void StartSettingsPage::_onOutputSettingClicked()

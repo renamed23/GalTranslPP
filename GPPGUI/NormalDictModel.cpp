@@ -1,4 +1,4 @@
-// NormalDictModel.cpp
+﻿// NormalDictModel.cpp
 
 #include "NormalDictModel.h"
 #include <QFont>
@@ -18,7 +18,7 @@ int NormalDictModel::rowCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return _entries.count();
+    return (int)_entries.count();
 }
 
 // 返回列数
@@ -34,7 +34,7 @@ int NormalDictModel::columnCount(const QModelIndex& parent) const
 QVariant NormalDictModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() >= _entries.count()) {
-        return QVariant();
+        return {};
     }
 
     const NormalDictEntry& entry = _entries.at(index.row());
@@ -62,7 +62,7 @@ QVariant NormalDictModel::data(const QModelIndex& index, int role) const
         }
     }
 
-    return QVariant();
+    return {};
 }
 
 // 提供表头数据
@@ -120,10 +120,12 @@ bool NormalDictModel::setData(const QModelIndex& index, const QVariant& value, i
             if (entry.original == value.toString()) return false;
             entry.original = value.toString();
             break;
+
         case Column::Translation:
             if (entry.translation == value.toString()) return false;
             entry.translation = value.toString();
             break;
+
         case Column::ConditionTar:
         {
             QString str = value.toString();
@@ -152,17 +154,20 @@ bool NormalDictModel::setData(const QModelIndex& index, const QVariant& value, i
             entry.conditionTar = value.toString();
         }
         break;
+
         case Column::ConditionReg:
             if (entry.conditionReg == value.toString()) return false;
             entry.conditionReg = value.toString();
             break;
+
         case Column::IsReg:
         {
             bool isReg = value.toBool();
             if (entry.isReg == isReg) return false;
             entry.isReg = isReg;
-            break;
         }
+        break;
+
         case Column::Priority:
         {
             bool ok;
@@ -170,11 +175,13 @@ bool NormalDictModel::setData(const QModelIndex& index, const QVariant& value, i
             // 输入验证：确保输入的是有效的数字
             if (!ok || entry.priority == priority) return false;
             entry.priority = priority;
-            break;
         }
+        break;
+
         default:
             return false;
         }
+
         Q_EMIT dataChanged(index, index, { role, Qt::DisplayRole });
         return true;
     }

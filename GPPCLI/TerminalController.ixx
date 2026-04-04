@@ -1,9 +1,4 @@
-module;
-
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/base_sink.h>
-
-export module TerminalController;
+﻿export module TerminalController;
 
 import Tool;
 import ProgressBar;
@@ -87,7 +82,7 @@ export {
                 });
         }
 
-        virtual ~TerminalController()
+        virtual ~TerminalController() override
         {
             m_controlling = false;
             if (m_flushThread.joinable()) {

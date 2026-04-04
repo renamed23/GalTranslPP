@@ -2,7 +2,6 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 module PDFTool;
 

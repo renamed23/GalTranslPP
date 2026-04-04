@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #pragma  warning( push ) 
 #pragma  warning( disable: 4244 )
 #pragma  warning( disable: 4251 )
@@ -33,13 +32,13 @@ ProblemAnalyzer::ProblemAnalyzer(const std::unique_ptr<GptDictionary>& gptDictio
 {
 	m_excludeTraditionalCharList =
     {
-        "乾", "阪"
+        "乾", "阪", "篠", "塚"
     };
 }
 
 void ProblemAnalyzer::analyze(Sentence* sentence) {
     if (sentence->translated_preview.empty()) {
-        if (!sentence->pre_processed_text.empty() && !sentence->pre_translated_text.empty()) {
+        if (!sentence->pre_processed_text.empty()) {
             sentence->problems.push_back("翻译为空");
         }
         return;

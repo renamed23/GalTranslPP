@@ -5,15 +5,11 @@
 #include <QHeaderView>
 #include <QStackedWidget>
 
-#include "ElaText.h"
 #include "ElaLineEdit.h"
 #include "ElaScrollPageArea.h"
-#include "ElaToolTip.h"
 #include "ElaTabWidget.h"
-#include "ElaTableView.h"
 #include "ElaPushButton.h"
 #include "ElaMessageBar.h"
-#include "ElaToggleSwitch.h"
 #include "ElaPlainTextEdit.h"
 
 import Tool;
@@ -58,7 +54,7 @@ void PromptSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
-	mainLayout->setContentsMargins(0, 0, 0, 0);
+	mainLayout->setContentsMargins(10, 10, 10, 0);
 
 	ElaTabWidget* tabWidget = new ElaTabWidget(mainWidget);
 	tabWidget->setTabsClosable(false);
@@ -70,18 +66,19 @@ void PromptSettingsPage::_setupUI()
 		{
 			QWidget* promptWidget = new QWidget(mainWidget);
 			QVBoxLayout* promptLayout = new QVBoxLayout(promptWidget);
-			QWidget* promptButtonWidget = new QWidget(mainWidget);
-			QHBoxLayout* promptButtonLayout = new QHBoxLayout(promptButtonWidget);
-			ElaPushButton* promptUserModeButtom = new ElaPushButton(promptButtonWidget);
+			promptLayout->setContentsMargins(0, 0, 0, 0);
+			
+			QHBoxLayout* promptButtonLayout = new QHBoxLayout(promptWidget);
+			ElaPushButton* promptUserModeButtom = new ElaPushButton(promptWidget);
 			promptUserModeButtom->setText(tr("用户提示词"));
 			promptUserModeButtom->setEnabled(false);
-			ElaPushButton* promptSystemModeButtom = new ElaPushButton(promptButtonWidget);
+			ElaPushButton* promptSystemModeButtom = new ElaPushButton(promptWidget);
 			promptSystemModeButtom->setText(tr("系统提示词"));
 			promptSystemModeButtom->setEnabled(true);
 			promptButtonLayout->addWidget(promptUserModeButtom);
 			promptButtonLayout->addWidget(promptSystemModeButtom);
 			promptButtonLayout->addStretch();
-			promptLayout->addWidget(promptButtonWidget, 0, Qt::AlignTop);
+			promptLayout->addLayout(promptButtonLayout);
 
 			QStackedWidget* promptStackedWidget = new QStackedWidget(promptWidget);
 			// 用户提示词
@@ -101,7 +98,7 @@ void PromptSettingsPage::_setupUI()
 			);
 			promptStackedWidget->addWidget(forgalJsonSystemModeEdit);
 			promptStackedWidget->setCurrentIndex(0);
-			promptLayout->addWidget(promptStackedWidget, 1);
+			promptLayout->addWidget(promptStackedWidget);
 			connect(promptUserModeButtom, &ElaPushButton::clicked, this, [=]()
 				{
 					promptStackedWidget->setCurrentIndex(0);
@@ -143,11 +140,11 @@ void PromptSettingsPage::_setupUI()
 			sakuraApplyFunc();
 			gendictApplyFunc();
 			nametransApplyFunc();
-			std::ofstream ofs(_projectDir / L"Prompt.toml");
+			std::ofstream ofs(_projectDir / L"Prompt.toml", std::ios::binary);
 			ofs << _promptConfig;
 			ofs.close();
 		};
 
 	mainLayout->addWidget(tabWidget);
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }
