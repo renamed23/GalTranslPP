@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <unicode/unistr.h>
 #include <unicode/uchar.h>
 #include <unicode/ucnv.h>
@@ -127,7 +126,7 @@ const std::string& CodePageChecker::findUnmappableChars(const std::string& trans
         &targetPtr, targetLimit,
         &sourcePtr, sourceLimit,
         nullptr, nullptr, nullptr, nullptr,
-        TRUE, TRUE,
+        1, 1,
         &status);
 
     // U_INVALID_CHAR_FOUND 错误是预期的，因为它会触发回调。

@@ -1,11 +1,11 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module PDFTool;
 
 import std;
+import spdlog;
 
 namespace fs = std::filesystem;
 

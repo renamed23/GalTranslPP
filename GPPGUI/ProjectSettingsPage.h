@@ -28,7 +28,7 @@ class ProjectSettingsPage : public BasePage
     Q_OBJECT
 
 public:
-    explicit ProjectSettingsPage(toml::ordered_value& globalConfig, const fs::path& projectDir, QWidget* parent = nullptr);
+    explicit ProjectSettingsPage(const fs::path& projectDir, toml::ordered_value& globalConfig, QWidget* parent = nullptr);
     ~ProjectSettingsPage() override;
 
     QString getProjectName();

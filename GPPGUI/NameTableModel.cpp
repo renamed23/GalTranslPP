@@ -1,4 +1,4 @@
-// NameTableModel.cpp
+﻿// NameTableModel.cpp
 
 #include "NameTableModel.h"
 #include <QFont>
@@ -17,7 +17,7 @@ int NameTableModel::rowCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return _entries.count();
+    return (int)_entries.count();
 }
 
 // 返回列数
@@ -26,14 +26,14 @@ int NameTableModel::columnCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return _headerLabels.count();
+    return (int)_headerLabels.count();
 }
 
 // 提供数据给视图
 QVariant NameTableModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() >= _entries.count()) {
-        return QVariant();
+        return {};
     }
 
     const NameTableEntry& entry = _entries.at(index.row());
@@ -58,7 +58,7 @@ QVariant NameTableModel::data(const QModelIndex& index, int role) const
         }
     }
 
-    return QVariant();
+    return {};
 }
 
 // 提供表头数据
@@ -112,13 +112,16 @@ bool NameTableModel::setData(const QModelIndex& index, const QVariant& value, in
             if (entry.original == value.toString()) return false;
             entry.original = value.toString();
             break;
+
         case 1:
             if (entry.translation == value.toString()) return false;
             entry.translation = value.toString();
             break;
+
         default:
             return false;
         }
+
         Q_EMIT dataChanged(index, index, { role, Qt::DisplayRole });
         return true;
     }

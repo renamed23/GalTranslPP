@@ -2,7 +2,6 @@
 
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module Dictionary;
 
@@ -43,7 +42,7 @@ export {
 
         void sort();
 
-        void loadFromFile(const fs::path& filePath, bool& needReboot);
+        void loadFromFile(const fs::path& filePath);
 
         std::string generatePrompt(std::span<Sentence*> batch, TransEngine transEngine) const;
 
@@ -78,7 +77,7 @@ export {
             const std::unique_ptr<LuaManager>& luaManager, const std::unique_ptr<PythonManager>& pythonManager, const std::shared_ptr<spdlog::logger>& logger)
             : m_projectDir(projectDir), m_luaManager(luaManager), m_pythonManager(pythonManager), m_logger(logger) {}
 
-        void loadFromFile(const fs::path& filePath, bool& needReboot);
+        void loadFromFile(const fs::path& filePath);
 
         void sort();
 

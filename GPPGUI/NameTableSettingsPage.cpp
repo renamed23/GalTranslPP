@@ -21,7 +21,6 @@ NameTableSettingsPage::NameTableSettingsPage(fs::path& projectDir, toml::ordered
 {
 	setWindowTitle(tr("人名替换表"));
 	setTitleVisible(false);
-	setContentsMargins(0, 0, 0, 0);
 
 	_setupUI();
 }
@@ -78,36 +77,40 @@ QString NameTableSettingsPage::readNameTableStr()
 
 void NameTableSettingsPage::_setupUI()
 {
-	ElaTabWidget* tabWidget = new ElaTabWidget(this);
+	QWidget* mainWidget = new QWidget(this);
+	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	mainLayout->setContentsMargins(10, 10, 10, 0);
+
+	ElaTabWidget* tabWidget = new ElaTabWidget(mainWidget);
 	tabWidget->setIsTabTransparent(true);
 	tabWidget->setTabsClosable(false);
 
-	QWidget* mainWidget = new QWidget(this);
-	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
+	QWidget* nameTableWidget = new QWidget(mainWidget);
+	QVBoxLayout* nameTableLayout = new QVBoxLayout(nameTableWidget);
+	nameTableLayout->setContentsMargins(0, 0, 0, 0);
 
-	QWidget* buttonWidget = new QWidget(mainWidget);
-	QHBoxLayout* buttonLayout = new QHBoxLayout(buttonWidget);
-	ElaPushButton* plainTextModeButton = new ElaPushButton(tr("纯文本模式"), buttonWidget);
-	ElaPushButton* TableModeButton = new ElaPushButton(tr("表模式"), buttonWidget);
+	QHBoxLayout* buttonLayout = new QHBoxLayout(nameTableWidget);
+	ElaPushButton* plainTextModeButton = new ElaPushButton(tr("纯文本模式"), nameTableWidget);
+	ElaPushButton* TableModeButton = new ElaPushButton(tr("表模式"), nameTableWidget);
 
-	ElaIconButton* saveDictButton = new ElaIconButton(ElaIconType::Check, buttonWidget);
+	ElaIconButton* saveDictButton = new ElaIconButton(ElaIconType::Check, nameTableWidget);
 	saveDictButton->setFixedWidth(30);
 	ElaToolTip* saveDictButtonToolTip = new ElaToolTip(saveDictButton);
 	saveDictButtonToolTip->setToolTip(tr("保存当前页"));
-	ElaIconButton* withdrawButton = new ElaIconButton(ElaIconType::ArrowLeft, buttonWidget);
+	ElaIconButton* withdrawButton = new ElaIconButton(ElaIconType::ArrowLeft, nameTableWidget);
 	withdrawButton->setFixedWidth(30);
 	ElaToolTip* withdrawButtonToolTip = new ElaToolTip(withdrawButton);
 	withdrawButtonToolTip->setToolTip(tr("撤回删除行"));
 	withdrawButton->setEnabled(false);
-	ElaIconButton* refreshButton = new ElaIconButton(ElaIconType::ArrowRotateRight, buttonWidget);
+	ElaIconButton* refreshButton = new ElaIconButton(ElaIconType::ArrowRotateRight, nameTableWidget);
 	refreshButton->setFixedWidth(30);
 	ElaToolTip* refreshButtonToolTip = new ElaToolTip(refreshButton);
 	refreshButtonToolTip->setToolTip(tr("刷新当前页"));
-	ElaIconButton* addNameButton = new ElaIconButton(ElaIconType::Plus, buttonWidget);
+	ElaIconButton* addNameButton = new ElaIconButton(ElaIconType::Plus, nameTableWidget);
 	addNameButton->setFixedWidth(30);
 	ElaToolTip* addNameButtonToolTip = new ElaToolTip(addNameButton);
 	addNameButtonToolTip->setToolTip(tr("添加词条"));
-	ElaIconButton* delNameButton = new ElaIconButton(ElaIconType::Minus, buttonWidget);
+	ElaIconButton* delNameButton = new ElaIconButton(ElaIconType::Minus, nameTableWidget);
 	delNameButton->setFixedWidth(30);
 	ElaToolTip* delNameButtonToolTip = new ElaToolTip(delNameButton);
 	delNameButtonToolTip->setToolTip(tr("删除词条"));
@@ -121,9 +124,9 @@ void NameTableSettingsPage::_setupUI()
 	buttonLayout->addWidget(addNameButton);
 	buttonLayout->addWidget(delNameButton);
 
-	QStackedWidget* stackedWidget = new QStackedWidget(mainWidget);
+	QStackedWidget* stackedWidget = new QStackedWidget(nameTableWidget);
 	// 纯文本模式
-	ElaPlainTextEdit* plainTextEdit = new ElaPlainTextEdit(mainWidget);
+	ElaPlainTextEdit* plainTextEdit = new ElaPlainTextEdit(stackedWidget);
 	QFont plainTextFont = plainTextEdit->font();
 	plainTextFont.setPixelSize(15);
 	plainTextEdit->setFont(plainTextFont);
@@ -131,7 +134,7 @@ void NameTableSettingsPage::_setupUI()
 	stackedWidget->addWidget(plainTextEdit);
 
 	// 表模式
-	ElaTableView* nameTableView = new ElaTableView(mainWidget);
+	ElaTableView* nameTableView = new ElaTableView(stackedWidget);
 	NameTableModel* nameTableModel = new NameTableModel(nameTableView);
 	QList<NameTableEntry> nameList = readNameTable();
 	nameTableModel->loadData(nameList);
@@ -232,12 +235,12 @@ void NameTableSettingsPage::_setupUI()
 		});
 
 
-	mainLayout->addWidget(buttonWidget);
-	mainLayout->addWidget(stackedWidget, 1);
+	nameTableLayout->addLayout(buttonLayout);
+	nameTableLayout->addWidget(stackedWidget);
 
 	_applyFunc = [=]()
 		{
-			std::ofstream ofs(_projectDir / L"人名替换表.toml");
+			std::ofstream ofs(_projectDir / L"人名替换表.toml", std::ios::binary);
 			int index = stackedWidget->currentIndex();
 			if (index == 0) {
 				ofs << plainTextEdit->toPlainText().toStdString();
@@ -266,6 +269,7 @@ void NameTableSettingsPage::_setupUI()
 
 	_refreshFunc = refreshFunc;
 
-	tabWidget->addTab(mainWidget, tr("人名替换表"));
-	addCentralWidget(tabWidget, true, true, 0);
+	tabWidget->addTab(nameTableWidget, tr("人名替换表"));
+	mainLayout->addWidget(tabWidget);
+	addCentralWidget(mainWidget, true, false, 0);
 }

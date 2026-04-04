@@ -1,4 +1,4 @@
-// TLFCfgPage.h
+﻿// TLFCfgPage.h
 
 #ifndef TLFCFGPAGE_H
 #define TLFCFGPAGE_H
@@ -12,7 +12,7 @@ class TLFCfgPage : public BasePage
 
 public:
     explicit TLFCfgPage(toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~TLFCfgPage();
+    ~TLFCfgPage() override;
 
 private:
     toml::ordered_value& _projectConfig;

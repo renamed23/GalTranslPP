@@ -2,7 +2,6 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 module PythonTextPlugin;
 
@@ -14,7 +13,7 @@ PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string
     : m_logger(logger), m_modulePath(modulePath)
 {
     m_logger->info("正在初始化 Python 插件 {}", m_modulePath);
-    std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager->registerFunction(m_modulePath, "init", m_needReboot);
+    std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager->registerFunction(m_modulePath, "init");
     if (!pythonInterpreterOpt.has_value()) {
         throw std::runtime_error(std::format("{} init 函数初始化失败", m_modulePath));
     }
@@ -22,7 +21,7 @@ PythonTextPlugin::PythonTextPlugin(const fs::path& projectDir, const std::string
 
     auto registerFunctionFunc = [&](const std::string& funcName, py::object*& func)
         {
-            pythonInterpreterOpt = pythonManager->registerFunction(m_modulePath, funcName, m_needReboot);
+            pythonInterpreterOpt = pythonManager->registerFunction(m_modulePath, funcName);
             if (pythonInterpreterOpt.has_value()) {
                 func = m_pythonInterpreter->functions[funcName].get();
                 m_logger->info("{} {} 函数注册成功", m_modulePath, funcName);

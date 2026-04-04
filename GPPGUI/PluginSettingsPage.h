@@ -13,13 +13,15 @@ class TF2HCfgPage;
 class TLFCfgPage;
 class SkipTransCfgPage;
 
+namespace fs = std::filesystem;
+
 class PluginSettingsPage : public BasePage
 {
     Q_OBJECT
 
 public:
-    explicit PluginSettingsPage(QWidget* mainWindow, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~PluginSettingsPage();
+    explicit PluginSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
+    ~PluginSettingsPage() override;
     virtual void apply2Config() override;
 
 private Q_SLOTS:
@@ -34,6 +36,7 @@ private:
     QVBoxLayout* _pluginListLayout; // 容纳所有 PluginItemWidget 的布局
     QList<PluginItemWidget*> _pluginItems; // 按顺序存储所有项的指针
 
+    fs::path& _projectDir;
     toml::ordered_value& _projectConfig;
     QWidget* _mainWindow;
 

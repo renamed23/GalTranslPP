@@ -79,12 +79,6 @@
     <ClCompile Include="PythonTextPlugin.ixx">
       <Filter>textPlugins</Filter>
     </ClCompile>
-    <ClCompile Include="proxy.ixx">
-      <Filter>Tools\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="json.ixx">
-      <Filter>Tools\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="ITranslator.ixx">
       <Filter>filePlugins</Filter>
     </ClCompile>
@@ -156,6 +150,12 @@
     </ClCompile>
     <ClCompile Include="NameTranslator.cpp">
       <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\json.ixx">
+      <Filter>Tools\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdParty\spdlog.ixx">
+      <Filter>Tools\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

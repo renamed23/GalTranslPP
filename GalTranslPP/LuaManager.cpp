@@ -2,7 +2,6 @@
 
 #include "GPPMacros.hpp"
 #include <toml.hpp>
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 #include <ctpl_stl.h>
 #include <unicode/unistr.h>
@@ -18,10 +17,8 @@ import LuaTranslator;
 import NLPTool;
 
 import ITranslator;
-import GPPDefines;
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 class LuaJson {
@@ -229,7 +226,7 @@ public:
 	}
 };
 
-std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(const std::string& scriptPath, const std::string& functionName, bool& needReboot) {
+std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(const std::string& scriptPath, const std::string& functionName) {
 	const fs::path stdScriptPath = fs::weakly_canonical(ascii2Wide(scriptPath));
 	if (!fs::exists(stdScriptPath)) {
 		m_logger->error("Script is not exist: {}", scriptPath);
@@ -242,10 +239,10 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 			auto& state = m_scriptStates[stdScriptPath];
 			state = std::make_shared<LuaStateInstance>();
 			state->lua->open_libraries();
-			std::ifstream ifs(stdScriptPath);
+			std::ifstream ifs(stdScriptPath, std::ios::binary);
 			std::string script((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 			state->lua->script(script);
-			registerCustomTypes(state, scriptPath, needReboot);
+			registerCustomTypes(state, scriptPath);
 			it = m_scriptStates.find(stdScriptPath);
 		}
 		catch (const sol::error& e) {
@@ -270,7 +267,7 @@ std::optional<std::shared_ptr<LuaStateInstance>> LuaManager::registerFunction(co
 	return it->second;
 }
 
-void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath, bool& needReboot) {
+void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& luaStateInstance, const std::string& scriptPath) {
 	sol::state& lua = *(luaStateInstance->lua);
 	// 绑定 NameType 枚举
 	lua.new_enum("NameType",
@@ -380,7 +377,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		{
 			toml::value tomlValue = LuaToml::solObj2TomlValue(obj);
 			try {
-				std::ofstream ofs(path);
+				std::ofstream ofs(path, std::ios::binary);
 				if (!ofs.is_open()) {
 					return std::make_tuple(false, std::string("Failed to open file for writing"));
 				}
@@ -409,7 +406,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		{
 			sol::state_view lua = s;
 			try {
-				std::ifstream ifs(path);
+				std::ifstream ifs(path, std::ios::binary);
 				json jsonValue = json::parse(ifs);
 				return std::make_tuple(LuaJson::jsonValue2SolObject(jsonValue, lua), std::nullopt);
 			}
@@ -422,7 +419,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		{
 			json jsonValue = LuaJson::solObj2JsonValue(obj);
 			try {
-				std::ofstream ofs(path);
+				std::ofstream ofs(path, std::ios::binary);
 				if (!ofs.is_open()) {
 					return std::make_tuple(false, std::string("Failed to open file for writing"));
 				}
@@ -501,6 +498,7 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 		"m_apiTimeOutMs", &NormalJsonTranslator::m_apiTimeOutMs,
 		"m_checkQuota", &NormalJsonTranslator::m_checkQuota,
 		"m_smartRetry", &NormalJsonTranslator::m_smartRetry,
+		"m_retransAllWhenFail", &NormalJsonTranslator::m_retransAllWhenFail,
 		"m_usePreDictInName", &NormalJsonTranslator::m_usePreDictInName,
 		"m_usePostDictInName", &NormalJsonTranslator::m_usePostDictInName,
 		"m_usePreDictInMsg", &NormalJsonTranslator::m_usePreDictInMsg,
@@ -575,8 +573,8 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 	sol::table utilsTable = lua.create_named_table("utils");
 	utilsTable["ascii2Ascii"] = [](const std::string& ascii, std::optional<int> src, std::optional<int> dst) -> std::tuple<std::string, bool>
 		{
-			BOOL usedDefaultChar = FALSE;
-			std::string resultStr = ascii2Ascii(ascii, (UINT)src.value_or(65001), (UINT)dst.value_or(0), &usedDefaultChar);
+			int usedDefaultChar = 0;
+			std::string resultStr = ascii2Ascii(ascii, (unsigned int)src.value_or(65001), (unsigned int)dst.value_or(0), &usedDefaultChar);
 			return std::make_tuple(resultStr, (bool)usedDefaultChar);
 		};
 	utilsTable["executeCommand"] = [](const std::string& program, const std::string& args, std::optional<bool> showWindow, std::optional<int> timeDelayAfterCommand) -> bool
@@ -725,26 +723,22 @@ void LuaManager::registerCustomTypes(const std::shared_ptr<LuaStateInstance>& lu
 				const std::string tokenizerBackend = lua[mode + "tokenizerBackend"].get<std::string>();
 				if (tokenizerBackend == "MeCab") {
 					const std::string mecabDictDir = lua[mode + "mecabDictDir"].get<std::string>();
-					m_logger->info("{} 正在检查 MeCab 环境...", scriptPath);
+					m_logger->info("{} 已配置 MeCab 分词器，首次使用时加载。", scriptPath);
 					utilsTable[mode + "tokenizeFunc"] = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-					m_logger->info("{} MeCab 环境检查完毕。", scriptPath);
 				}
 				else if (tokenizerBackend == "spaCy") {
 					const std::string spaCyModelName = lua[mode + "spaCyModelName"].get<std::string>();
-					m_logger->info("{} 正在检查 spaCy 环境...", scriptPath);
-					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
-					m_logger->info("{} spaCy 环境检查完毕。", scriptPath);
+					m_logger->info("{} 已配置 spaCy 分词器，首次使用时加载。", scriptPath);
+					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger);
 				}
 				else if (tokenizerBackend == "Stanza") {
 					const std::string stanzaLang = lua[mode + "stanzaLang"].get<std::string>();
-					m_logger->info("{} 正在检查 Stanza 环境...", scriptPath);
-					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
-					m_logger->info("{} Stanza 环境检查完毕。", scriptPath);
+					m_logger->info("{} 已配置 Stanza 分词器，首次使用时加载。", scriptPath);
+					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger);
 				}
 				else if (tokenizerBackend == "pkuseg") {
-					m_logger->info("{} 正在检查 pkuseg 环境...", scriptPath);
-					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger, needReboot);
-					m_logger->info("{} pkuseg 环境检查完毕。", scriptPath);
+					m_logger->info("{} 已配置 pkuseg 分词器，首次使用时加载。", scriptPath);
+					utilsTable[mode + "tokenizeFunc"] = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger);
 				}
 				else {
 					throw std::invalid_argument(std::format("{} 中注册了无效的 tokenizerBackend: {}", scriptPath, tokenizerBackend));

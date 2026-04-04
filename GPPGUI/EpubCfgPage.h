@@ -1,4 +1,4 @@
-// EpubCfgPage.h
+﻿// EpubCfgPage.h
 
 #ifndef EPUBCFGPAGE_H
 #define EPUBCFGPAGE_H
@@ -12,7 +12,7 @@ class EpubCfgPage : public BasePage
 
 public:
     explicit EpubCfgPage(toml::ordered_value& projectConfig, QWidget* parent = nullptr);
-    ~EpubCfgPage();
+    ~EpubCfgPage() override;
 
 private:
     toml::ordered_value& _projectConfig;

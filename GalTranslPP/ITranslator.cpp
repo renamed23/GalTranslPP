@@ -2,8 +2,6 @@
 
 #define PYBIND11_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/rotating_file_sink.h>
 #include <toml.hpp>
 #include <sol/sol.hpp>
 

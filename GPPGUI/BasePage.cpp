@@ -10,6 +10,8 @@ BasePage::BasePage(QWidget* parent)
             update();
         }
     });
+
+    setContentsMargins(0, 0, 0, 0);
 }
 
 void BasePage::apply2Config()

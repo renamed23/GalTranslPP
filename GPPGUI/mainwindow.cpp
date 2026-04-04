@@ -133,7 +133,7 @@ MainWindow::MainWindow(std::unique_ptr<py::gil_scoped_release>& release, QWidget
 
 ProjectSettingsPage* MainWindow::_createProjectSettingsPage(const fs::path& projectDir)
 {
-    QSharedPointer<ProjectSettingsPage> newPage(new ProjectSettingsPage(_globalConfig, projectDir, this));
+    QSharedPointer<ProjectSettingsPage> newPage(new ProjectSettingsPage(projectDir, _globalConfig, this));
     connect(newPage.get(), &ProjectSettingsPage::finishTranslatingSignal, this, &MainWindow::_onFinishTranslating);
     connect(newPage.get(), &ProjectSettingsPage::changeProjectNameSignal, this, [=](QString nodeKey, QString newProjectName)
         {
@@ -470,7 +470,7 @@ void MainWindow::_onNewProjectTriggered()
         addCommonDictsToProjectConfig("commonGptDicts", "gptDict");
         addCommonDictsToProjectConfig("commonPostDicts", "postDict");
 
-        std::ofstream ofs(newProjectDir / L"config.toml");
+        std::ofstream ofs(newProjectDir / L"config.toml", std::ios::binary);
         ofs << configData;
         ofs.close();
     }
@@ -692,7 +692,7 @@ void MainWindow::_onCloseWindowClicked(bool restart)
     _settingPage->apply2Config();
     insertToml(_globalConfig, "clearLogShortcut", _clearLogShortcut->key().toString().toStdString());
 
-    std::ofstream ofs(L"BaseConfig/globalConfig.toml");
+    std::ofstream ofs(L"BaseConfig/globalConfig.toml", std::ios::binary);
     ofs << _globalConfig;
     ofs.close();
 

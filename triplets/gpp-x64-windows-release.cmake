@@ -1,0 +1,10 @@
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+set(VCPKG_LIBRARY_LINKAGE dynamic)
+set(VCPKG_BUILD_TYPE release)
+
+if(PORT STREQUAL "marisa-trie")
+    set(VCPKG_LIBRARY_LINKAGE static)
+endif()
+
+set(SPDLOG_WCHAR_FILENAMES ON)

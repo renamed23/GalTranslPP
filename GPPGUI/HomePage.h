@@ -10,7 +10,7 @@ class HomePage : public BasePage
 public:
 
     Q_INVOKABLE explicit HomePage(toml::ordered_value& globalConfig, QWidget* parent = nullptr);
-    ~HomePage();
+    ~HomePage() override;
 
 private:
 

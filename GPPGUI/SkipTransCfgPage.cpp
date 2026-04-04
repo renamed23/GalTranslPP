@@ -17,7 +17,7 @@ SkipTransCfgPage::SkipTransCfgPage(toml::ordered_value& projectConfig, QWidget* 
     : BasePage(parent), _projectConfig(projectConfig)
 {
     setWindowTitle(tr("跳过翻译设置"));
-    setContentsMargins(10, 0, 10, 0);
+    setContentsMargins(30, 15, 15, 0);
 
     // 创建中心部件和布局
     QWidget* centerWidget = new QWidget(this);
@@ -82,7 +82,7 @@ SkipTransCfgPage::SkipTransCfgPage(toml::ordered_value& projectConfig, QWidget* 
     mainLayout->addStretch();
 
     centerWidget->setWindowTitle(tr("跳过翻译设置"));
-    addCentralWidget(centerWidget, true, true, 0);
+    addCentralWidget(centerWidget, true, false, 0);
 }
 
 SkipTransCfgPage::~SkipTransCfgPage()

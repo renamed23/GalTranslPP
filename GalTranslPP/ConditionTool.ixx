@@ -4,7 +4,6 @@
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
 #include <toml.hpp>
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 
 export module ConditionTool;
@@ -106,7 +105,7 @@ export {
 
     template<typename TC>
     CheckSeCondFunc getCheckSeCondFunc(const toml::basic_value<TC>& condElem, const fs::path& projectDir,
-        const std::unique_ptr<PythonManager>& pythonManager, const std::unique_ptr<LuaManager>& luaManager, const std::shared_ptr<spdlog::logger>& logger, bool& needReboot) 
+        const std::unique_ptr<PythonManager>& pythonManager, const std::unique_ptr<LuaManager>& luaManager, const std::shared_ptr<spdlog::logger>& logger) 
     {
         std::vector<CheckSeCondFunc> funcs;
 
@@ -132,7 +131,7 @@ export {
                     replaceStrInplace(conditionLuaStr, "<PROJECT_DIR>", wide2Ascii(projectDir));
                     const std::string& conditionFuncStr = tbl.at("conditionFunc").as_string();
                     const std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager->registerFunction(
-                        conditionLuaStr, conditionFuncStr, needReboot);
+                        conditionLuaStr, conditionFuncStr);
                     if (luaStateOpt) {
                         std::shared_ptr<LuaStateInstance> luaState = *luaStateOpt;
                         sol::function* pConditionFunc = luaState->functions[conditionFuncStr].get();
@@ -162,7 +161,7 @@ export {
                     replaceStrInplace(conditionPythonStr, "<PROJECT_DIR>", wide2Ascii(projectDir));
                     const std::string conditionFuncStr = tbl.at("conditionFunc").as_string();
                     const std::optional<std::shared_ptr<PythonInterpreterInstance>> pythonInterpreterOpt = pythonManager->registerFunction(
-                        conditionPythonStr, conditionFuncStr, needReboot);
+                        conditionPythonStr, conditionFuncStr);
                     if (pythonInterpreterOpt) {
                         std::shared_ptr<PythonInterpreterInstance> pythonInterpreter = *pythonInterpreterOpt;
                         py::object* pConditionFunc = pythonInterpreter->functions[conditionFuncStr].get();

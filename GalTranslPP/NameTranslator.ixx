@@ -1,13 +1,13 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 
 export module NameTranslator;
 
 import APIPool;
 import Dictionary;
 import ITranslator;
+import spdlog;
 
 namespace fs = std::filesystem;
 

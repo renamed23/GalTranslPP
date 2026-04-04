@@ -8,6 +8,7 @@
 - **IDE**: [Visual Studio 2026](https://visualstudio.microsoft.com/insiders/?rwnlp=zh-hans)
   - **必需工作负载**: `使用 C++ 的桌面开发`
   - **必需工具集**: `MSVC v145`
+- **辅助构建工具**: [CMake](https://cmake.org/download/)
 - **Python 3.12.10**: 本仓库中的 `python-3.12.10-embed-amd64.zip`
 - **7zip**: 本仓库中的 `7z.dll`
 - **版本控制工具**: [git](https://git-scm.com/)
@@ -68,16 +69,6 @@ cd GalTranslPP
   - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\lib\ElaWidgetTools.lib` 文件存在
   - 确保 `3rdParty\ElaWidgetTools\Install\ElaWidgetTools\bin\ElaWidgetTools.dll` 文件存在
 
-### 4.4 编译 OpenCC
-
-- 1、  使用 Visual Studio 打开 `3rdParty\OpenCC` 文件夹。
-- 2、  如果编译选项没有 `x64-Release`，就先点到管理配置，点击绿色加号，选择 `x64-Release`，Ctrl + S 保存。
-- 3、  选择 `x64-Release`，生成 opencc.dll(安装) (lib\opencc.dll)。
-- 4、  **确认编译产物**
-  - 确保 `3rdParty\OpenCC\out\install\x64-Release\include` 文件夹存在，程序会用到里面的头文件
-  - 确保 `3rdParty\OpenCC\out\install\x64-Release\lib` 目录下存在文件 `marisa.lib` 和 `opencc.lib`
-  - 确保 `3rdParty\OpenCC\out\install\x64-Release\bin\opencc.dll` 文件存在
-
 ## 5. 编译 GalTranslPP (主项目)
 
 - 1、  使用 Visual Studio 打开根目录下的 `GalTranslPP.sln` 解决方案文件。
@@ -96,14 +87,12 @@ cd GalTranslPP
 
 ### 6.1 GPPCLI
 
-- 1、  将`Example`文件夹内的`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPCLI`
-- 2、  将`3rdParty`文件夹内的`7z.dll`文件复制到`GalTranslPP\Release\GPPCLI`
+- 1、 运行项目根目录下的 `Release.bat`
 
 ### 6.2 GPPGUI
 
-- 1、  将`BaseConfig`文件夹复制到`GalTranslPP\Release\GPPGUI`
-- 2、  将`7z.dll`文件复制到`GalTranslPP\Release\GPPGUI`
-- 3、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
+- 1、 运行项目根目录下的 `Release.bat`
+- 2、  打开 Qt专属控制台，如 Qt 6.9.2(MSVC 2022 64-bit)，输入命令 
 
 ```cmd
 windeployqt path/to/GalTranslPP_GUI.exe
@@ -126,6 +115,6 @@ mklink .\GPPCLI_PRIVATE "D:\GALGAME\GALGAMETOOLS\AIGC\GPPCLI"
 mklink .\GPPGUI_PRIVATE "D:\GALGAME\GALGAMETOOLS\AIGC\GPPGUI"
 ```
 
-这样每次编译都会将最核心的文件`GalTranslPP_CLI.exe`、`GalTranslPP_GUI.exe`和`Updater_new.exe`复制到相应目录。  
+这样每次编译都会将最核心的文件`GalTranslPP_CLI.exe`、`GalTranslPP_GUI.exe`、`Updater_new.exe`和`*.dll`复制到相应目录。  
 
 至此所有步骤均已完成。

@@ -18,8 +18,6 @@
 
 import Tool;
 import NormalJsonTranslatorHelperTool;
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 OtherSettingsPage::OtherSettingsPage(QWidget* mainWindow, fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent) :
 	BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir), _mainWindow(mainWindow)
@@ -39,8 +37,7 @@ void OtherSettingsPage::_setupUI()
 {
 	QWidget* mainWidget = new QWidget(this);
 	QVBoxLayout* mainLayout = new QVBoxLayout(mainWidget);
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-	mainLayout->setSpacing(5);
+	mainLayout->setContentsMargins(20, 15, 15, 0);
 
 	// 项目路径
 	ElaScrollPageArea* pathArea = new ElaScrollPageArea(mainWidget);
@@ -182,7 +179,7 @@ void OtherSettingsPage::_setupUI()
 				{
 					json overviewData;
 					if (importOverviewPathStr.endsWith(".json", Qt::CaseInsensitive)) {
-						ifs.open(importOverviewPathStr.toStdWString());
+						ifs.open(importOverviewPathStr.toStdWString(), std::ios::binary);
 						overviewData = json::parse(ifs);
 						ifs.close();
 					}
@@ -209,7 +206,7 @@ void OtherSettingsPage::_setupUI()
 					std::unordered_map<int, std::reference_wrapper<json>> cacheIndexMap;
 
 					try {
-						ifs.open(cachePath);
+						ifs.open(cachePath, std::ios::binary);
 						cacheData = json::parse(ifs);
 						for (auto& cacheItem : cacheData) {
 							cacheIndexMap.insert({ cacheItem["index"].get<int>(), cacheItem });
@@ -241,7 +238,7 @@ void OtherSettingsPage::_setupUI()
 						++fileImportCount;
 					}
 					if (fileImportCount != 0) {
-						ofs.open(cachePath);
+						ofs.open(cachePath, std::ios::binary);
 						if (!ofs.is_open()) {
 							problems.push_back(std::format("[文件 {}] 无法写入，跳过导入", cacheFileName));
 							continue;
@@ -393,5 +390,5 @@ void OtherSettingsPage::_setupUI()
 	mainLayout->addWidget(cacheArea);
 	
 	mainLayout->addStretch();
-	addCentralWidget(mainWidget, true, true, 0);
+	addCentralWidget(mainWidget, true, false, 0);
 }

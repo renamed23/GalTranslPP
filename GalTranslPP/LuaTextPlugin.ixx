@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 
 export module LuaTextPlugin;
@@ -24,14 +23,11 @@ export {
 
 		std::shared_ptr<spdlog::logger> m_logger;
 		std::string m_scriptPath;
-		bool m_needReboot = false;
 
 	public:
 
 		LuaTextPlugin(const fs::path& projectDir, const std::string& scriptPath, const std::unique_ptr<LuaManager>& luaManager, const std::shared_ptr<spdlog::logger>& logger);
 		~LuaTextPlugin();
-
-		bool needReboot() const { return m_needReboot; }
 
 		void dPreRun(Sentence* se);
 		void preRun(Sentence* se);

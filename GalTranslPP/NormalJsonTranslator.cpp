@@ -7,7 +7,6 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 #endif
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 #include <ctpl_stl.h>
 #include <sol/sol.hpp>
@@ -22,8 +21,6 @@ import NormalJsonTranslatorHelperTool;
 import NLPTool;
 import Tool;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 namespace py = pybind11;
 
@@ -49,7 +46,7 @@ NormalJsonTranslator::NormalJsonTranslator(const fs::path& projectDir, const std
     m_backgroundTextCachePath = m_otherCacheDir / L"backgroundTextCache.json";
     try {
         if (fs::exists(m_backgroundTextCachePath)) {
-            std::ifstream ifs(m_backgroundTextCachePath);
+            std::ifstream ifs(m_backgroundTextCachePath, std::ios::binary);
             json::parse(ifs).get_to(m_backgroundTextCacheMap);
         }
         else {
@@ -65,7 +62,7 @@ void NormalJsonTranslator::init()
 {
     const fs::path configPath = m_projectDir / L"config.toml";
     try {
-        bool needReboot = false;
+        
         const auto configData = toml::uparse(configPath);
 
         const std::string transEngineStr = toml::find_or(configData, "plugins", "transEngine", "");
@@ -106,7 +103,7 @@ void NormalJsonTranslator::init()
         const auto pluginConfigData = toml::uparse(filePluginConfigPath / L"NormalJson.toml");
         m_outputWithSrc = parseToml<bool>(configData, pluginConfigData, "plugins.NormalJson.output_with_src");
 
-        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 10);
+        m_batchSize = toml::find_or(configData, "common", "numPerRequestTranslate", 14);
         m_threadsNum = toml::find_or(configData, "common", "threadsNum", 1);
         m_sortMethod = toml::find_or(configData, "common", "sortMethod", "name");
         m_targetLang = toml::find_or(configData, "common", "targetLang", "zh-cn");
@@ -119,6 +116,7 @@ void NormalJsonTranslator::init()
         m_contextHistorySize = toml::find_or(configData, "common", "contextHistorySize", 10);
         m_smartRetry = toml::find_or(configData, "common", "smartRetry", false);
         m_checkQuota = toml::find_or(configData, "common", "checkQuota", true);
+        m_retransAllWhenFail = toml::find_or(configData, "common", "retransAllWhenFail", false);
 
         m_usePreDictInName = toml::find_or(configData, "dictionary", "usePreDictInName", false);
         m_usePostDictInName = toml::find_or(configData, "dictionary", "usePostDictInName", false);
@@ -139,12 +137,12 @@ void NormalJsonTranslator::init()
                 for (const auto& dictFileName : *dictFileNames) {
                     fs::path dictPath = m_projectDir / ascii2Wide(dictFileName);
                     if (fs::exists(dictPath)) {
-                        dict->loadFromFile(dictPath, needReboot);
+                        dict->loadFromFile(dictPath);
                     }
                     else {
                         dictPath = defaultDictFolderPath / ascii2Wide(dictType) / ascii2Wide(dictFileName);
                         if (fs::exists(dictPath)) {
-                            dict->loadFromFile(dictPath, needReboot);
+                            dict->loadFromFile(dictPath);
                         }
                     }
                 }
@@ -153,293 +151,288 @@ void NormalJsonTranslator::init()
         m_preDictionary = std::make_unique<NormalDictionary>(m_projectDir, m_luaManager, m_pythonManager, m_logger);
         loadDictsFunc("pre", m_preDictionary);
 
-        if (m_transEngine != TransEngine::DumpName) {
-            // 需要 API 和提示词
-            if (m_transEngine != TransEngine::Rebuild && m_transEngine != TransEngine::ShowNormal) {
+        if (m_transEngine == TransEngine::DumpName) {
+            return;
+        }
 
-                m_apiStrategy = toml::find_or(configData, "backendSpecific", "OpenAI-Compatible", "apiStrategy", "random");
-                if (m_apiStrategy != "random" && m_apiStrategy != "fallback") {
-                    throw std::invalid_argument("apiStrategy must be random or fallback");
-                }
-                int apiTimeOutSecond = toml::find_or(configData, "backendSpecific", "OpenAI-Compatible", "apiTimeout", 120);
-                m_apiTimeOutMs = apiTimeOutSecond * 1000;
+        // 需要 API 和提示词
+        if (m_transEngine != TransEngine::Rebuild && m_transEngine != TransEngine::ShowNormal) {
 
-                const auto apisArr = toml::find<
-                    std::vector<toml::table>
-                >(configData, "backendSpecific", "OpenAI-Compatible", "apis");
-
-                std::vector<TranslationApi> apis;
-                for (const auto& apiTbl : apisArr) {
-                    if (apiTbl.contains("enable") && !apiTbl.at("enable").as_boolean()) {
-                        continue;
-                    }
-                    TranslationApi api;
-                    if (apiTbl.contains("apikey") && !apiTbl.at("apikey").as_string().empty()) {
-                        api.apikey = apiTbl.at("apikey").as_string();
-                    }
-                    else if (m_transEngine == TransEngine::Sakura) {
-                        api.apikey = "sk-sakura";
-                    }
-                    if (apiTbl.contains("apiurl") && !apiTbl.at("apiurl").as_string().empty()) {
-                        api.apiurl = cvt2StdApiUrl(apiTbl.at("apiurl").as_string());
-                    }
-                    else {
-                        continue;
-                    }
-                    if (apiTbl.contains("modelName") && !apiTbl.at("modelName").as_string().empty()) {
-                        api.modelName = apiTbl.at("modelName").as_string();
-                    }
-                    else if (m_transEngine == TransEngine::Sakura) {
-                        api.modelName = "sakura";
-                    }
-                    else {
-                        continue;
-                    }
-                    api.stream = apiTbl.contains("stream") && apiTbl.at("stream").as_boolean();
-                    if (apiTbl.contains("temperature")) {
-                        api.temperature = apiTbl.at("temperature").as_floating();
-                    }
-                    if (apiTbl.contains("topP")) {
-                        api.topP = apiTbl.at("topP").as_floating();
-                    }
-                    if (apiTbl.contains("frequencyPenalty")) {
-                        api.frequencyPenalty = apiTbl.at("frequencyPenalty").as_floating();
-                    }
-                    if (apiTbl.contains("presencePenalty")) {
-                        api.presencePenalty = apiTbl.at("presencePenalty").as_floating();
-                    }
-                    if (apiTbl.contains("extraKeys")) {
-                        const toml::array& extraKeysArr = apiTbl.at("extraKeys").as_array();
-                        for (const auto& extraKey : extraKeysArr) {
-                            TranslationApi extraApi = api;
-                            extraApi.apikey = extraKey.as_string();
-                            if (extraApi.apikey.empty()) {
-                                continue;
-                            }
-                            apis.push_back(std::move(extraApi));
-                        }
-                    }
-                    if (api.apikey.empty()) {
-                        continue;
-                    }
-                    apis.push_back(std::move(api));
-                }
-                if (apis.empty()) {
-                    throw std::invalid_argument("找不到可用的 apikey ");
-                }
-                else {
-                    m_apiPool = std::make_unique<APIPool>(m_logger);
-                    m_apiPool->loadApis(std::move(apis));
-                }
-
-                const fs::path promptPath = [&]()
-	                {
-                        fs::path ret = m_projectDir / L"Prompt.toml";
-                        if (!fs::exists(promptPath)) {
-                            if (!fs::exists(defaultPromptPath)) {
-                                throw std::runtime_error("找不到 Prompt.toml 文件");
-                            }
-                            ret = defaultPromptPath;
-                        }
-                        return ret;
-                    }();
-
-                const auto promptData = toml::uparse(promptPath);
-
-                std::string systemKey;
-                std::string userKey;
-
-                switch (m_transEngine) 
-            	    {
-                case TransEngine::ForGalJson:
-                    systemKey = "FORGALJSON_SYSTEM";
-                    userKey = "FORGALJSON_TRANS_PROMPT_EN";
-                    break;
-                case TransEngine::ForGalTsv:
-                    systemKey = "FORGALTSV_SYSTEM";
-                    userKey = "FORGALTSV_TRANS_PROMPT_EN";
-                    break;
-                case TransEngine::ForNovelTsv:
-                    systemKey = "FORNOVELTSV_SYSTEM";
-                    userKey = "FORNOVELTSV_TRANS_PROMPT_EN";
-                    break;
-                case TransEngine::DeepseekJson:
-                    systemKey = "DEEPSEEKJSON_SYSTEM_PROMPT";
-                    userKey = "DEEPSEEKJSON_TRANS_PROMPT";
-                    break;
-                case TransEngine::Sakura:
-                    systemKey = "SAKURA_SYSTEM_PROMPT";
-                    userKey = "SAKURA_TRANS_PROMPT";
-                    break;
-                case TransEngine::GenDict:
-                    systemKey = "GENDIC_SYSTEM";
-                    userKey = "GENDIC_PROMPT";
-                    break;
-                case TransEngine::NameTrans:
-                    systemKey = "NAMETRANS_SYSTEM";
-                    userKey = "NAMETRANS_PROMPT";
-                    break;
-                default:
-                    throw std::invalid_argument("未知的 TransEngine");
-                }
-
-                if (promptData.contains(systemKey) && promptData.at(systemKey).is_string()) {
-                    m_systemPrompt = promptData.at(systemKey).as_string();
-                }
-                else {
-                    throw std::invalid_argument(std::format("Prompt.toml 中缺少 {} 键", systemKey));
-                }
-                if (promptData.contains(userKey) && promptData.at(userKey).is_string()) {
-                    m_userPrompt = promptData.at(userKey).as_string();
-                }
-                else {
-                    throw std::invalid_argument(std::format("Prompt.toml 中缺少 {} 键", userKey));
-                }
+            m_apiStrategy = toml::find_or(configData, "backendSpecific", "OpenAI-Compatible", "apiStrategy", "random");
+            if (m_apiStrategy != "random" && m_apiStrategy != "fallback") {
+                throw std::invalid_argument("apiStrategy must be random or fallback");
             }
+            int apiTimeOutSecond = toml::find_or(configData, "backendSpecific", "OpenAI-Compatible", "apiTimeout", 120);
+            m_apiTimeOutMs = apiTimeOutSecond * 1000;
 
+            const auto apisArr = toml::find<
+                std::vector<toml::table>
+            >(configData, "backendSpecific", "OpenAI-Compatible", "apis");
 
-            if (m_transEngine != TransEngine::NameTrans) {
-                // 需要翻译预处理
-                const std::string tokenizerBackend = toml::find_or(configData, "common", "tokenizerBackend", "MeCab");
-                if (tokenizerBackend == "MeCab") {
-                    const std::string mecabDictDir = toml::find_or(configData, "common", "mecabDictDir", "BaseConfig/mecabDict/mecab-ipadic-utf8");
-                    m_logger->info("正在检查 MeCab 环境...");
-                    m_tokenizeSourceLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-                    m_logger->info("MeCab 环境检查完毕。");
+            std::vector<TranslationApi> apis;
+            for (const auto& apiTbl : apisArr) {
+                if (apiTbl.contains("enable") && !apiTbl.at("enable").as_boolean()) {
+                    continue;
                 }
-                else if (tokenizerBackend == "spaCy") {
-                    const std::string spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
-                    m_logger->info("正在检查 spaCy 环境...");
-                    m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, needReboot);
-                    m_logger->info("spaCy 环境检查完毕。");
+                TranslationApi api;
+                if (apiTbl.contains("apikey") && !apiTbl.at("apikey").as_string().empty()) {
+                    api.apikey = apiTbl.at("apikey").as_string();
                 }
-                else if (tokenizerBackend == "Stanza") {
-                    const std::string stanzaLang = toml::find_or(configData, "common", "stanzaLang", "ja");
-                    m_logger->info("正在检查 Stanza 环境...");
-                    m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, needReboot);
-                    m_logger->info("Stanza 环境检查完毕。");
+                else if (m_transEngine == TransEngine::Sakura) {
+                    api.apikey = "sk-sakura";
+                }
+                if (apiTbl.contains("apiurl") && !apiTbl.at("apiurl").as_string().empty()) {
+                    api.apiurl = cvt2StdApiUrl(apiTbl.at("apiurl").as_string());
                 }
                 else {
-                    throw std::invalid_argument(std::format("无效的 tokenizerBackend: {}", tokenizerBackend));
+                    continue;
                 }
-
-                const auto textPlugins = toml::find<
-                    std::optional<std::vector<std::string>>
-                >(configData, "plugins", "textPlugins");
-                if (textPlugins) {
-                    registerPlugins(m_textPlugins, *textPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData, true);
+                if (apiTbl.contains("modelName") && !apiTbl.at("modelName").as_string().empty()) {
+                    api.modelName = apiTbl.at("modelName").as_string();
                 }
-            }
-            else {
-                m_gptDictionary = std::make_unique<GptDictionary>(m_projectDir, m_otherCacheDir, m_tokenizeSourceLangFunc,
-                    m_luaManager, m_pythonManager, m_logger);
-                loadDictsFunc("gpt", m_gptDictionary);
-            }
-
-
-            // 需要翻译中/后处理
-            if (m_transEngine != TransEngine::ShowNormal && m_transEngine != TransEngine::GenDict && m_transEngine != TransEngine::NameTrans) {
-
-                m_gptDictionary = std::make_unique<GptDictionary>(m_projectDir, m_otherCacheDir, m_tokenizeSourceLangFunc,
-                    m_luaManager, m_pythonManager, m_logger);
-                loadDictsFunc("gpt", m_gptDictionary);
-                m_postDictionary = std::make_unique<NormalDictionary>(m_projectDir, m_luaManager, m_pythonManager, m_logger);
-                loadDictsFunc("post", m_postDictionary);
-
-                const auto textPlugins = toml::find<
-                    std::optional<std::vector<std::string>>
-                >(configData, "plugins", "textPlugins");
-                if (textPlugins) {
-                    registerPlugins(m_textPlugins, *textPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData, false);
+                else if (m_transEngine == TransEngine::Sakura) {
+                    api.modelName = "sakura";
                 }
-
-                m_problemAnalyzer = std::make_unique<ProblemAnalyzer>(m_gptDictionary, m_targetLang, m_logger);
-                const auto problemList = toml::find<
-                    std::optional<std::vector<std::string>>
-                >(configData, "problemAnalyze", "problemList");
-                if (problemList) {
-                    const std::string punctSet = toml::find_or(configData, "problemAnalyze", "punctSet", "（()）：:*[]{}<>『』「」“”;；'/\\");
-                    const std::string codePage = toml::find_or(configData, "problemAnalyze", "codePage", "gbk");
-                    double langProbability = toml::find_or(configData, "problemAnalyze", "langProbability", 0.94);
-                    m_problemAnalyzer->loadProblems(*problemList, punctSet, codePage, langProbability);
+                else {
+                    continue;
                 }
-
-                const auto retranslKeys = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "retranslKeys");
-                if (retranslKeys) {
-                    for (const auto& elem : *retranslKeys) {
-                        if (elem.is_string()) {
-                            GppConditionPattern pattern;
-                            pattern.conditionTarget = CachePart::Problems;
-                            pattern.conditionReg.setPattern(elem.as_string()).setModifier(defaultRegCompileModifier).compile();
-                            if (!pattern.conditionReg) {
-                                throw std::runtime_error(std::format("retranslKeys 正则表达式 [{}] 编译失败", elem.as_string()));
-                            }
-                            GPPCondition cond{ std::move(pattern) };
-                            CheckSeCondFunc checkFunc = [condr = std::move(cond)](const Sentence* se) -> bool
-                                {
-                                    return checkGppCondition(condr, se);
-                                };
-                            m_retranslKeys.push_back(std::move(checkFunc));
-                        }
-                        else if (elem.is_array() || elem.is_table()) {
-                            CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot);
-                            m_retranslKeys.push_back(std::move(checkFunc));
-                        }
-                        else {
-                            throw std::invalid_argument("retranslKeys 的元素必须是字符串、表或表数组");
-                        }
-                    }
+                api.stream = apiTbl.contains("stream") && apiTbl.at("stream").as_boolean();
+                if (apiTbl.contains("temperature")) {
+                    api.temperature = apiTbl.at("temperature").as_floating();
                 }
-
-                const auto skipProblems = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "skipProblems");
-                if (skipProblems) {
-                    for (const auto& elem : *skipProblems) {
-                        if (elem.is_string()) {
-                            m_skipProblems.push_back({ jpc::Regex(elem.as_string(), defaultRegCompileModifier), std::nullopt });
-                        }
-                        else if (elem.is_array() && elem.size() > 0) {
-                            if (!elem[0].is_string()) {
-                                throw std::invalid_argument("skipProblems 的内联表数组第一个元素必须是字符串");
-                            }
-                            jpc::Regex pattern(elem[0].as_string(), defaultRegCompileModifier);
-                            if (elem.size() == 1) {
-                                m_skipProblems.push_back({ std::move(pattern), std::nullopt });
-                            }
-                            else {
-                                CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, m_projectDir, m_pythonManager, m_luaManager, m_logger, needReboot);
-                                m_skipProblems.push_back({ std::move(pattern), std::move(checkFunc) });
-                            }
-                        }
-                        else {
-                            throw std::invalid_argument("skipProblems 的元素必须是字符串或表数组");
-                        }
-                    }
+                if (apiTbl.contains("topP")) {
+                    api.topP = apiTbl.at("topP").as_floating();
                 }
-
-                const auto overwriteCompareObj = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "overwriteCompareObj");
-                if (overwriteCompareObj) {
-                    for (const auto& tbl : *overwriteCompareObj) {
-                        const std::string problemKey = toml::find_or(tbl, "problemKey", "");
-                        if (problemKey.empty()) {
+                if (apiTbl.contains("frequencyPenalty")) {
+                    api.frequencyPenalty = apiTbl.at("frequencyPenalty").as_floating();
+                }
+                if (apiTbl.contains("presencePenalty")) {
+                    api.presencePenalty = apiTbl.at("presencePenalty").as_floating();
+                }
+                if (apiTbl.contains("extraKeys")) {
+                    const toml::array& extraKeysArr = apiTbl.at("extraKeys").as_array();
+                    for (const auto& extraKey : extraKeysArr) {
+                        TranslationApi extraApi = api;
+                        extraApi.apikey = extraKey.as_string();
+                        if (extraApi.apikey.empty()) {
                             continue;
                         }
-                        std::string base = toml::find_or(tbl, "base", "");
-                        if (base.empty()) {
-                            base = "orig_text";
-                        }
-                        std::string check = toml::find_or(tbl, "check", "");
-                        if (check.empty()) {
-                            check = "trans_preview";
-                        }
-                        m_problemAnalyzer->overwriteCompareObj(problemKey, base, check);
+                        apis.push_back(std::move(extraApi));
                     }
                 }
+                if (api.apikey.empty()) {
+                    continue;
+                }
+                apis.push_back(std::move(api));
+            }
+            if (apis.empty()) {
+                throw std::invalid_argument("找不到可用的 apikey ");
+            }
+            else {
+                m_apiPool = std::make_unique<APIPool>(m_logger);
+                m_apiPool->loadApis(std::move(apis));
+            }
+
+            const fs::path promptPath = [&]()
+                {
+                    fs::path ret = m_projectDir / L"Prompt.toml";
+                    if (!fs::exists(promptPath)) {
+                        if (!fs::exists(defaultPromptPath)) {
+                            throw std::runtime_error("找不到 Prompt.toml 文件");
+                        }
+                        ret = defaultPromptPath;
+                    }
+                    return ret;
+                }();
+
+            const auto promptData = toml::uparse(promptPath);
+
+            std::string systemKey;
+            std::string userKey;
+
+            switch (m_transEngine)
+            {
+            case TransEngine::ForGalJson:
+                systemKey = "FORGALJSON_SYSTEM";
+                userKey = "FORGALJSON_TRANS_PROMPT_EN";
+                break;
+            case TransEngine::ForGalTsv:
+                systemKey = "FORGALTSV_SYSTEM";
+                userKey = "FORGALTSV_TRANS_PROMPT_EN";
+                break;
+            case TransEngine::ForNovelTsv:
+                systemKey = "FORNOVELTSV_SYSTEM";
+                userKey = "FORNOVELTSV_TRANS_PROMPT_EN";
+                break;
+            case TransEngine::DeepseekJson:
+                systemKey = "DEEPSEEKJSON_SYSTEM_PROMPT";
+                userKey = "DEEPSEEKJSON_TRANS_PROMPT";
+                break;
+            case TransEngine::Sakura:
+                systemKey = "SAKURA_SYSTEM_PROMPT";
+                userKey = "SAKURA_TRANS_PROMPT";
+                break;
+            case TransEngine::GenDict:
+                systemKey = "GENDIC_SYSTEM";
+                userKey = "GENDIC_PROMPT";
+                break;
+            case TransEngine::NameTrans:
+                systemKey = "NAMETRANS_SYSTEM";
+                userKey = "NAMETRANS_PROMPT";
+                break;
+            default:
+                throw std::invalid_argument("未知的 TransEngine");
+            }
+
+            if (promptData.contains(systemKey) && promptData.at(systemKey).is_string()) {
+                m_systemPrompt = promptData.at(systemKey).as_string();
+            }
+            else {
+                throw std::invalid_argument(std::format("Prompt.toml 中缺少 {} 键", systemKey));
+            }
+            if (promptData.contains(userKey) && promptData.at(userKey).is_string()) {
+                m_userPrompt = promptData.at(userKey).as_string();
+            }
+            else {
+                throw std::invalid_argument(std::format("Prompt.toml 中缺少 {} 键", userKey));
             }
         }
 
-        needReboot = needReboot || std::ranges::any_of(m_textPlugins, [](const auto& plugin) { return plugin->needReboot(); });
-        if (needReboot) {
-            throw std::runtime_error("需要重启程序以应用新安装的 NLP 模型");
+
+        if (m_transEngine != TransEngine::NameTrans) {
+            // 需要翻译预处理
+            const std::string tokenizerBackend = toml::find_or(configData, "common", "tokenizerBackend", "MeCab");
+            if (tokenizerBackend == "MeCab") {
+                const std::string mecabDictDir = toml::find_or(configData, "common", "mecabDictDir", "BaseConfig/mecabDict/mecab-ipadic-utf8");
+                m_logger->info("已配置 MeCab 分词器，首次使用时加载。");
+                m_tokenizeSourceLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
+            }
+            else if (tokenizerBackend == "spaCy") {
+                const std::string spaCyModelName = toml::find_or(configData, "common", "spaCyModelName", "ja_core_news_lg");
+                m_logger->info("已配置 spaCy 分词器，首次使用时加载。");
+                m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger);
+            }
+            else if (tokenizerBackend == "Stanza") {
+                const std::string stanzaLang = toml::find_or(configData, "common", "stanzaLang", "ja");
+                m_logger->info("已配置 Stanza 分词器，首次使用时加载。");
+                m_tokenizeSourceLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger);
+            }
+            else {
+                throw std::invalid_argument(std::format("无效的 tokenizerBackend: {}", tokenizerBackend));
+            }
+
+            const auto textPlugins = toml::find<
+                std::optional<std::vector<std::string>>
+            >(configData, "plugins", "textPlugins");
+            if (textPlugins) {
+                registerPlugins(m_textPlugins, *textPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData, true);
+            }
+        }
+        else {
+            m_gptDictionary = std::make_unique<GptDictionary>(m_projectDir, m_otherCacheDir, m_tokenizeSourceLangFunc,
+                m_luaManager, m_pythonManager, m_logger);
+            loadDictsFunc("gpt", m_gptDictionary);
+        }
+
+
+        // 需要翻译中/后处理
+        if (m_transEngine != TransEngine::ShowNormal && m_transEngine != TransEngine::GenDict && m_transEngine != TransEngine::NameTrans) {
+
+            m_gptDictionary = std::make_unique<GptDictionary>(m_projectDir, m_otherCacheDir, m_tokenizeSourceLangFunc,
+                m_luaManager, m_pythonManager, m_logger);
+            loadDictsFunc("gpt", m_gptDictionary);
+            m_postDictionary = std::make_unique<NormalDictionary>(m_projectDir, m_luaManager, m_pythonManager, m_logger);
+            loadDictsFunc("post", m_postDictionary);
+
+            const auto textPlugins = toml::find<
+                std::optional<std::vector<std::string>>
+            >(configData, "plugins", "textPlugins");
+            if (textPlugins) {
+                registerPlugins(m_textPlugins, *textPlugins, m_projectDir, m_otherCacheDir, m_pythonManager, m_luaManager, m_logger, configData, false);
+            }
+
+            m_problemAnalyzer = std::make_unique<ProblemAnalyzer>(m_gptDictionary, m_targetLang, m_logger);
+            const auto problemList = toml::find<
+                std::optional<std::vector<std::string>>
+            >(configData, "problemAnalyze", "problemList");
+            if (problemList) {
+                const std::string punctSet = toml::find_or(configData, "problemAnalyze", "punctSet", "（()）：:*[]{}<>『』「」“”;；'/\\");
+                const std::string codePage = toml::find_or(configData, "problemAnalyze", "codePage", "gbk");
+                double langProbability = toml::find_or(configData, "problemAnalyze", "langProbability", 0.94);
+                m_problemAnalyzer->loadProblems(*problemList, punctSet, codePage, langProbability);
+            }
+
+            const auto retranslKeys = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "retranslKeys");
+            if (retranslKeys) {
+                for (const auto& elem : *retranslKeys) {
+                    if (elem.is_string()) {
+                        GppConditionPattern pattern;
+                        pattern.conditionTarget = CachePart::Problems;
+                        pattern.conditionReg.setPattern(elem.as_string()).setModifier(defaultRegCompileModifier).compile();
+                        if (!pattern.conditionReg) {
+                            throw std::runtime_error(std::format("retranslKeys 正则表达式 [{}] 编译失败", elem.as_string()));
+                        }
+                        GPPCondition cond{ std::move(pattern) };
+                        CheckSeCondFunc checkFunc = [condr = std::move(cond)](const Sentence* se) -> bool
+                            {
+                                return checkGppCondition(condr, se);
+                            };
+                        m_retranslKeys.push_back(std::move(checkFunc));
+                    }
+                    else if (elem.is_array() || elem.is_table()) {
+                        CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, m_projectDir, m_pythonManager, m_luaManager, m_logger);
+                        m_retranslKeys.push_back(std::move(checkFunc));
+                    }
+                    else {
+                        throw std::invalid_argument("retranslKeys 的元素必须是字符串、表或表数组");
+                    }
+                }
+            }
+
+            const auto skipProblems = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "skipProblems");
+            if (skipProblems) {
+                for (const auto& elem : *skipProblems) {
+                    if (elem.is_string()) {
+                        m_skipProblems.push_back({ jpc::Regex(elem.as_string(), defaultRegCompileModifier), std::nullopt });
+                    }
+                    else if (elem.is_array() && elem.size() > 0) {
+                        if (!elem[0].is_string()) {
+                            throw std::invalid_argument("skipProblems 的内联表数组第一个元素必须是字符串");
+                        }
+                        jpc::Regex pattern(elem[0].as_string(), defaultRegCompileModifier);
+                        if (elem.size() == 1) {
+                            m_skipProblems.push_back({ std::move(pattern), std::nullopt });
+                        }
+                        else {
+                            CheckSeCondFunc checkFunc = getCheckSeCondFunc(elem, m_projectDir, m_pythonManager, m_luaManager, m_logger);
+                            m_skipProblems.push_back({ std::move(pattern), std::move(checkFunc) });
+                        }
+                    }
+                    else {
+                        throw std::invalid_argument("skipProblems 的元素必须是字符串或表数组");
+                    }
+                }
+            }
+
+            const auto overwriteCompareObj = toml::find<std::optional<toml::array>>(configData, "problemAnalyze", "overwriteCompareObj");
+            if (overwriteCompareObj) {
+                for (const auto& tbl : *overwriteCompareObj) {
+                    const std::string problemKey = toml::find_or(tbl, "problemKey", "");
+                    if (problemKey.empty()) {
+                        continue;
+                    }
+                    std::string base = toml::find_or(tbl, "base", "");
+                    if (base.empty()) {
+                        base = "orig_text";
+                    }
+                    std::string check = toml::find_or(tbl, "check", "");
+                    if (check.empty()) {
+                        check = "trans_preview";
+                    }
+                    m_problemAnalyzer->overwriteCompareObj(problemKey, base, check);
+                }
+            }
+
         }
     }
     catch (const toml::exception& e) {
@@ -619,7 +612,7 @@ void NormalJsonTranslator::postProcess(Sentence* se) {
 }
 
 
-bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId) {
+bool NormalJsonTranslator::translateBatch(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId) {
 
     for (Sentence* se : batch) {
         if (se->pre_processed_text.empty()) {
@@ -654,8 +647,8 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
             std::span<Sentence*> firstHalf = batchToTransThisRoundSpan.subspan(0, mid);
             std::span<Sentence*> secondHalf = batchToTransThisRoundSpan.subspan(mid);
 
-            bool firstOk = translateBatchWithRetry(relInputPath, firstHalf, backgroundText, threadId);
-            bool secondOk = translateBatchWithRetry(relInputPath, secondHalf, backgroundText, threadId);
+            bool firstOk = translateBatch(relInputPath, firstHalf, backgroundText, threadId);
+            bool secondOk = translateBatch(relInputPath, secondHalf, backgroundText, threadId);
 
             return firstOk && secondOk;
         }
@@ -732,17 +725,18 @@ bool NormalJsonTranslator::translateBatchWithRetry(const fs::path& relInputPath,
         }
 
         // --- 如果请求成功，则继续解析 ---
-        int parsedCount = 0;
-
-        //void parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
-        //    std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences, int& parsedCount, TransEngine transEngine, bool showBackgroundText);
-        parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
-            m_controller, backgroundText, m_completedSentences, parsedCount, m_transEngine, m_logger->should_log(spdlog::level::debug));
+        //int parseContent(std::string& content, std::span<Sentence*> batchToTransThisRound, absl::btree_map<int, Sentence*>& id2SentenceMap, const std::string& modelName,
+        //    const std::shared_ptr<IController>& controller, std::string& backgroudText, std::atomic<int>& completedSentences,
+        //    TransEngine transEngine, bool showBackgroundText, bool retransAllWhenFail);
+        int parsedCount = parseContent(response.content, batchToTransThisRound, id2SentenceMap, currentApi.modelName,
+            m_controller, backgroundText, m_completedSentences,
+            m_transEngine, m_logger->should_log(spdlog::level::debug), m_retransAllWhenFail);
 
         if (parsedCount != batchToTransThisRound.size()) {
             ++retryCount;
             if (!m_controller->shouldStop()) {
-                m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试...", threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount);
+                m_logger->warn("[线程 {}] [文件 {}] 解析失败或不完整 ({} / {}), 进行第 {} 次重试..., 解析结果: \n{}", 
+                    threadId, wide2Ascii(relInputPath), parsedCount, batchToTransThisRound.size(), retryCount, response.content);
             }
             continue;
         }
@@ -788,7 +782,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
 
     // 解析输入文件
     try {
-        ifs.open(inputPath);
+        ifs.open(inputPath, std::ios::binary);
         jSentences = ordered_json::parse(ifs);
         ifs.close();
         for (const auto& [index, item] : jSentences | std::views::enumerate) {
@@ -840,7 +834,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
             m_controller->updateBar(); // ShowNormal
         }
         createParent(showNormalPath);
-        std::ofstream ofs(showNormalPath);
+        std::ofstream ofs(showNormalPath, std::ios::binary);
         ofs << showNormalJson.dump(2);
         ofs.close();
         return;
@@ -901,7 +895,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     json jsonArr;
                     {
                         std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
-                        ifs.open(potentialCachePath);
+                        ifs.open(potentialCachePath, std::ios::binary);
                         jsonArr = json::parse(ifs);
                         ifs.close();
                     }
@@ -980,7 +974,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                     json cacheJsonList;
                     {
                         std::shared_lock<std::shared_mutex> lock(m_transCacheMutex);
-                        ifs.open(cp);
+                        ifs.open(cp, std::ios::binary);
                         cacheJsonList = json::parse(ifs);
                         ifs.close();
                     }
@@ -1077,11 +1071,12 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
                 }
                 m_logger->debug("[线程 {}] [文件 {}] 已停止翻译", threadId, wide2Ascii(relInputPath));
                 std::lock_guard<std::shared_mutex> lock(m_transCacheMutex);
+                saveCache(sentences, cachePath);
                 saveProblemOverviewFunc();
                 return;
             }
 
-            translateBatchWithRetry(relInputPath, batchView, backgroundText, threadId);
+            translateBatch(relInputPath, batchView, backgroundText, threadId);
             for (Sentence* se : batchView) {
                 postProcess(se);
             }
@@ -1122,7 +1117,7 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
     }
 
-    std::ofstream ofs(outputPath);
+    std::ofstream ofs(outputPath, std::ios::binary);
     ofs << jSentences.dump(2);
     ofs.close();
 
@@ -1146,9 +1141,9 @@ void NormalJsonTranslator::processFile(const fs::path& relInputPath, int threadI
         }
         combineOutputFiles(originalRelFilePath, splitFileParts, m_outputCacheDir, m_outputDir, m_logger);
         if (m_onFileProcessed) {
-            std::unique_lock<std::mutex> lock(m_outputMutex, std::defer_lock);
+            std::unique_lock<std::mutex> lock(m_outputMutex, std::defer_lock); // 非常神奇,总之如果 m_onFileProcessed 是 python 侧赋值的闭包的话，这里的不 unlock 就会死锁
             if (!m_pythonTranslator) {
-                lock.lock(); // 非常神奇,总之如果 m_onFileProcessed 是 python 侧赋值的闭包的话，这里的不 unlock 就会死锁
+                lock.lock();
             }
             m_onFileProcessed(originalRelFilePath);
         }
@@ -1210,7 +1205,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
             }
             const fs::path relInputPath = fs::relative(entry.path(), m_inputDir);
             try {
-                ifs.open(entry.path());
+                ifs.open(entry.path(), std::ios::binary);
                 json data = json::parse(ifs);
                 ifs.close();
 
@@ -1280,7 +1275,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 newNameTable[key] = toml::array{ "", jsonNameTable[key] };
             }
         }
-        ofs.open(nameTablePath);
+        ofs.open(nameTablePath, std::ios::binary);
         ofs << newNameTable;
         ofs.close();
         m_logger->info("已更新 人名替换表.toml 文件");
@@ -1310,7 +1305,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 this->preProcess(se);
             };
         DictionaryGenerator generator(m_controller, m_logger, m_apiPool, m_tokenizeSourceLangFunc, m_otherCacheDir,
-            preProcessFunc, m_onPerformApi, m_onDictProcessed,
+            std::move(preProcessFunc), m_onPerformApi, m_onDictProcessed,
             m_systemPrompt, m_userPrompt, m_apiStrategy, m_targetLang,
             m_maxRetries, m_threadsNum, m_apiTimeOutMs, m_checkQuota);
         const fs::path outputFilePath = m_projectDir / L"项目GPT字典-生成.toml";
@@ -1354,7 +1349,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                 m_logger->info("检测到文件分割模式 ({})，开始预处理输入文件...", m_splitFile);
                 for (const auto& relJsonPath : relJsonPaths) {
                     try {
-                        ifs.open(m_inputDir / relJsonPath);
+                        ifs.open(m_inputDir / relJsonPath, std::ios::binary);
                         const ordered_json data = ordered_json::parse(ifs);
                         ifs.close();
                         const std::vector<ordered_json> parts = splitImplFunc(data, m_splitFileNum);
@@ -1365,7 +1360,7 @@ std::optional<std::vector<fs::path>> NormalJsonTranslator::beforeRun() {
                             m_jsonToSplitFileParts[relJsonPath].insert({ relPartPath, false });
                             const fs::path partPath = m_inputCacheDir / relPartPath;
                             createParent(partPath);
-                            ofs.open(partPath);
+                            ofs.open(partPath, std::ios::binary);
                             ofs << part.dump(2);
                             ofs.close();
                         }
@@ -1424,10 +1419,10 @@ void NormalJsonTranslator::afterRun() {
     }
     else {
         std::ofstream ofs;
-        ofs.open(m_projectDir / L"翻译问题概览.toml");
+        ofs.open(m_projectDir / L"翻译问题概览.toml", std::ios::binary);
         ofs << toml::format("problemOverview", m_problemOverview);
         ofs.close();
-        ofs.open(m_projectDir / L"翻译问题概览.json");
+        ofs.open(m_projectDir / L"翻译问题概览.json", std::ios::binary);
         ofs << toml2Json(m_problemOverview).dump(2);
         ofs.close();
         m_logger->debug("已生成 翻译问题概览.json 和 翻译问题概览.toml 文件");
@@ -1479,7 +1474,7 @@ void NormalJsonTranslator::afterRun() {
         try {
             createParent(m_backgroundTextCachePath);
             json j = m_backgroundTextCacheMap;
-            std::ofstream ofs(m_backgroundTextCachePath);
+            std::ofstream ofs(m_backgroundTextCachePath, std::ios::binary);
             ofs << j.dump(2);
             ofs.close();
             m_logger->debug("背景文本缓存已保存至 {}", wide2Ascii(m_backgroundTextCachePath));

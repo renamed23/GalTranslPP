@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <sol/sol.hpp>
 
 module LuaTextPlugin;
@@ -12,7 +11,7 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 	: m_logger(logger), m_scriptPath(scriptPath)
 {
 	m_logger->info("正在初始化 Lua 插件 {}", m_scriptPath);
-	std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager->registerFunction(m_scriptPath, "init", m_needReboot);
+	std::optional<std::shared_ptr<LuaStateInstance>> luaStateOpt = luaManager->registerFunction(m_scriptPath, "init");
 	if (!luaStateOpt.has_value()) {
 		throw std::runtime_error(std::format("{} init函数初始化失败", m_scriptPath));
 	}
@@ -20,7 +19,7 @@ LuaTextPlugin::LuaTextPlugin(const fs::path& projectDir, const std::string& scri
 
 	auto registerFunctionFunc = [&](const std::string& funcName, sol::function*& pFunc)
 		{
-			luaStateOpt = luaManager->registerFunction(m_scriptPath, funcName, m_needReboot);
+			luaStateOpt = luaManager->registerFunction(m_scriptPath, funcName);
 			if (luaStateOpt.has_value()) {
 				pFunc = m_luaState->functions[funcName].get();
 				m_logger->info("{} {} 函数注册成功", m_scriptPath, funcName);

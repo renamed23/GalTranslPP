@@ -3,10 +3,9 @@
 #define PYBIND11_HEADERS
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
-#include <toml.hpp>
 #include <ctpl_stl.h>
 #include <proxy/proxy.h>
+#include <toml.hpp>
 
 export module NormalJsonTranslator;
 
@@ -63,6 +62,7 @@ export {
         int m_apiTimeOutMs;
         bool m_checkQuota;
         bool m_smartRetry;
+        bool m_retransAllWhenFail;
         bool m_usePreDictInName;
         bool m_usePostDictInName;
         bool m_usePreDictInMsg;
@@ -112,7 +112,7 @@ export {
 
         void postProcess(Sentence* se);
 
-        bool translateBatchWithRetry(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId);
+        bool translateBatch(const fs::path& relInputPath, std::span<Sentence*> batch, std::string& backgroundText, int threadId);
 
         void processFile(const fs::path& relInputPath, int threadId);
 

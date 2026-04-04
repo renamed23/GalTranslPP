@@ -1,7 +1,6 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 module TextLinebreakFix;
@@ -67,26 +66,22 @@ TextLinebreakFix::TextLinebreakFix(const fs::path& otherCacheDir, const toml::va
 			const std::string tokenizerBackend = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.tokenizerBackend");
 			if (tokenizerBackend == "MeCab") {
 				const std::string mecabDictDir = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.mecabDictDir");
-				m_logger->info("TextLinebreakFix-{} 正在检查 MeCab 环境...", pluginRunTimeNames[m_runTime]);
+				m_logger->info("TextLinebreakFix-{} 已配置 MeCab 分词器，首次使用时加载。", pluginRunTimeNames[m_runTime]);
 				m_tokenizeTargetLangFunc = getMeCabTokenizeFunc(mecabDictDir, m_logger);
-				m_logger->info("TextLinebreakFix-{} MeCab 环境检查完毕。", pluginRunTimeNames[m_runTime]);
 			}
 			else if (tokenizerBackend == "spaCy") {
 				const std::string spaCyModelName = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.spaCyModelName");
-				m_logger->info("TextLinebreakFix-{} 正在检查 spaCy 环境...", pluginRunTimeNames[m_runTime]);
-				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger, m_needReboot);
-				m_logger->info("TextLinebreakFix-{} spaCy 环境检查完毕。", pluginRunTimeNames[m_runTime]);
+				m_logger->info("TextLinebreakFix-{} 已配置 spaCy 分词器，首次使用时加载。", pluginRunTimeNames[m_runTime]);
+				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "spacy" }, "tokenizer_spacy", spaCyModelName, m_logger);
 			}
 			else if (tokenizerBackend == "Stanza") {
 				const std::string stanzaLang = parseToml<std::string>(projectConfig, pluginConfig, "plugins.TextLinebreakFix.stanzaLang");
-				m_logger->info("TextLinebreakFix-{} 正在检查 Stanza 环境...", pluginRunTimeNames[m_runTime]);
-				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger, m_needReboot);
-				m_logger->info("TextLinebreakFix-{} Stanza 环境检查完毕。", pluginRunTimeNames[m_runTime]);
+				m_logger->info("TextLinebreakFix-{} 已配置 Stanza 分词器，首次使用时加载。", pluginRunTimeNames[m_runTime]);
+				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "stanza" }, "tokenizer_stanza", stanzaLang, m_logger);
 			}
 			else if (tokenizerBackend == "pkuseg") {
-				m_logger->info("TextLinebreakFix-{} 正在检查 pkuseg 环境...", pluginRunTimeNames[m_runTime]);
-				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger, m_needReboot);
-				m_logger->info("TextLinebreakFix-{} pkuseg 环境检查完毕。", pluginRunTimeNames[m_runTime]);
+				m_logger->info("TextLinebreakFix-{} 已配置 pkuseg 分词器，首次使用时加载。", pluginRunTimeNames[m_runTime]);
+				m_tokenizeTargetLangFunc = getNLPTokenizeFunc({ "setuptools", "nes-py", "cython", "pkuseg" }, "tokenizer_pkuseg", "default", m_logger);
 			}
 			else {
 				throw std::invalid_argument(std::format("TextLinebreakFix-{} 无效的 tokenizerBackend: {}", pluginRunTimeNames[m_runTime], tokenizerBackend));

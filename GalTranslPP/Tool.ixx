@@ -1,44 +1,69 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
-#include <unicode/uscript.h>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #include <ctpl_stl.h>
 #include <toml.hpp>
+#include <unicode/uscript.h>
 
 export module Tool;
 
 export import GPPDefines;
-export import nlohmann.json;
 
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 namespace fs = std::filesystem;
 
 export {
 
-    std::string wide2Ascii(const std::wstring& wide, UINT CodePage = 65001, LPBOOL usedDefaultChar = nullptr);
-    std::wstring ascii2Wide(const std::string& ascii, UINT CodePage = 65001);
-    std::string ascii2Ascii(const std::string& ascii, UINT src = 65001, UINT dst = 0, LPBOOL usedDefaultChar = nullptr);
+#ifdef _WIN32
+    std::string wide2Ascii(const std::wstring& wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr);
+    std::string wide2Ascii(std::wstring_view wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr);
+    inline std::string wide2Ascii(const wchar_t* wide, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr) {
+        return wide2Ascii(std::wstring_view(wide), codePage, usedDefaultChar);
+    }
+    template<typename T>
+    requires(std::is_same_v<std::remove_cvref_t<T>, fs::path>)
+    inline std::string wide2Ascii(T&& path, UINT codePage = CP_UTF8, LPBOOL usedDefaultChar = nullptr) {
+        return wide2Ascii(path.native(), codePage, usedDefaultChar);
+    }
+
+    std::wstring ascii2Wide(const std::string& ascii, UINT codePage = CP_UTF8);
+    std::wstring ascii2Wide(std::string_view ascii, UINT codePage = CP_UTF8);
+
+    std::string ascii2Ascii(const std::string& ascii, UINT src = CP_UTF8, UINT dst = CP_ACP, LPBOOL usedDefaultChar = nullptr);
+    std::string ascii2Ascii(std::string_view ascii, UINT src = CP_UTF8, UINT dst = CP_ACP, LPBOOL usedDefaultChar = nullptr);
 
     bool executeCommand(const std::wstring& program, const std::wstring& args, bool showWindow = true, int timeDelayAfterCommand = 5);
 
     int getConsoleWidth();
+#endif
+
 
     std::string getNameString(const Sentence* se);
     std::string getNameString(const json& j);
 
     bool createParent(const fs::path& path);
 
-    std::wstring str2Lower(std::wstring_view str) {
-        return str | std::views::transform([](const auto c) { return std::tolower(c); }) | std::ranges::to<std::wstring>();
+    template<typename RetT>
+    RetT str2LowerImpl(auto&& str) {
+        return str | std::views::transform([](const auto c) { return std::tolower(c); }) | std::ranges::to<RetT>();
     }
-    std::string str2Lower(std::string_view str) {
-        return str | std::views::transform([](const auto c) { return std::tolower(c); }) | std::ranges::to<std::string>();
-    }
-    template <typename CharT, typename Traits, typename Alloc>
-    auto str2Lower(const std::basic_string<CharT, Traits, Alloc>& str) {
-        return str2Lower(std::basic_string_view<CharT>(str));
+    template<typename T>
+        requires(!std::is_same_v<std::remove_cvref_t<T>, fs::path>)
+    inline auto str2Lower(T&& str) {
+        if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::wstring_view>) {
+            return str2LowerImpl<std::wstring>(str);
+        }
+        if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::string_view>) {
+            return str2LowerImpl<std::string>(str);
+        }
+        if constexpr (std::constructible_from<std::wstring_view, T>) {
+            return str2LowerImpl<std::wstring>(std::wstring_view(str));
+        }
+        if constexpr (std::constructible_from<std::string_view, T>) {
+            return str2LowerImpl<std::string>(std::string_view(str));
+        }
     }
     std::wstring str2Lower(const fs::path& path) {
 #ifdef _WIN32
@@ -53,18 +78,18 @@ export {
         return str;
     }
 
-    auto splitStringFunc = [](auto&& str, auto&& delimiter) -> decltype(auto)
-        {
-            std::vector<std::remove_cvref_t<decltype(str)>> result;
-            for (auto&& subStrView : str | std::views::split(delimiter)) {
-                result.emplace_back(subStrView.begin(), subStrView.end());
-            }
-            return result;
-        };
-    std::vector<std::string> splitString(const std::string& str, char delimiter) { return splitStringFunc(str, delimiter); }
-    std::vector<std::string> splitString(const std::string& str, std::string_view delimiter) { return splitStringFunc(str, delimiter); }
-    std::vector<std::string_view> splitStringView(std::string_view strv, char delimiter) { return splitStringFunc(strv, delimiter); }
-    std::vector<std::string_view> splitStringView(std::string_view strv, std::string_view delimiter) { return splitStringFunc(strv, delimiter); }
+    auto splitStringImpl(auto&& str, auto&& delimiter) -> decltype(auto)
+    {
+        std::vector<std::remove_cvref_t<decltype(str)>> result;
+        for (auto&& subStrView : str | std::views::split(delimiter)) {
+            result.emplace_back(subStrView.begin(), subStrView.end());
+        }
+        return result;
+    }
+    std::vector<std::string> splitString(const std::string& str, char delimiter) { return splitStringImpl(str, delimiter); }
+    std::vector<std::string> splitString(const std::string& str, std::string_view delimiter) { return splitStringImpl(str, delimiter); }
+    std::vector<std::string_view> splitStringView(std::string_view strv, char delimiter) { return splitStringImpl(strv, delimiter); }
+    std::vector<std::string_view> splitStringView(std::string_view strv, std::string_view delimiter) { return splitStringImpl(strv, delimiter); }
 
     std::optional<int> str2Int(std::string_view sv);
 

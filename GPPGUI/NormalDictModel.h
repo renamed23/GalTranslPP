@@ -1,4 +1,4 @@
-// NormalDictModel.h
+﻿// NormalDictModel.h
 
 #ifndef NORMALDICTMODEL_H
 #define NORMALDICTMODEL_H
@@ -14,8 +14,8 @@ struct NormalDictEntry
     QString translation;
     QString conditionTar;
     QString conditionReg;
-    bool isReg = false;
     int priority = 0;
+    bool isReg = false;
 };
 
 class NormalDictModel : public QAbstractTableModel
@@ -23,7 +23,7 @@ class NormalDictModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    enum Column {
+    enum Column : int {
         Original = 0,
         Translation,
         ConditionTar,

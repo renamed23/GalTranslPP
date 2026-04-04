@@ -1,15 +1,12 @@
 ﻿module;
 
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
 
 module NameTranslator;
 
-import GPPDefines;
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 NameTranslator::NameTranslator(
@@ -187,7 +184,7 @@ void NameTranslator::run(const fs::path& nameTablePath) {
     }
 
     // 5. 保存文件
-    std::ofstream ofs(nameTablePath);
+    std::ofstream ofs(nameTablePath, std::ios::binary);
     ofs << nameTableData;
     ofs.close();
 

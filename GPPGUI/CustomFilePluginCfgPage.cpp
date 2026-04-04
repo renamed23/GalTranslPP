@@ -1,4 +1,4 @@
-#include "CustomFilePluginCfgPage.h"
+﻿#include "CustomFilePluginCfgPage.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -13,11 +13,11 @@
 
 import Tool;
 
-CustomFilePluginCfgPage::CustomFilePluginCfgPage(toml::ordered_value& projectConfig, toml::ordered_value& globalConfig, QWidget* parent) 
-	: BasePage(parent), _globalConfig(globalConfig), _projectConfig(projectConfig)
+CustomFilePluginCfgPage::CustomFilePluginCfgPage(fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent)
+	: BasePage(parent), _projectConfig(projectConfig), _globalConfig(globalConfig), _projectDir(projectDir)
 {
 	setWindowTitle(tr("自定义文件处理插件配置"));
-	setContentsMargins(10, 0, 10, 0);
+	setContentsMargins(30, 15, 15, 0);
 
 	// 创建一个中心部件和布局
 	QWidget* centerWidget = new QWidget(this);
@@ -36,7 +36,9 @@ CustomFilePluginCfgPage::CustomFilePluginCfgPage(toml::ordered_value& projectCon
 	ElaPushButton* filePluginBtn = new ElaPushButton(tr("浏览"), filePluginArea);
 	connect(filePluginBtn, &ElaPushButton::clicked, this, [=]()
 		{
-			QString path = QFileDialog::getOpenFileName(this, tr("选择自定义文件处理插件"), QString::fromStdString(toml::find_or(_globalConfig, "lastPluginPath", "./")), "Lua script (*.lua);;Python script (*.py)");
+			QString path = QFileDialog::getOpenFileName(this, tr("选择自定义文件处理插件"), 
+				QString::fromStdString(toml::find_or(_globalConfig, "lastPluginPath", "./")), 
+				"custom script (*.lua *.py)");
 			if (!path.isEmpty())
 			{
 				filePluginEdit->setText(path);
@@ -75,7 +77,7 @@ CustomFilePluginCfgPage::CustomFilePluginCfgPage(toml::ordered_value& projectCon
 
 	mainLayout->addStretch();
 	centerWidget->setWindowTitle(tr("自定义文件处理插件配置"));
-	addCentralWidget(centerWidget, true, true, 0);
+	addCentralWidget(centerWidget, true, false, 0);
 }
 
 CustomFilePluginCfgPage::~CustomFilePluginCfgPage()

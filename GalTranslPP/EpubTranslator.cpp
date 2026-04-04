@@ -2,7 +2,6 @@
 
 #define PCRE2_HEADERS
 #include "GPPMacros.hpp"
-#include <spdlog/spdlog.h>
 #include <zip.h>
 #pragma  warning( push ) 
 #pragma  warning( disable: 4005 ) 
@@ -12,10 +11,8 @@
 
 module EpubTranslator;
 
-import GPPDefines;
 import Tool;
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 // 递归遍历 Gumbo 树以提取文本节点
@@ -63,8 +60,6 @@ void EpubTranslator::init()
     m_epubOutputDir = m_projectDir / L"gt_output";
     m_tempUnpackDir = L"cache" / m_projectDir.filename() / L"epub_unpacked";
     m_tempRebuildDir = L"cache" / m_projectDir.filename() / L"epub_rebuild";
-
-    std::ifstream ifs;
 
     try {
         const auto projectConfig = toml::uparse(m_projectDir / L"config.toml");
@@ -255,7 +250,7 @@ void EpubTranslator::beforeRun()
 
                 createParent(m_inputDir / relJsonPath); // cache/myproject/epub_json_input/dir1/book1/OEBPS/chapter1.json
                 std::ofstream ofs;
-                ofs.open(m_inputDir / relJsonPath);
+                ofs.open(m_inputDir / relJsonPath, std::ios::binary);
                 ofs << j.dump(2);
                 ofs.close();
 
@@ -299,7 +294,7 @@ void EpubTranslator::beforeRun()
                 std::ifstream ifs;
                 const std::string& originalContent = jsonInfo.content;
 
-                ifs.open(m_outputDir / relJsonPath);
+                ifs.open(m_outputDir / relJsonPath, std::ios::binary);
                 json translatedDatas = json::parse(ifs);
                 ifs.close();
 

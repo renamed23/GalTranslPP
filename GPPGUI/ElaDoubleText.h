@@ -14,7 +14,7 @@ class ElaDoubleText : public QWidget
 
 public:
     explicit ElaDoubleText(QWidget* parent, const QString& firstLine, int firstLinePixelSize, const QString& secondLine, int secondLinePixelSize, const QString& toolTip);
-    ~ElaDoubleText();
+    ~ElaDoubleText() override;
 
     QString getFirstLineText() const;
 

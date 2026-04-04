@@ -1,4 +1,4 @@
-// CommonGptDictPage.h
+﻿// CommonGptDictPage.h
 
 #ifndef COMMONGPTDICTPAGE_H
 #define COMMONGPTDICTPAGE_H
@@ -17,11 +17,11 @@ class ElaTableView;
 namespace fs = std::filesystem;
 
 struct GptTabEntry {
-    QWidget* pageMainWidget;
-    QStackedWidget* stackedWidget;
-    ElaPlainTextEdit* plainTextEdit;
-    ElaTableView* tableView;
-    GptDictModel* dictModel;
+    QWidget* pageMainWidget{};
+    QStackedWidget* stackedWidget{};
+    ElaPlainTextEdit* plainTextEdit{};
+    ElaTableView* tableView{};
+    GptDictModel* dictModel{};
     fs::path dictPath;
     std::function<bool(bool)>saveFunc;
     QSharedPointer<QList<GptDictEntry>> withdrawList;

@@ -6,17 +6,20 @@
 #include <toml.hpp>
 #include "BasePage.h"
 
+namespace fs = std::filesystem;
+
 class CustomFilePluginCfgPage : public BasePage
 {
     Q_OBJECT
 
 public:
-    explicit CustomFilePluginCfgPage(toml::ordered_value& projectConfig, toml::ordered_value& globalConfig, QWidget* parent = nullptr);
-    ~CustomFilePluginCfgPage();
+    explicit CustomFilePluginCfgPage(fs::path& projectDir, toml::ordered_value& globalConfig, toml::ordered_value& projectConfig, QWidget* parent = nullptr);
+    ~CustomFilePluginCfgPage() override;
 
 private:
-    toml::ordered_value& _projectConfig;
+    fs::path& _projectDir;
     toml::ordered_value& _globalConfig;
+    toml::ordered_value& _projectConfig;
 };
 
 #endif // CUSTOMFILEPLUGINCFGPAGE_H
