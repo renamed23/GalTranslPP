@@ -33,6 +33,7 @@ msbuild "GalTranslPP.slnx" /t:GPPCLI /p:Configuration=Release /p:Platform=x64 /p
 echo [4/4] 正在复制资产文件到 Release 目录...
 xcopy "Example\BaseConfig" "Release\GPPCLI\BaseConfig" /E /I /Y
 xcopy "Example\sampleProject" "Release\GPPCLI\sampleProject" /E /I /Y
+xcopy "3rdParty\7z.dll" "Release\GPPCLI" /Y
 
 echo 完成
 pause>nul
