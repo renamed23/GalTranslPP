@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
                 shutDownPythonEnv(release);
                 return 1;
             }
-            projectPath = ascii2Wide(argv[++i]);
+            projectPath = ascii2Wide(std::string_view(argv[++i]));
         }
         else if (arg.starts_with("--project-path=")) {
             projectPath = ascii2Wide(arg.substr(std::string("--project-path=").size()));
